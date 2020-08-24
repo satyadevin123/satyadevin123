@@ -18,10 +18,10 @@ VALUES
 ('$subscriptionid',''),
 ('$dataFactoryNameLocation',''),
 ('$tenantid',''),
-('$sendmailMasterPipelineName',''),
-('$finalouput',''),
+('$sendmailMasterPipelineName','"sendmail"'),
+('$finalouput','"pocmeta"'),
 ('$azuredeployparametersjson',''),
-('$nameofintegrationruntime',''),
+('$nameofintegrationruntime','"Azure-IR-ADF"'),
 ('$SinkAccountName','')
 
 Print 'End - Inserting data to master parameters list table'
@@ -184,7 +184,7 @@ VALUES
 (1,'InvokedPipelineName','',1),
 (2,'condition','',6),
 (3,'inputarray','',6),
-(4,'isSequential','FALSE',4),
+(4,'isSequential','false',4),
 (5,'Metadataactivityname','',7),
 (6,'filedlist','',7),
 (7,'MyDataset','',7),
@@ -192,7 +192,7 @@ VALUES
 (9,'LookupActivityname','',2),
 (10,'query','select SS.Name as Schema_Name, ST.Name as Table_Name FROM SYS.TABLES ST JOIN SYS.SCHEMAS SS ON SS.schema_id= ST.schema_id',2),
 (11,'dataset','',2),
-(12,'firstrow','FALSE',2),
+(12,'firstrow','false',2),
 (13,'foreachactivityname','',4),
 (14,'dependson','',4),
 (15,'dependencyConditions','',4),
