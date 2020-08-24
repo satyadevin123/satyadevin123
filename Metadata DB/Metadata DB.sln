@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30309.148
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "Metadata DB", "Metadata DB\Metadata DB.sqlproj", "{ACA33C6B-0DB4-491C-B0B0-CE832EFFD81B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ACA33C6B-0DB4-491C-B0B0-CE832EFFD81B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACA33C6B-0DB4-491C-B0B0-CE832EFFD81B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACA33C6B-0DB4-491C-B0B0-CE832EFFD81B}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{ACA33C6B-0DB4-491C-B0B0-CE832EFFD81B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACA33C6B-0DB4-491C-B0B0-CE832EFFD81B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACA33C6B-0DB4-491C-B0B0-CE832EFFD81B}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {012BA5C7-4947-43DE-A625-00EBF666E69F}
+	EndGlobalSection
+EndGlobal

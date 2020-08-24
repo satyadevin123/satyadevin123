@@ -1,0 +1,26 @@
+﻿CREATE TABLE [dbo].[TBL_Teradata_load_Tables_Scripts] (
+    [id]                         INT            IDENTITY (1, 1) NOT NULL,
+    [TblName]                    VARCHAR (80)   NULL,
+    [total]                      BIGINT         NULL,
+    [range_type]                 SMALLINT       NULL,
+    [DateCreated]                DATETIME       NULL,
+    [schemaname]                 VARCHAR (50)   NULL,
+    [destination]                VARCHAR (150)  NULL,
+    [ColumnName]                 VARCHAR (50)   NULL,
+    [sel_max_part]               VARCHAR (200)  NULL,
+    [max_partition]              INT            NULL,
+    [CreateTableStatement]       VARCHAR (MAX)  NULL,
+    [CreateViewStatement]        VARCHAR (MAX)  NULL,
+    [CreateExternalStatement]    VARCHAR (MAX)  NULL,
+    [TableCreated]               CHAR (1)       NULL,
+    [ViewCreated]                CHAR (1)       NULL,
+    [ExternalTableCreated]       CHAR (1)       NULL,
+    [ParquetFilesCreated]        CHAR (1)       NULL,
+    [InsertData]                 VARCHAR (MAX)  NULL,
+    [DataInsertedToTable]        CHAR (1)       NULL,
+    [CreateIndexStatement]       VARCHAR (MAX)  NULL,
+    [DropTableStatement]         VARCHAR (8000) NULL,
+    [DropExternalTableStatement] VARCHAR (8000) NULL,
+    [DropViewStatement]          VARCHAR (8000) NULL
+);
+

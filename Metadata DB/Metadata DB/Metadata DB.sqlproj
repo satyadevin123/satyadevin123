@@ -1,0 +1,265 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Name>Metadata_DB</Name>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>4.1</ProjectVersion>
+    <ProjectGuid>{aca33c6b-0db4-491c-b0b0-ce832effd81b}</ProjectGuid>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql130DatabaseSchemaProvider</DSP>
+    <OutputType>Database</OutputType>
+    <RootPath>
+    </RootPath>
+    <RootNamespace>Metadata_DB</RootNamespace>
+    <AssemblyName>Metadata_DB</AssemblyName>
+    <ModelCollation>1033, CI</ModelCollation>
+    <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
+    <DeployToDatabase>True</DeployToDatabase>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetLanguage>CS</TargetLanguage>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <SqlServerVerification>False</SqlServerVerification>
+    <IncludeCompositeObjects>True</IncludeCompositeObjects>
+    <TargetDatabaseSet>True</TargetDatabaseSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
+    <!-- Default to the v11.0 targets path if the targets file for the current VS version is not found -->
+    <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
+    <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
+  </PropertyGroup>
+  <Import Condition="'$(SQLDBExtensionsRefPath)' != ''" Project="$(SQLDBExtensionsRefPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <ItemGroup>
+    <Folder Include="Properties" />
+    <Folder Include="Audit\" />
+    <Folder Include="Audit\Tables\" />
+    <Folder Include="dbo\" />
+    <Folder Include="dbo\Tables\" />
+    <Folder Include="procfwk\" />
+    <Folder Include="procfwk\Tables\" />
+    <Folder Include="dbo\Views\" />
+    <Folder Include="procfwk\Views\" />
+    <Folder Include="Security\" />
+    <Folder Include="dbo\Stored Procedures\" />
+    <Folder Include="procfwk\Stored Procedures\" />
+    <Folder Include="procfwk\Synonyms\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Build Include="Audit\Tables\ExceptionLogDetails.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="Audit\Tables\PipelineStatusDetails.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\Log_DataFeedRepository.sql" />
+    <Build Include="dbo\Tables\Log_DBX_DataValidations_ErrorDetails.sql" />
+    <Build Include="dbo\Tables\Scale_resources.sql" />
+    <Build Include="dbo\Tables\ServicePrincipals.sql" />
+    <Build Include="dbo\Tables\T_ChildPipelines_Activities.sql" />
+    <Build Include="dbo\Tables\T_Columns.sql" />
+    <Build Include="dbo\Tables\T_Components.sql" />
+    <Build Include="dbo\Tables\T_ConfigurationDetails.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\T_Custom_Logging.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\T_DataSource_Queries.sql" />
+    <Build Include="dbo\Tables\T_Dependence.sql" />
+    <Build Include="dbo\Tables\T_LinkedService_Parameters.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\T_LinkedService_Parameters_bkp_cmn.sql" />
+    <Build Include="dbo\Tables\T_LinkedServices.sql" />
+    <Build Include="dbo\Tables\T_List_Activities.sql" />
+    <Build Include="dbo\Tables\t_list_activities_bkup.sql" />
+    <Build Include="dbo\Tables\T_List_Activities_config.sql" />
+    <Build Include="dbo\Tables\T_List_Activity_Parameters.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\t_list_activity_parameters_bkup.sql" />
+    <Build Include="dbo\Tables\T_List_Dataset_Parameters.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\T_List_DataSets.sql" />
+    <Build Include="dbo\Tables\T_List_DataSets_bkup.sql" />
+    <Build Include="dbo\Tables\t_list_datasets_bkup2.sql" />
+    <Build Include="dbo\Tables\T_List_DataSources.sql" />
+    <Build Include="dbo\Tables\T_List_Datatypes.sql" />
+    <Build Include="dbo\Tables\T_List_LinkedService_Parameters.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\T_List_LinkedService_Parameters_bkup.sql" />
+    <Build Include="dbo\Tables\T_List_LinkedServices.sql" />
+    <Build Include="dbo\Tables\T_list_LinkedServices_bkup.sql" />
+    <Build Include="dbo\Tables\T_List_Queries.sql" />
+    <Build Include="dbo\Tables\T_ManagedIdentity.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\T_Master_Parameters_List.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\t_master_parameters_list_bkp_cmn.sql" />
+    <Build Include="dbo\Tables\T_Master_Pipelines.sql" />
+    <Build Include="dbo\Tables\T_Master_Pipelines_Parameters_List.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\T_Pipeline_Activity_Parameters.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\T_Pipeline_Activity_Parameters_Bkup.sql" />
+    <Build Include="dbo\Tables\T_Pipeline_Code.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\T_Pipeline_Dataset_Parameters.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\T_Pipeline_DataSet_Parameters_Bkup.sql" />
+    <Build Include="dbo\Tables\T_Pipeline_DataSets.sql" />
+    <Build Include="dbo\Tables\T_Pipeline_DataSets_Bkup.sql" />
+    <Build Include="dbo\Tables\T_Pipeline_LinkedService_Parameters.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\T_Pipeline_LinkedService_Parameters_Bkup.sql" />
+    <Build Include="dbo\Tables\T_Pipeline_LinkedServices.sql" />
+    <Build Include="dbo\Tables\T_Pipeline_LinkedServices_Bkup.sql" />
+    <Build Include="dbo\Tables\T_pipeline_log.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Tables\t_pipeline_tables_tobemoved.sql" />
+    <Build Include="dbo\Tables\T_PipelineParameters.sql" />
+    <Build Include="dbo\Tables\T_Pipelines.sql" />
+    <Build Include="dbo\Tables\T_Pipelines_Bkup.sql" />
+    <Build Include="dbo\Tables\T_Pipelines_steps.sql" />
+    <Build Include="dbo\Tables\T_Pipelines_steps_Bkup.sql" />
+    <Build Include="dbo\Tables\T_SourceDataSet.sql" />
+    <Build Include="dbo\Tables\T_Tables.sql" />
+    <Build Include="dbo\Tables\TBL_DataSource_List_table.sql" />
+    <Build Include="dbo\Tables\TBL_DataSource_load_Tables.sql" />
+    <Build Include="dbo\Tables\TBL_DataSource_load_Tables_Columns_Scripts.sql" />
+    <Build Include="dbo\Tables\tbl_List_Data_Sources.sql" />
+    <Build Include="dbo\Tables\TBL_LookUp_Range.sql" />
+    <Build Include="dbo\Tables\TBL_Start_Load.sql" />
+    <Build Include="dbo\Tables\TBL_Teradata_Load_Tables_Reconcile.sql" />
+    <Build Include="dbo\Tables\TBL_Teradata_load_Tables_Scripts.sql" />
+    <Build Include="dbo\Tables\TBL_Teradata_query.sql" />
+    <Build Include="dbo\Tables\TBL_Teradata_Table_Indices.sql" />
+    <Build Include="dbo\Tables\TBL_Teradata_to_SQL_Datatype.sql" />
+    <Build Include="dbo\Tables\TBL_UpScale_DownScale_DWU.sql" />
+    <Build Include="procfwk\Tables\CurrentExecution.sql" />
+    <Build Include="procfwk\Tables\DataFactorys.sql" />
+    <Build Include="procfwk\Tables\ExecutionLog.sql" />
+    <Build Include="procfwk\Tables\PipelineAuthLink.sql" />
+    <Build Include="procfwk\Tables\PipelineParameters.sql" />
+    <Build Include="procfwk\Tables\Pipelines.sql" />
+    <Build Include="procfwk\Tables\Properties.sql" />
+    <Build Include="procfwk\Tables\Stages.sql" />
+    <Build Include="dbo\Views\vw_ProcessQualifiedFiles.sql" />
+    <Build Include="dbo\Views\vw_ProcessRawFiles.sql" />
+    <Build Include="procfwk\Views\CurrentProperties.sql" />
+    <Build Include="procfwk\Views\LastExecution.sql" />
+    <Build Include="Security\WW-METADATA-DRIVEN-ADF.sql" />
+    <Build Include="dbo\Stored Procedures\FailProcedure.sql" />
+    <Build Include="dbo\Stored Procedures\final_execution_ps.sql" />
+    <Build Include="dbo\Stored Procedures\final_execution_ps_1.sql" />
+    <Build Include="dbo\Stored Procedures\final_execution_ps_2.sql" />
+    <Build Include="dbo\Stored Procedures\final_execution_ps_cmn.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Stored Procedures\final_execution_ps_new.sql" />
+    <Build Include="dbo\Stored Procedures\final_execution_ps_new1.sql" />
+    <Build Include="dbo\Stored Procedures\final_execution_ps_working.sql" />
+    <Build Include="dbo\Stored Procedures\SetRandomWaitValues.sql" />
+    <Build Include="dbo\Stored Procedures\usp_add_email_nofification.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Stored Procedures\usp_Build_SourceQuery.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Stored Procedures\usp_generate_pipelinecode.sql" />
+    <Build Include="dbo\Stored Procedures\usp_Get_ErrorMessage.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Activities.sql" />
+    <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_LinkedServiceParameters_New.sql" />
+    <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Parameters.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Parameters_New.sql" />
+    <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Parameters_oo.sql" />
+    <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Parameters_wrk.sql" />
+    <Build Include="dbo\Stored Procedures\usp_Load_DataToStaging.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Stored Procedures\usp_Log_PipelineStatus.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Stored Procedures\usp_return_activitycode.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Stored Procedures\usp_return_activitycode_bkup.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Stored Procedures\usp_return_activitycode_bkup1.sql" />
+    <Build Include="dbo\Stored Procedures\USP_TABLE_CREATION.sql" />
+    <Build Include="dbo\Stored Procedures\usp_TruncateParameterTables.sql" />
+    <Build Include="dbo\Stored Procedures\usp_Update_PipelineStatus.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Stored Procedures\usp_Update_PipelineStatusAndSetupDetails.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="procfwk\Stored Procedures\AddProperty.sql" />
+    <Build Include="procfwk\Stored Procedures\AddServicePrincipal.sql" />
+    <Build Include="procfwk\Stored Procedures\CheckForBlockedPipelines.sql" />
+    <Build Include="procfwk\Stored Procedures\CheckMetadataIntegrity.sql" />
+    <Build Include="procfwk\Stored Procedures\CheckStageAndPiplineIntegrity.sql" />
+    <Build Include="procfwk\Stored Procedures\CreateNewExecution.sql" />
+    <Build Include="procfwk\Stored Procedures\DeleteServicePrincipal.sql" />
+    <Build Include="procfwk\Stored Procedures\ExecutionWrapper.sql" />
+    <Build Include="procfwk\Stored Procedures\GetPipelineParameters.sql" />
+    <Build Include="procfwk\Stored Procedures\GetPipelinesInStage.sql" />
+    <Build Include="procfwk\Stored Procedures\GetPropertyValue.sql" />
+    <Build Include="procfwk\Stored Procedures\GetServicePrincipal.sql" />
+    <Build Include="procfwk\Stored Procedures\GetStages.sql" />
+    <Build Include="procfwk\Stored Procedures\ResetExecution.sql" />
+    <Build Include="procfwk\Stored Procedures\SetLogActivityFailed.sql" />
+    <Build Include="procfwk\Stored Procedures\SetLogPipelineFailed.sql" />
+    <Build Include="procfwk\Stored Procedures\SetLogPipelineRunning.sql" />
+    <Build Include="procfwk\Stored Procedures\SetLogPipelineSuccess.sql" />
+    <Build Include="procfwk\Stored Procedures\SetLogPipelineUnknown.sql" />
+    <Build Include="procfwk\Stored Procedures\SetLogStagePreparing.sql" />
+    <Build Include="procfwk\Stored Procedures\UpdateExecutionLog.sql" />
+    <Build Include="Security\Audit.sql" />
+    <Build Include="Security\config.sql" />
+    <Build Include="Security\procfwk.sql" />
+    <Build Include="procfwk\Synonyms\DataFactoryDetails.sql" />
+    <Build Include="procfwk\Synonyms\PipelineProcesses.sql" />
+    <Build Include="procfwk\Synonyms\ProcessingStageDetails.sql" />
+  </ItemGroup>
+</Project>

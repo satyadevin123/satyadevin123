@@ -1,0 +1,25 @@
+﻿CREATE TABLE [dbo].[T_pipeline_log] (
+    [DataFactory_Name]                      NVARCHAR (500) NULL,
+    [Pipeline_Name]                         NVARCHAR (500) NULL,
+    [RunId]                                 NVARCHAR (500) NULL,
+    [Source]                                NVARCHAR (500) NULL,
+    [Destination]                           NVARCHAR (500) NULL,
+    [TriggerType]                           NVARCHAR (500) NULL,
+    [TriggerId]                             NVARCHAR (500) NULL,
+    [TriggerName]                           NVARCHAR (500) NULL,
+    [TriggerTime]                           NVARCHAR (500) NULL,
+    [rowsCopied]                            NVARCHAR (500) NULL,
+    [RowsRead]                              INT            NULL,
+    [No_ParallelCopies]                     INT            NULL,
+    [copyDuration_in_secs]                  NVARCHAR (500) NULL,
+    [effectiveIntegrationRuntime]           NVARCHAR (500) NULL,
+    [Source_Type]                           NVARCHAR (500) NULL,
+    [Sink_Type]                             NVARCHAR (500) NULL,
+    [Execution_Status]                      NVARCHAR (500) NULL,
+    [CopyActivity_Start_Time]               DATETIME       NULL,
+    [CopyActivity_End_Time]                 DATETIME       NULL,
+    [CopyActivity_queuingDuration_in_secs]  NVARCHAR (500) NULL,
+    [CopyActivity_timeToFirstByte_in_secs]  NVARCHAR (500) NULL,
+    [CopyActivity_transferDuration_in_secs] NVARCHAR (500) NULL
+);
+
