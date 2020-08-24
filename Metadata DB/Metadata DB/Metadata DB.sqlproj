@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>4.1</ProjectVersion>
     <ProjectGuid>{aca33c6b-0db4-491c-b0b0-ce832effd81b}</ProjectGuid>
-    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql130DatabaseSchemaProvider</DSP>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.SqlAzureV12DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
     <RootPath>
     </RootPath>
@@ -183,7 +183,6 @@
     <Build Include="dbo\Views\vw_ProcessRawFiles.sql" />
     <Build Include="procfwk\Views\CurrentProperties.sql" />
     <Build Include="procfwk\Views\LastExecution.sql" />
-    <Build Include="Security\WW-METADATA-DRIVEN-ADF.sql" />
     <Build Include="dbo\Stored Procedures\FailProcedure.sql" />
     <Build Include="dbo\Stored Procedures\final_execution_ps.sql" />
     <Build Include="dbo\Stored Procedures\final_execution_ps_1.sql" />
@@ -198,14 +197,10 @@
     <Build Include="dbo\Stored Procedures\usp_add_email_nofification.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="dbo\Stored Procedures\usp_Build_SourceQuery.sql">
-      <AnsiNulls>Off</AnsiNulls>
-    </Build>
     <Build Include="dbo\Stored Procedures\usp_generate_pipelinecode.sql" />
     <Build Include="dbo\Stored Procedures\usp_Get_ErrorMessage.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Activities.sql" />
     <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_LinkedServiceParameters_New.sql" />
     <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Parameters.sql">
       <AnsiNulls>Off</AnsiNulls>
@@ -213,9 +208,6 @@
     <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Parameters_New.sql" />
     <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Parameters_oo.sql" />
     <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Parameters_wrk.sql" />
-    <Build Include="dbo\Stored Procedures\usp_Load_DataToStaging.sql">
-      <AnsiNulls>Off</AnsiNulls>
-    </Build>
     <Build Include="dbo\Stored Procedures\usp_Log_PipelineStatus.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
@@ -229,9 +221,6 @@
     <Build Include="dbo\Stored Procedures\USP_TABLE_CREATION.sql" />
     <Build Include="dbo\Stored Procedures\usp_TruncateParameterTables.sql" />
     <Build Include="dbo\Stored Procedures\usp_Update_PipelineStatus.sql">
-      <AnsiNulls>Off</AnsiNulls>
-    </Build>
-    <Build Include="dbo\Stored Procedures\usp_Update_PipelineStatusAndSetupDetails.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
     <Build Include="procfwk\Stored Procedures\AddProperty.sql" />
