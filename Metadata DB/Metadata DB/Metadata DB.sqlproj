@@ -262,4 +262,7 @@
     <Build Include="procfwk\Synonyms\PipelineProcesses.sql" />
     <Build Include="procfwk\Synonyms\ProcessingStageDetails.sql" />
   </ItemGroup>
+  <ItemGroup>
+    <PostDeploy Include="Script.PostDeployment1.sql" />
+  </ItemGroup>
 </Project>
