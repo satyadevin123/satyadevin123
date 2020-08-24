@@ -16,7 +16,7 @@
 <Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
 <Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDB'/>
 <Parameter Name='$azureSqlDBUserName' Value = 'vsagala'/>
-<Parameter Name='$azureSqlDBPassword' Value = 'Pass@123'/>
+<Parameter Name='$azureSqlDBPassword' Value = ''/>
 </Parameters>
 </MetadataDB>
 <Sources>
@@ -26,7 +26,7 @@
 <Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
 <Parameter Name='$azureSqlDatabaseName' Value = 'AdventureWorksSample'/>
 <Parameter Name='$azureSqlDBUserName' Value = 'vsagala'/>
-<Parameter Name='$azureSqlDBPassword' Value = 'Pass@123'/>
+<Parameter Name='$azureSqlDBPassword' Value = ''/>
 </Parameters>
 <Tables>
 <Table Name='ErrorLog' schema='dbo'/>
