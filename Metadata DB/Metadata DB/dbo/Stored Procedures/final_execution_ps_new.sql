@@ -1,20 +1,33 @@
 ﻿
 
-
---EXEC [dbo].[final_execution_ps_new] 3
-
+--[dbo].[final_execution_ps_new1]  4
 CREATE procedure [dbo].[final_execution_ps_new] 
  (@PipelineId INT)
 as
 
 
+
 Declare @MasterPipelineActivityJsoncode table(Jsoncode varchar(max),ID INT IDENTITY(1,1))
+Declare @DFCreationJsonCode table(Jsoncode varchar(max),ID INT IDENTITY(1,1))
+
+
+insert into @DFCreationJsonCode select 'New-AzDataFactoryV2 -ResourceGroupName $resourceGroupName -Name $dataFactoryName –Location $dataFactoryNameLocation -Force'
+insert into @DFCreationJsonCode select 
+'$sinkAccount = Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $SinkAccountName  -ErrorAction SilentlyContinue'
+insert into @DFCreationJsonCode select  'if($sinkAccount -eq $null){
+     New-AzStorageAccount -Kind StorageV2 -ResourceGroupName $resourceGroupName -Name $SinkAccountName -Location $dataFactoryNameLocation -EnableHierarchicalNamespace $true -SkuName Standard_LRS }'
+insert into @DFCreationJsonCode select '$spID = (Get-AzDataFactoryV2 -ResourceGroupName $resourceGroupName -Name $dataFactoryName).Identity.PrincipalId '
+insert into @DFCreationJsonCode select 'New-AzRoleAssignment -ObjectId $spID -RoleDefinitionName "Storage Blob Data Contributor" -Scope "/subscriptions/$subscriptionid/resourceGroups/$resourceGroupName/providers/Microsoft.Storage/storageAccounts/$SinkAccountName" -ErrorAction SilentlyContinue'
+insert into @DFCreationJsonCode select 'Set-AzDataFactoryV2IntegrationRuntime -DataFactoryName $dataFactoryName -Name $nameofintegrationruntime -ResourceGroupName $resourceGroupName -Type Managed -Location $dataFactoryNameLocation -Force'
+
+declare @emailpipelinename nvarchar(100)
+
 insert into @MasterPipelineActivityJsoncode select '$pipelineDefinition = @"'
 insert into @MasterPipelineActivityJsoncode select Jsoncode From T_Master_Pipelines Where MasterPipelineName='Sendmail'
 insert into @MasterPipelineActivityJsoncode select '"@'
 insert into @MasterPipelineActivityJsoncode select '$pipelineDefinition | Out-File c:\$finaloutput.json'
 
-insert into @MasterPipelineActivityJsoncode select  'New-AzDataFactoryV2Pipeline -DataFactoryName $dataFactoryName -ResourceGroupName $resourceGroupName -Name $pipelinename -Force -File "c:\$finaloutput.json"'
+insert into @MasterPipelineActivityJsoncode select  'New-AzDataFactoryV2Pipeline -DataFactoryName $dataFactoryName -ResourceGroupName $resourceGroupName -Name $sendmailMasterPipelineName -Force -File "c:\$finaloutput.json"'
 
 Declare @pipelinename varchar(100)
 set @pipelinename = (select PipelineName from [dbo].[T_Pipelines] where id=@PipelineId )
@@ -47,7 +60,7 @@ AND t.rownum =@LSCount
 
 
 insert into @LinkedServiceJsoncode select '$'+@LinkedService+'Definition = @"'
-insert into @LinkedServiceJsoncode select Jsoncode from [dbo].[T_Pipeline_LinkedServices] 
+insert into @LinkedServiceJsoncode select REPLACE(Jsoncode,'$','$'+CAST(TPL.Id AS nvarchar)+'_') from [dbo].[T_Pipeline_LinkedServices] 
 TPL JOIN [dbo].[T_List_LinkedServices] TLL ON TLL.ID = TPL.LinkedServiceID where TPL.id=@LSCount
 insert into @LinkedServiceJsoncode select '"@'
 insert into @LinkedServiceJsoncode select '$'+@LinkedService+'Definition | Out-File c:\'+@LinkedService+'.json'
@@ -80,7 +93,7 @@ AND t.rownum =@DSCount
 --set @Dataset= (select DataSet_Name from [dbo].[T_Pipeline_DataSets] TPD JOIN [T_List_DataSets] TLD ON TPD.DataSetId= TLD.id where TPD.id =@DSCount)
 
 insert into @DataSetJsoncode select '$'+@DataSet+'Definition = @"'
-insert into @DataSetJsoncode select Jsoncode from [dbo].[T_Pipeline_DataSets] TPD JOIN [T_List_DataSets] TLD ON TPD.DataSetId= TLD.id where TPD.id=@DSCount
+insert into @DataSetJsoncode select REPLACE(TLD.Jsoncode,'$','$'+CAST(TPL.Id AS nvarchar)+'_') from [dbo].[T_Pipeline_DataSets] TPD JOIN [T_List_DataSets] TLD ON TPD.DataSetId= TLD.id JOIN T_Pipeline_LinkedServices TPL ON TPL.ID = TPD.LinkedServericeId JOIN T_List_LinkedServices TLL ON TLL.Id = TPL.LinkedServiceId where TPD.id=@DSCount
 insert into @DataSetJsoncode select '"@'
 insert into @DataSetJsoncode select '$'+@DataSet+'Definition | Out-File c:\'+@DataSet+'.json'
 insert into @DataSetJsoncode select  'New-AzDataFactoryV2DataSet -DataFactoryName $dataFactoryName -ResourceGroupName $resourceGroupName -Force -Name "'+@name+'" -File "c:\'+@DataSet+'.json"'
@@ -136,6 +149,8 @@ FROM (
 		union all
 		select ParameterName+' = '+ ParameterValue+'' AS Parameter,ID, 'MasterPipelineParameterList' AS DescType from T_Master_Pipelines_Parameters_List
 		union all
+		select Jsoncode AS Parameter,ID, 'DFCode' AS DescType from @DFCreationJsonCode 
+		union all
 		select Jsoncode AS Parameter,ID, 'LSCode' AS DescType from @LinkedServiceJsoncode 
 		union all
 		select Jsoncode AS Parameter, ID, 'DSCode' AS DescType from @DataSetJsoncode 
@@ -149,8 +164,9 @@ ORDER BY CASE WHEN DescType Like '%MasterParameterList%' THEN 1
 			  WHEN DescType Like '%DatasetParameterList%' THEN 3
 			  WHEN DescType Like '%ActivityParameterList%' THEN 4
 			  WHEN DescType Like '%MasterPipelineParameterList%' THEN 5
-			  WHEN DescType Like '%LSCode%' THEN 6
-			  WHEN DescType Like '%DSCode%' THEN 7 
+			  WHEN DescType Like '%DFCode%' THEN 6
+			  WHEN DescType Like '%LSCode%' THEN 7
+			  WHEN DescType Like '%DSCode%' THEN 8 
 			  WHEN DescType Like '%Mastercode%' THEN 9
 			  WHEN DescType Like '%ActivityCode%' THEN 10 END 
 			  ,ID
@@ -173,6 +189,8 @@ FROM (
 		union all
 		select ParameterName+' = '+ ParameterValue+'' AS Parameter,ID, 'MasterPipelineParameterList' AS DescType from T_Master_Pipelines_Parameters_List
 		union all
+		select Jsoncode AS Parameter,ID, 'DFCode' AS DescType from @DFCreationJsonCode 
+		union all
 		select Jsoncode AS Parameter,ID, 'LSCode' AS DescType from @LinkedServiceJsoncode 
 		union all
 		select Jsoncode AS Parameter, ID, 'DSCode' AS DescType from @DataSetJsoncode 
@@ -184,7 +202,8 @@ ORDER BY CASE WHEN DescType Like '%MasterParameterList%' THEN 1
 			  WHEN DescType Like '%DatasetParameterList%' THEN 3
 			  WHEN DescType Like '%ActivityParameterList%' THEN 4
 			  WHEN DescType Like '%MasterPipelineParameterList%' THEN 5
-			  WHEN DescType Like '%LSCode%' THEN 6
-			  WHEN DescType Like '%DSCode%' THEN 7 
+			  WHEN DescType Like '%DFCode%' THEN 6
+			  WHEN DescType Like '%LSCode%' THEN 7
+			  WHEN DescType Like '%DSCode%' THEN 8 
 			  WHEN DescType Like '%Mastercode%' THEN 9
 			  WHEN DescType Like '%ActivityCode%' THEN 10 END

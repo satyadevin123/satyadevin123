@@ -94,7 +94,6 @@
     <Build Include="dbo\Tables\T_LinkedService_Parameters.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="dbo\Tables\T_LinkedService_Parameters_bkp_cmn.sql" />
     <Build Include="dbo\Tables\T_LinkedServices.sql" />
     <Build Include="dbo\Tables\T_List_Activities.sql" />
     <Build Include="dbo\Tables\t_list_activities_bkup.sql" />
@@ -102,7 +101,6 @@
     <Build Include="dbo\Tables\T_List_Activity_Parameters.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="dbo\Tables\t_list_activity_parameters_bkup.sql" />
     <Build Include="dbo\Tables\T_List_Dataset_Parameters.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
@@ -114,9 +112,7 @@
     <Build Include="dbo\Tables\T_List_LinkedService_Parameters.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="dbo\Tables\T_List_LinkedService_Parameters_bkup.sql" />
     <Build Include="dbo\Tables\T_List_LinkedServices.sql" />
-    <Build Include="dbo\Tables\T_list_LinkedServices_bkup.sql" />
     <Build Include="dbo\Tables\T_List_Queries.sql" />
     <Build Include="dbo\Tables\T_ManagedIdentity.sql">
       <AnsiNulls>Off</AnsiNulls>
@@ -124,7 +120,6 @@
     <Build Include="dbo\Tables\T_Master_Parameters_List.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="dbo\Tables\t_master_parameters_list_bkp_cmn.sql" />
     <Build Include="dbo\Tables\T_Master_Pipelines.sql" />
     <Build Include="dbo\Tables\T_Master_Pipelines_Parameters_List.sql">
       <AnsiNulls>Off</AnsiNulls>
@@ -132,31 +127,25 @@
     <Build Include="dbo\Tables\T_Pipeline_Activity_Parameters.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="dbo\Tables\T_Pipeline_Activity_Parameters_Bkup.sql" />
     <Build Include="dbo\Tables\T_Pipeline_Code.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
     <Build Include="dbo\Tables\T_Pipeline_Dataset_Parameters.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="dbo\Tables\T_Pipeline_DataSet_Parameters_Bkup.sql" />
     <Build Include="dbo\Tables\T_Pipeline_DataSets.sql" />
     <Build Include="dbo\Tables\T_Pipeline_DataSets_Bkup.sql" />
     <Build Include="dbo\Tables\T_Pipeline_LinkedService_Parameters.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="dbo\Tables\T_Pipeline_LinkedService_Parameters_Bkup.sql" />
     <Build Include="dbo\Tables\T_Pipeline_LinkedServices.sql" />
-    <Build Include="dbo\Tables\T_Pipeline_LinkedServices_Bkup.sql" />
     <Build Include="dbo\Tables\T_pipeline_log.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
     <Build Include="dbo\Tables\t_pipeline_tables_tobemoved.sql" />
     <Build Include="dbo\Tables\T_PipelineParameters.sql" />
     <Build Include="dbo\Tables\T_Pipelines.sql" />
-    <Build Include="dbo\Tables\T_Pipelines_Bkup.sql" />
     <Build Include="dbo\Tables\T_Pipelines_steps.sql" />
-    <Build Include="dbo\Tables\T_Pipelines_steps_Bkup.sql" />
     <Build Include="dbo\Tables\T_SourceDataSet.sql" />
     <Build Include="dbo\Tables\T_Tables.sql" />
     <Build Include="dbo\Tables\TBL_DataSource_List_table.sql" />
@@ -184,15 +173,7 @@
     <Build Include="procfwk\Views\CurrentProperties.sql" />
     <Build Include="procfwk\Views\LastExecution.sql" />
     <Build Include="dbo\Stored Procedures\FailProcedure.sql" />
-    <Build Include="dbo\Stored Procedures\final_execution_ps.sql" />
-    <Build Include="dbo\Stored Procedures\final_execution_ps_1.sql" />
-    <Build Include="dbo\Stored Procedures\final_execution_ps_2.sql" />
-    <Build Include="dbo\Stored Procedures\final_execution_ps_cmn.sql">
-      <AnsiNulls>Off</AnsiNulls>
-    </Build>
     <Build Include="dbo\Stored Procedures\final_execution_ps_new.sql" />
-    <Build Include="dbo\Stored Procedures\final_execution_ps_new1.sql" />
-    <Build Include="dbo\Stored Procedures\final_execution_ps_working.sql" />
     <Build Include="dbo\Stored Procedures\SetRandomWaitValues.sql" />
     <Build Include="dbo\Stored Procedures\usp_add_email_nofification.sql">
       <AnsiNulls>Off</AnsiNulls>
@@ -202,22 +183,13 @@
       <AnsiNulls>Off</AnsiNulls>
     </Build>
     <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_LinkedServiceParameters_New.sql" />
-    <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Parameters.sql">
-      <AnsiNulls>Off</AnsiNulls>
-    </Build>
-    <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Parameters_New.sql" />
-    <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Parameters_oo.sql" />
-    <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Parameters_wrk.sql" />
+    <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Parameters.sql" />
     <Build Include="dbo\Stored Procedures\usp_Log_PipelineStatus.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
     <Build Include="dbo\Stored Procedures\usp_return_activitycode.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="dbo\Stored Procedures\usp_return_activitycode_bkup.sql">
-      <AnsiNulls>Off</AnsiNulls>
-    </Build>
-    <Build Include="dbo\Stored Procedures\usp_return_activitycode_bkup1.sql" />
     <Build Include="dbo\Stored Procedures\USP_TABLE_CREATION.sql" />
     <Build Include="dbo\Stored Procedures\usp_TruncateParameterTables.sql" />
     <Build Include="dbo\Stored Procedures\usp_Update_PipelineStatus.sql">
