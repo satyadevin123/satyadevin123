@@ -9,4 +9,6 @@ truncate table dbo.t_pipelines_steps
 truncate table dbo.t_pipeline_datasets
 truncate table dbo.t_pipeline_linkedservices
 truncate table dbo.t_pipeline_tables_tobemoved
+truncate table dbo.t_pipelineparameters
+delete  from dbo.t_pipelines
 END
