@@ -9,7 +9,7 @@ Function Log-Message([String]$Message) { Add-Content -Path "D:\Metadata PoC\Meta
 
 Log-Message "Beginning exeuction of the script:"
 $SqlConnection = New-Object System.Data.SqlClient.SqlConnection
-$SqlConnection.ConnectionString = "Server = poc-metadatadriven.database.windows.net; Database = MetadataDB; Integrated Security = False; User ID = vsagala; Password = Pass@123;"
+$SqlConnection.ConnectionString = "Server = poc-metadatadriven.database.windows.net; Database = MetadataDBPublishTest; Integrated Security = False; User ID = vsagala; Password = Pass@123;"
 $SqlCmd = New-Object System.Data.SqlClient.SqlCommand
 $SqlCmd.Connection = $SqlConnection
 Log-Message "Start :  Open Connection to Metadata database"
@@ -26,12 +26,15 @@ Log-Message "End :  Trunate pipeline parameter,activity,dataset, linked server t
 
 foreach($ppdetail in $MetaDetails.Metadata.Pipelines.Pipeline){
 Write-Host "Pipeline Name :" $ppdetail.Name
-$pipelineid = 4
-Log-Message "Start :  Inserted pipeline details in T_Pipelines table"
-$SqlCmd.CommandText = "INSERT INTO [dbo].[T_Pipelines] (id,PipelineName, Enabled,EmailNotificationEnabled) VALUES ($pipelineid,'"+$ppdetail.Name+"',1,0)"
-#$SqlCmd.ExecuteNonQuery()
-Log-Message "End :  Inserted pipeline details in T_Pipelines table"
 
+Log-Message "Start :  Inserted pipeline details in T_Pipelines table"
+$SqlCmd.CommandText = "INSERT INTO [dbo].[T_Pipelines] (PipelineName, Enabled,EmailNotificationEnabled) VALUES ('"+$ppdetail.Name+"',1,0)"
+$SqlCmd.ExecuteNonQuery()
+
+$SqlCmd.CommandText = "SELECT MAX(Id) FROM [T_Pipelines] "
+$pipelineid = $SqlCmd.ExecuteScalar()
+
+Log-Message "End :  Inserted pipeline details in T_Pipelines table"
 
 <# update the master parameters based on input in the XML file #>
 

@@ -250,6 +250,15 @@
     <Build Include="procfwk\Synonyms\DataFactoryDetails.sql" />
     <Build Include="procfwk\Synonyms\PipelineProcesses.sql" />
     <Build Include="procfwk\Synonyms\ProcessingStageDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_InsertPipelineDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_UpdateMasterParametersList.sql" />
+    <Build Include="dbo\Stored Procedures\usp_InsertPipelineLinkedServiceDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_UpdateLinkedServiceParameters.sql" />
+    <Build Include="dbo\Stored Procedures\usp_InsertPipelineDataSets.sql" />
+    <Build Include="dbo\Stored Procedures\usp_InsertPipelineDataSetParameters.sql" />
+    <Build Include="dbo\Stored Procedures\usp_insertpipelinesteps.sql" />
+    <Build Include="dbo\Stored Procedures\usp_updatepipelineactivityparameters.sql" />
+    <Build Include="dbo\Stored Procedures\usp_InsertPipelineTablesToBeMoved.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Script.PostDeployment1.sql" />
