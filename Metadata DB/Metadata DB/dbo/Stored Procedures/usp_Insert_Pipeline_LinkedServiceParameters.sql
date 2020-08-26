@@ -1,4 +1,4 @@
-﻿CREATE procedure [dbo].[usp_Insert_Pipeline_LinkedServiceParameters_New]
+﻿CREATE procedure [dbo].[usp_Insert_Pipeline_LinkedServiceParameters]
 (@LinkedServiceId INT,@PipelineId INT)
 as
 begin

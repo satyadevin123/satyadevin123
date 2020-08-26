@@ -1,5 +1,5 @@
 ﻿CREATE TABLE [dbo].[T_List_DataSets] (
-    [id]                           INT            NOT NULL,
+    [id]                           INT       IDENTITY(1,1)     NOT NULL,
     [DataSet_name]                 NVARCHAR (255) NULL,
     [LinkedService_id]             INT            NULL,
     [created_date]                 DATE           NULL,

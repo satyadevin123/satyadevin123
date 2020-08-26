@@ -1,5 +1,5 @@
 ﻿CREATE TABLE [dbo].[T_List_Activities] (
-    [id]                   INT            NOT NULL,
+    [id]                   INT        IDENTITY(1,1)    NOT NULL,
     [ActivityName]         NVARCHAR (255) NULL,
     [ActivityStandardName] NVARCHAR (255) NULL,
     [Enabled]              INT            NULL,
