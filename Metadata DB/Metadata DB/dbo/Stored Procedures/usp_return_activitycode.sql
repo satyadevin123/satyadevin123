@@ -1,6 +1,4 @@
-﻿
-
-CREATE procedure [dbo].[usp_return_activitycode] 
+﻿CREATE procedure [dbo].[usp_return_activitycode] 
 @PipelineID Int
 as
 
@@ -50,7 +48,7 @@ Declare @configvalues varchar(8000)
 select @configvalues=coalesce(@configvalues+ ',','')+'"'+ConfigName+'":"'+configvalue+'"' from [dbo].[T_ConfigurationDetails]
 
 insert into @activity_code select ', {
-                "name": "Execute Send Mail for '+ISNULL(REPLACE(LOWER(PS.Activityname),'_',''),LS.ActivityStandardName)+'",
+                "name": "Execute Send Mail for lkp'+CAST(PS.Activity_ID AS nvarchar)+'",
                 "type": "ExecutePipeline",
                 "dependsOn": [
                     {
@@ -172,3 +170,6 @@ SELECT ActivityJsoncode FROM @activity_code
 --	SELECT * FROM CTE
 
 --	SELECT * FROM @LevelTable
+GO
+
+
