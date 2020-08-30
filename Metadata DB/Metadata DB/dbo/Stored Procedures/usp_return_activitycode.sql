@@ -48,7 +48,7 @@ Declare @configvalues varchar(8000)
 select @configvalues=coalesce(@configvalues+ ',','')+'"'+ConfigName+'":"'+configvalue+'"' from [dbo].[T_ConfigurationDetails]
 
 insert into @activity_code select ', {
-                "name": "Execute Send Mail for lkp'+CAST(PS.Activity_ID AS nvarchar)+'",
+                "name": "Execute Send Mail for lkp'+CAST(PS.Id AS nvarchar)+'",
                 "type": "ExecutePipeline",
                 "dependsOn": [
                     {

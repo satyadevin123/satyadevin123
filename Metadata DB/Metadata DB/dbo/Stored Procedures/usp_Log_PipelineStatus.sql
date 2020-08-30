@@ -1,8 +1,17 @@
 ﻿
-
-CREATE PROC [dbo].[usp_Log_PipelineStatus] @In_PipelineID [VARCHAR](100),@In_PipelineName [VARCHAR](100),@In_PipelineStatus [VARCHAR](50),@In_ExecutionStartTime [DATETIME],@In_ExecutionEndTime [DATETIME],@In_EntityName [VARCHAR](200) AS
+CREATE PROC [dbo].[usp_Log_PipelineStatus] 
+@In_PipelineName [VARCHAR](100),
+@In_PipelineStatus [VARCHAR](50),
+@In_ExecutionStartTime [DATETIME],
+@In_ExecutionEndTime [DATETIME] AS
 BEGIN
 
+DECLARE @PipelineId INT
+SELECT Id
+FROM T_Pipelines WHERE PipelineName = @In_PipelineName
+
+IF (@In_PipelineStatus = 'InProgress')
+BEGIN
 	INSERT INTO audit.PipelineStatusDetails
 	(
 	[PipelineId]
@@ -10,14 +19,27 @@ BEGIN
 	,[PipelineStatus]
 	,[ExecutionStartTime]
 	,[ExecutionEndTime]
-	,[EntityName]
+	
 	)
 	SELECT
-	@In_PipelineID ,
+	@PipelineId ,
 	@In_PipelineName ,
 	@In_PipelineStatus ,
-	@In_ExecutionStartTime,
-	@In_ExecutionEndTime,
-	@In_EntityName
+	getdate(),
+	NULL
 
 END
+
+ELSE
+BEGIN
+
+UPDATE audit.PipelineStatusDetails
+SET [ExecutionEndTime] = getdate(),
+[PipelineStatus] = @In_PipelineStatus
+WHERE PipelineId = @PipelineId AND ExecutionEndTime IS NULL
+
+END
+END
+GO
+
+

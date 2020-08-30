@@ -171,7 +171,7 @@ VALUES
                     "referenceName": "$azurekeyvaultlinkedservicereference",
                     "type": "LinkedServiceReference"
                 },
-                "secretName": "srcConnectionPassword"
+                "secretName": "$azureSqlDBPassword"
             }
         },
         "connectVia": {
@@ -382,14 +382,14 @@ INSERT INTO @SrcActivities
 ( ActivityName,ActivityStandardName,Enabled,code,linkedserverrequired,datasetrequired)
 VALUES
 ('Execute Pipeline','Exe_Pipeline',1,'{                  "name": "ExecutePipelineActivity",                  "type": "ExecutePipeline",                  "typeProperties": {                      "parameters": {                                                  "mySourceDatasetFolderPath": {                              "value": "@pipeline().parameters.mySourceDatasetFolderPath",                              "type": "Expression"                          }                      },                      "pipeline": {                          "referenceName": "<InvokedPipelineName>",                          "type": "PipelineReference"                      },                      "waitOnCompletion": true                   }              }          ],          "parameters": [              {                  "mySourceDatasetFolderPath": {                      "type": "String"                  }              }',NULL,NULL),
-('Lookup Activity','LKP_DataSource_Name',1,'{                  "name": "$LookupActivityname",                  "type": "Lookup",                  "dependsOn": [],                  "policy": {                      "timeout": "7.00:00:00",                      "retry": 0,                      "retryIntervalInSeconds": 30,                      "secureOutput": false,                      "secureInput": false                  },                  "userProperties": [],                  "typeProperties": {                      "source": {                          "type": "AzureSqlSource",                          "sqlReaderQuery": {                              "value": "$query",                              "type": "Expression"                          },                          "queryTimeout": "02:00:00"                      },                      "dataset": {                          "referenceName": "$dataset",                          "type": "DatasetReference"                      },                      "firstRowOnly": $firstrow                  }              }',NULL,1),
+('Lookup Activity','LKP_DataSource_Name',1,'     {                  "name": "$LookupActivityname",                  "type": "Lookup",                      "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],                  "policy": {                      "timeout": "7.00:00:00",                      "retry": 0,                      "retryIntervalInSeconds": 30,                      "secureOutput": false,                      "secureInput": false                  },                  "userProperties": [],                  "typeProperties": {                      "source": {                          "type": "AzureSqlSource",                          "sqlReaderQuery": {                              "value": "$query",                              "type": "Expression"                          },                          "queryTimeout": "02:00:00"                      },                      "dataset": {                          "referenceName": "$dataset",                          "type": "DatasetReference"                      },       "firstRowOnly": $firstrow                  }              }       ',NULL,1),
 ('Copy Activity','CP_DataSource_DataDestination',1,'{"name": "$CopyActivityName","type": "Copy","dependsOn": [],"policy": {    "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},"userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "sqlReaderQuery": {            "value": "$sqlReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },    "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }',NULL,1),
 ('For Each Activity','ForEachActivity',1,'   {                  "name": "$foreachactivityname",                  "type": "ForEach",                  "dependsOn": [                      {                          "activity": "$dependson",                          "dependencyConditions": [                              "$dependencyConditions"                          ]                      }                  ],                  "userProperties": [],                  "typeProperties": {                      "items": {                          "value": "@activity(''$dependentactivityname'').output.value",                          "type": "Expression"                      },                      "batchCount": $batchCount,       "isSequential": $isSequential,       "activities": [$activityjsoncode]                         }              }',NULL,NULL),
 ('Wait Activity','Wait',1,'{     "name":"Wait1",     "type":"Wait",     "dependsOn":[       ],     "userProperties":[        {           "name":"Description",           "value":"Wait time for 30 seconds"        }     ],     "typeProperties":{        "waitTimeInSeconds":30     }  } ',NULL,NULL),
 ('Filter Activity','FilterActivity',1,'{   "name": "MyFilterActivity",   "type": "filter",   "typeProperties": {    "condition": "$condition",    "items": "$inputarray"   }  }',NULL,NULL),
 ('Get Metadata Activity','Metadata Activity',1,'{   "name": "$Metadataactivityname",   "type": "GetMetadata",   "typeProperties": {    "fieldList" : "$filedlist",    "dataset": {     "referenceName": "$MyDataset",     "type": "DatasetReference"    }   }  }',NULL,NULL),
 ('If Activity','IfActivity',1,'{      "name": "$Name_of_the_activity>",      "type": "IfCondition",      "typeProperties": {        "expression": {              "value": "$expression_that_evaluates_to_trueorfalse>",              "type": "Expression"        },          "ifTrueActivities": [              {                  "Activity 1 definition>"              },              {                  "<Activity 2 definition>"              },              {                  "<Activity N definition>"              }          ],            "ifFalseActivities": [              {                  "<Activity 1 definition>"              },              {                  "<Activity 2 definition>"              },              {                  "<Activity N definition>"              }        ]      }  }',NULL,NULL),
-('Custom Logging','SP_Custom_Logging',1,'{      "name": "Stored Procedure Activity",      "description":"Description",      "type": "SqlServerStoredProcedure",      "linkedServiceName": {          "referenceName": "AzureSqlLinkedService",          "type": "LinkedServiceReference"      },      "typeProperties": {          "storedProcedureName": "$SPName",          "storedProcedureParameters": "$SPParameters"            }      }  }','1',NULL)
+('Custom Logging','SP_Custom_Logging',1,'   {      "name": "$SPActivityName",      "description":"Description",      "type": "SqlServerStoredProcedure",     "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],     "linkedServiceName": {          "referenceName": "$MetadataDBLinkedServiceName",       "type": "LinkedServiceReference"      },      "typeProperties": {              "storedProcedureName": "$SPName",          "storedProcedureParameters": $SPParameters            }      }  }','1',NULL)
 
 
 MERGE [T_List_Activities] AS mrg
@@ -429,7 +429,7 @@ Print 'Start - Inserting data to list activity parameters table'
 
 
 DECLARE @SrcactivityParameters as TABLE
-( ParameterName VARCHAR (100) , ParameterValue VARCHAR (500) , ActivityName NVARCHAR (255))
+( ParameterName VARCHAR (100) , ParameterValue VARCHAR (8000) , ActivityName NVARCHAR (255))
 
 INSERT INTO @SrcactivityParameters
 ( ParameterName,ParameterValue,ActivityName)
@@ -460,7 +460,26 @@ VALUES
 ('outputDatasetReference','','Copy Activity'),
 ('parameters','       ""filename"": ""@item().table_name"",                                          ""directory"": ""@item().table_name"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity'),
 ('sqlReaderQuery','@concat(''select * from '',''['',item().schema_name,'']'',''.'',''['',item().table_name,'']'')','Copy Activity'),
-('$SPName','usp_Log_PipelineStatus','Custom Logging')
+('SPName','usp_Log_PipelineStatus','Custom Logging'),
+('SPParameters','   {""In_PipelineName"": {""value"": 
+   {""value"": ""@pipeline().Pipeline"",""type"": ""Expression""},                
+   ""type"": ""String""                          },                     
+   ""In_PipelineStatus"": {                              ""value"": ""$pipelinestatus"",     
+   ""type"": ""String""                          },                 
+   ""In_ExecutionStartTime"": {                            
+   ""value"": {                                 ""value"": ""@utcnow()"",     
+   ""type"": ""Expression""                              },                  
+   ""type"": ""Datetime""                          },                      
+   ""In_ExecutionEndTime"": {                              ""value"": ""@utcnow()"",                    
+   ""type"": ""Datetime""                          }    
+                    ','Custom Logging'),
+('MetadataDBLinkedServiceName','','Custom Logging'),
+
+('SPActivityName','','Custom Logging'),
+('dependson','','Custom Logging'),
+('dependencyConditions','','Custom Logging'),
+('dependencyConditions','','Lookup Activity')
+
 
 MERGE [T_List_Activity_Parameters] AS mrg
 USING (
