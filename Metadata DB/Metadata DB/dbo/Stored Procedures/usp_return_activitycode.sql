@@ -1,4 +1,5 @@
-﻿CREATE procedure [dbo].[usp_return_activitycode] 
+﻿
+CREATE procedure [dbo].[usp_return_activitycode] 
 @PipelineID Int
 as
 
@@ -52,10 +53,8 @@ insert into @activity_code select ', {
                 "type": "ExecutePipeline",
                 "dependsOn": [
                     {
-                        "activity": "'+ISNULL(PS.Activityname,LS.ActivityStandardName)+'",
-                        "dependencyConditions": [
-                            "'+'Failed'+'"
-                        ]
+                        "activity": "'+ISNULL(PS1.Activityname,LS.ActivityStandardName)+'",
+                        "dependencyConditions": ["Succeeded"]
                     }
                 ],
                 "userProperties": [],
@@ -77,10 +76,12 @@ insert into @activity_code select ', {
 		
 		NULL FROM [dbo].[T_Pipelines] P
 INNER JOIN [dbo].[T_Pipelines_Steps] PS on P.Id = PS.PipelineiD
+INNER JOIN [dbo].[T_Pipelines_Steps] PS1 on PS.PipelineId = PS1.PipelineiD AND PS.id = PS1.DependsOn
+AND ps1.DependencyCondition = 'Failed'
 INNER JOIN [dbo].[T_List_Activities] LS on LS.ID = PS.Activity_ID
 WHERE PS.EmailNotificationEnabled=1
 and ps.id not in (select  Child_Activity from T_Pipelines_steps where PipelineId = @PipelineID)
-
+AND ps1.Activityname like '%SPPipelineFailedActivity%'
 
 
 --INSERT INTO @activity_code SELECT ', {

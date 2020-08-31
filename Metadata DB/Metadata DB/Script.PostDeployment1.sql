@@ -8,7 +8,25 @@ Post-Deployment Script Template
  Example:      :setvar TableName MyTable							
                SELECT * FROM [$(TableName)]					
 --------------------------------------------------------------------------------------
-*/
+--*/
+--Print 'Start - Change pricing tier to basic'
+--DECLARE @CurrentDBName NVARCHAR(100)
+--DECLARE @Sql NVARCHAR(1000)
+
+--SELECT @CurrentDBName = DB_NAME() 
+
+--USE MASTER
+--SET @Sql = 'ALTER DATABASE '+@CurrentDBName +' MODIFY (EDITION =''Basic'')';
+
+--exec sp_executesql @Sql
+
+--Print 'end - Change pricing tier to basic'
+--GO
+
+--SET @Sql = 'USE '+@CurrentDBName
+
+--exec sp_executesql @Sql
+
 Print 'Start - Inserting data to master parameters list table'
 
 DECLARE @Mastertable as TABLE
