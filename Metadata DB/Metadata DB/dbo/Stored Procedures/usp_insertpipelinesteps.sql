@@ -61,7 +61,7 @@ declare @failedactivityname nvarchar(200)
 
 
     INSERT INTO dbo.T_Pipelines_steps (PipelineId,Activity_ID,DependsOn,Child_Activity,EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,id,@dependsonid,0,1,'SPPipelineSucceddedActivity' ,'Succeeded'
+    SELECT @PipelineId,id,@dependsonid,0,1,'SPPipelineSucceededActivity' ,'Succeeded'
     FROM dbo.T_List_Activities where ActivityName = 'Custom Logging'
 	
 	

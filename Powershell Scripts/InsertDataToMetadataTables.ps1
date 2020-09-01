@@ -1,427 +1,428 @@
-﻿
+﻿Param
+(
+[Parameter(Mandatory=$True,Position=1)]
+[string]$ConfigXMLFilePath,
+[Parameter(Mandatory=$True,Position=2)]
+[string]$MetadataDBUserName,
+[Parameter(Mandatory=$True,Position=3)]
+[Securestring]$MetadataDBPasswordSecure
+)
+
+#try
+#{
 $XMLfile = 'D:\Metadata PoC\XMLInput.xml'
 [XML]$MetaDetails = Get-Content $XMLfile
 
+$logdate = get-date
+$logfilepath = "D:\Metadata PoC\MetadataCreationLogFile.txt"
+
+"$logdate`t************ Start************"|Out-File $logfilepath
+
+
 <# function to log details to file #>
-Function Log-Message([String]$Message) { Add-Content -Path "D:\Metadata PoC\MetadataCreationLogFile.txt" $Message }
+Function Log-Message([String]$Message) 
+{ 
+    $datetime = (Get-Date -UFormat "%Y-%m-%d_%I-%M-%S_%p").tostring()
+    Add-Content -Path $logfilepath $Message 
+    Write-Host $Message
+}
 
+<# function to execute sql commands #>
+Function Sql-Execute
+{
+
+    Param([String]$Qry,[String]$Qrydetails) 
+    $logdate = get-date
+    Log-Message "$logdate`tStart :  $Qrydetails"
+    $SqlCmd = New-Object System.Data.SqlClient.SqlCommand
+    $SqlCmd.Connection = $SqlConnection
+    $SqlCmd.CommandText = "$Qry"
+    $Rows_Affected = $SqlCmd.ExecuteNonQuery()
+    Log-Message "No.of rows affected :  $Rows_Affected"    
+    Log-Message "$logdate`tEnd :  $Qrydetails" 
+}
+
+Function Sql-ExecuteScalar
+{
+
+    Param([String]$Qry,[String]$Qrydetails) 
+    Log-Message "Start :  $Qrydetails"
+    $SqlCmd.CommandText = "$Qry"
+    $scalarval = $SqlCmd.ExecuteScalar()
+    Log-Message "No.of rows affected :  $scalarval"    
+    Log-Message "End :  $Qrydetails" 
+    return   $scalarval
+}
+
+Function Create-KeyVault
+{
+    Param([String]$keyvaultName,[String]$keyvaultlocation,[String]$resourceGroupName) 
+    New-AzKeyVault -Name $keyvaultname.Replace('"','') -ResourceGroupName 'RG-data-pipeline-framework-poc' -Location 'west us' -ErrorAction SilentlyContinue -DisableSoftDelete -SoftDeleteRetentionInDays 7
+
+}
+<# Master parameters #>
+
+Function Update-MasterParametersToDB
+{
+    
+    foreach($parameterdetail in $MetaDetails.Metadata.AzureEnvSetup.Parameters.Parameter)
+    {
+        $paramval = '"'+$parameterdetail.Value+'"'
+        $paramname = $parameterdetail.Name
+        if ($paramname -eq '$keyvaultname')
+        {
+            $keyvaultname = '"'+$parameterdetail.Value+'"'
+        }
+        if ($paramname -eq '$keyvaultlocation')
+        {
+            $keyvaultlocation = $parameterdetail.Value
+        }
+        if ($paramname -eq '$resourceGroupName')
+        {
+            $resourceGroupName = $parameterdetail.Value
+        }
+
+        Sql-Execute -Qry "EXEC usp_UpdateMasterParametersList '$paramname','$paramval'" -Qrydetails "Update master parameter $paramname"
+    }
+    Write-Host $keyvaultname
+    Write-Host $resourceGroupName
+    Write-host $keyvaultlocation
+    Create-KeyVault -keyvaultName $keyvaultname -keyvaultlocation $keyvaultlocation -resourceGroupName $resourceGroupName
+
+return $keyvaultname
+}
+
+Function Truncate-Pipelinedetails
+{
+   <# truncate the pipeline tables as part of each run #>
+    Sql-Execute -Qry "EXEC usp_TruncateParameterTables" -Qrydetails "Trunate pipeline parameter,activity,dataset, linked server tables"
+}
+
+
+Write-Host 'started'
+
+Log-Message "Beginning exeuction of the script"
 <# SQL connection setup to the metadata database  #>
+foreach($parameterdetail in $MetaDetails.Metadata.MetadataDB.Parameters.Parameter)
+{
+    if ($parameterdetail.Name -eq '$azureSqlDBServerName')
+    {
+    $MetadataDBServerName = $parameterdetail.Value
+    }
+    if ($parameterdetail.Name -eq '$azureSqlDatabaseName')
+    {
+    $MetadataDBdatabaseName = $parameterdetail.Value
+    }
 
-Log-Message "Beginning exeuction of the script:"
+}
+$BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($MetadataDBPasswordSecure)
+$MetadataDBPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+
 $SqlConnection = New-Object System.Data.SqlClient.SqlConnection
-$SqlConnection.ConnectionString = "Server = poc-metadatadriven.database.windows.net; Database = MetadataDBPublishTest; Integrated Security = False; User ID = vsagala; Password = Pass@123;"
+$SqlConnection.ConnectionString = "Server = $MetadataDBServerName.database.windows.net; Database = $MetadataDBdatabaseName; Integrated Security = False; User ID = $MetadataDBUserName; Password = $MetadataDBPassword;"
+
+Log-Message "Start :  Opening Connection to Metadata database"
 $SqlCmd = New-Object System.Data.SqlClient.SqlCommand
 $SqlCmd.Connection = $SqlConnection
-Log-Message "Start :  Open Connection to Metadata database"
 $SqlConnection.Open()
-Log-Message "End :  Open Connection to Metadata database"
+Log-Message "End :  Opening Connection to Metadata database"
 
-<# truncate the pipeline tables as part of each run #>
-
-Log-Message "Start :  Trunate pipeline parameter,activity,dataset, linked server tables"
-$SqlCmd.CommandText = "EXEC usp_TruncateParameterTables"
-$SqlCmd.ExecuteNonQuery()
-Log-Message "End :  Trunate pipeline parameter,activity,dataset, linked server tables"
-
-
-foreach($ppdetail in $MetaDetails.Metadata.Pipelines.Pipeline){
-Write-Host "Pipeline Name :" $ppdetail.Name
-
-Log-Message "Start :  Inserted pipeline details in T_Pipelines table"
-$SqlCmd.CommandText = "INSERT INTO [dbo].[T_Pipelines] (PipelineName, Enabled,EmailNotificationEnabled) VALUES ('"+$ppdetail.Name+"',1,0)"
-$SqlCmd.ExecuteNonQuery()
-
-$SqlCmd.CommandText = "SELECT MAX(Id) FROM [T_Pipelines] "
-$pipelineid = $SqlCmd.ExecuteScalar()
-
-Log-Message "End :  Inserted pipeline details in T_Pipelines table"
-
-<# update the master parameters based on input in the XML file #>
-
-Log-Message "Start :  Update Master parameters related to Azure Env setup like RG,location, ADFname"
-foreach($parameterdetail in $MetaDetails.Metadata.AzureEnvSetup.Parameters.Parameter){
-$paramval = '"'+$parameterdetail.Value+'"'
-$paramname = $parameterdetail.Name
-$SqlCmd.CommandText = "UPDATE T_Master_Parameters_List SET ParameterValue = '" + $paramval + "' WHERE ParameterName = '" + $paramname + "'"
-$SqlCmd.ExecuteNonQuery()
-}
 $irname = '"Azure-IR-ADF"'
-$SqlCmd.CommandText = "UPDATE T_Master_Parameters_List SET ParameterValue = '$irname' WHERE ParameterName = '$nameofintegrationruntime'"
-$SqlCmd.ExecuteNonQuery()
-Log-Message "End :  Update Master parameters related to Azure Env setup like RG,location, ADFname"
+$keyvaulttype = 'azurekeyvault'
+   
+$keyvaultname = Update-MasterParametersToDB
+Truncate-Pipelinedetails
 
-
-
-
-<# Linked service and dataset for the metadata database #>
-foreach($MetadataDB in $ppdetail.MetadataDB)
+Function Insert-DatasetsAndParameters
 {
-Log-Message "Start :  Insert the metadata details to T_Pipeline_LinkedServices table"
+Param([int]$PipelineId,[String]$LinkedServiceType,[int]$LinkedServiceId,[String]$AdditionalType,[String]$AdditionalVal) 
+    
+           Write-Host "id: $LinkedServiceId"
+           
+           if($AdditionalType -eq $null -or $AdditionalType -eq '')
+           {
+            Sql-Execute -Qry "EXEC usp_InsertPipelineDataSets '$LinkedServiceType',$LinkedServiceId,$PipelineId" -Qrydetails  "Insert datasets for metadata db"
+            }
+            else
+            {
+             Sql-Execute -Qry "EXEC usp_InsertPipelineDataSets '$LinkedServiceType',$LinkedServiceId,$PipelineId,$AdditionalType,$AdditionalVal" -Qrydetails  "Insert datasets for metadata db"
+            }
+            $SqlCmd.CommandText = "SELECT MAX(Id) FROM [T_Pipeline_DataSets] "
+            $dataset_id = Sql-ExecuteScalar -Qry "SELECT MAX(Id) FROM [T_Pipeline_DataSets] " -Qrydetails "max dataset id"
+            $datasetparamname = '$'+$LinkedServiceId+'_'+$LinkedServiceType+'DatasetName'
+            $datasetparamval = 'DS_POC_'+$LinkedServiceType+'_'+$LinkedServiceId.ToString()
+            Write-Host "EXEC usp_InsertPipelineDataSetParameters '$datasetparamname','$datasetparamval',$dataset_id"
+            Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$datasetparamname','$datasetparamval',$dataset_id" -Qrydetails  "Insert dataset parameters for metadata db"
+            
+      
+    [pscustomobject] @{
+    id = $dataset_id
+    name = $datasetparamval
+    }
 
-$type = $MetadataDB.Type
-$SqlCmd.CommandText = "INSERT INTO [dbo].[T_Pipeline_LinkedServices] (PipelineId, LinkedServiceId) SELECT $pipelineid,Id   FROM [dbo].[T_List_LinkedServices] WHERE LinkedService_Name = '" + $MetadataDB.Type + "'"
-$SqlCmd.ExecuteNonQuery()
-$SqlCmd.CommandText = "SELECT MAX(Id) FROM [T_Pipeline_LinkedServices] "
-$metadblinkedservice_id = $SqlCmd.ExecuteScalar()
-$metadblinkedservicename = '"LS_POC_'+$type+'_'+$metadblinkedservice_id +'"'
-Log-Message "End :  Insert the metadata db details to T_Pipeline_LinkedServices table"
+     
 
-Log-Message "Start :  Insert the metadata db parameter details to T_Pipeline_LinkedService_Parameters table"
-
-$SqlCmd.CommandText = "EXEC [dbo].[usp_Insert_Pipeline_LinkedServiceParameters_New] $metadblinkedservice_id, $pipelineid"
-
-Write-Host "EXEC [dbo].[usp_Insert_Pipeline_LinkedServiceParameters_New] $metadblinkedservice_id, $pipelineid"
-
-$SqlCmd.ExecuteNonQuery()
-
-
-foreach($parameterdetail in $MetadataDB.Parameters.Parameter){
-$paramval = '"'+$parameterdetail.Value+'"'
-#$SqlCmd.CommandText = "INSERT INTO [dbo].[T_Pipeline_LinkedService_Parameters] (ParameterName,ParameterValue, LinkedServerId,pipelineid) VALUES ('"+$metadblinkedservice_id+"_"+$parameterdetail.Name+"','"+$paramval+"',$metadblinkedservice_id,$pipelineid)"
-$paramname = $parameterdetail.Name.Replace('$','$'+$metadblinkedservice_id+'_')
-$SqlCmd.CommandText = "UPDATE [dbo].[T_Pipeline_LinkedService_Parameters] SET ParameterValue = '$paramval' WHERE LinkedServerId = $metadblinkedservice_id AND PipelineId = $pipelineid AND ParameterName = '$paramname'"
-Write-Host "UPDATE [dbo].[T_Pipeline_LinkedService_Parameters] SET ParameterValue = '$paramval' WHERE LinkedServerId = $metadblinkedservice_id AND PipelineId = $pipelineid AND ParameterName = '$paramname'"
-$SqlCmd.ExecuteNonQuery()
-
-}
-
-$linkedserviceparamname = '$'+$metadblinkedservice_id +'_'+$type+'LinkedServiceName'
-$SqlCmd.CommandText = "UPDATE [dbo].[T_Pipeline_LinkedService_Parameters]  SET ParameterValue = '$metadblinkedservicename' WHERE ParameterName = '$linkedserviceparamname' AND LinkedServerId = $metadblinkedservice_id AND PipelineId = $pipelineid"
-
-$SqlCmd.ExecuteNonQuery()
-
-$SqlCmd.CommandText = "UPDATE T_Pipeline_LinkedService_Parameters SET ParameterValue = '$irname' WHERE ParameterName like '%nameofintegrationruntime%' AND LinkedServerId = $metadblinkedservice_id AND PipelineId = $pipelineid"
-$SqlCmd.ExecuteNonQuery()
+}        
 
 
-Log-Message "End :  Insert the metadata db parameter details to T_Pipeline_LinkedService_Parameters"
+Function Insert-KeyVaultReferenceToSQLDBLinkedService
+{
+Param([int]$Linkedservice_id,[string]$kvlinkedservicename,[int]$pipelineid,[string]$type,[string] $keyvaultname,[string]$messagetype )
 
+            $linkedserviceparamname = '$'+$Linkedservice_id +'_'+'azurekeyvaultlinkedservicereference'
+            Sql-Execute -Qry "EXEC usp_UpdateLinkedServiceParameters '$linkedserviceparamname','$kvlinkedservicename',$pipelineid,$Linkedservice_id" -Qrydetails "Insert value for parameter : $linkedserviceparamname"
+            $SecretPassword = Read-Host "Type password for $messagetype database : " -AsSecureString
+            $kv = $keyvaultname.Replace('"','')
+            $name = $Linkedservice_id.ToString()+'azurekeyvaultlinkedservicereference'
+            
+            Write-Host $name
+            
+            Set-AzKeyVaultSecret -VaultName $kv -Name $name -SecretValue $SecretPassword
+            $name = '"'+$name+'"'
+            Write-Host $type
+            if($type -eq 'azureSQLDatabase')
+            {
+            
+            $param = '$'+$Linkedservice_id +'_'+'azureSqlDBPassword'
+            Write-Host $param
 
-Log-Message "Start :  Insert the metadata db dataset"
-
-$SqlCmd.CommandText = "
-INSERT INTO dbo.T_Pipeline_DataSets (PipelineId,LinkedServericeId,DataSetId )
-SELECT $pipelineid,tpl.Id,tld.id FROM dbo.T_List_DataSets tld inner join dbo.T_List_LinkedServices tll on tld.LinkedService_id = tll.Id inner join dbo.T_Pipeline_LinkedServices tpl 
-ON tpl.LinkedServiceId = tll.Id where tll.LinkedService_Name = '$type' and tpl.id = $metadblinkedservice_id
-"
-
-$SqlCmd.ExecuteNonQuery()
-
-$SqlCmd.CommandText = "SELECT MAX(Id) FROM [T_Pipeline_DataSets] "
-$metadbdataset_id = $SqlCmd.ExecuteScalar()
-$met = '$'+$metadblinkedservice_id+'_'+$type+'DatasetName'
-$metadbds = 'DS_POC_'+$type+'_'+$metadbdataset_id
-
-$SqlCmd.CommandText = "
-INSERT INTO dbo.T_Pipeline_DataSet_Parameters (ParameterName,ParameterValue,DataSetId )
-VALUES('$met','$metadbds',$metadblinkedservice_id)"
-
-$SqlCmd.ExecuteNonQuery()
-
-Log-Message "End :  Insert the metadb dataset"
+            }
+            else
+            {
+            $param = '$'+$Linkedservice_id +'_'+'onpremSqlDBPassword'
+            }
+            Write-Host $param
+            Write-Host "EXEC usp_UpdateLinkedServiceParameters '$param','$name',$pipelineid,$Linkedservice_id"
+            Sql-Execute -Qry "EXEC usp_UpdateLinkedServiceParameters '$param','$name',$pipelineid,$Linkedservice_id" -Qrydetails "Insert value for parameter : $linkedserviceparamname"
+            
 
 }
 
+Function Insert-LinkedServicesAndParameters
+{
+Param([int]$PipelineId,[String]$LinkedServiceType,[String]$resourceGroupName) 
+    
+    $Qry = "EXEC usp_InsertPipelineLinkedServiceDetails $PipelineId,'$LinkedServiceType'"
+    Write-Host $Qry
+    $QryDetails = "Insert the $LinkedServiceType details to T_Pipeline_LinkedServices table"
+    Write-Host $QryDetails
+    Sql-Execute -Qry $Qry -Qrydetails $QryDetails 
+    $SqlCmd.CommandText = "SELECT MAX(Id) FROM [T_Pipeline_LinkedServices] "
+    $linkedservice_id = $SqlCmd.ExecuteScalar()
+    $linkedservicename = '"LS_POC_'+$LinkedServiceType+'_'+$linkedservice_id +'"'
+    Sql-Execute -Qry "EXEC [dbo].[usp_Insert_Pipeline_LinkedServiceParameters] $linkedservice_id, $pipelineid" -Qrydetails  "Insert the key vault parameter details to T_Pipeline_LinkedService_Parameters table"
+    $linkedserviceparamname = '$'+$linkedservice_id +'_'+$LinkedServiceType+'LinkedServiceName'
+    Sql-Execute -Qry "EXEC usp_UpdateLinkedServiceParameters '$linkedserviceparamname','$linkedservicename',$pipelineid,$linkedservice_id" -Qrydetails  "Update linked service parameter : $linkedservicename"
+    
+    if ($LinkedServiceType -eq 'azurekeyvault')
+    {  
+    $keyvaultnameparam = '$'+$linkedservice_id +'_keyvaultname'
+    $keyvaultnameparamval = $keyvaultname
+    Sql-Execute -Qry "EXEC usp_UpdateLinkedServiceParameters '$keyvaultnameparam','$keyvaultnameparamval',$pipelineid,$linkedservice_id" -Qrydetails  "Update linked service parameter : $linkedservicename"
+     }
+     if($LinkedServiceType -ne 'azurekeyvault')
+     {
+     $SqlCmd.CommandText = "UPDATE T_Pipeline_LinkedService_Parameters SET ParameterValue = '$irname' WHERE ParameterName like '%nameofintegrationruntime%' AND LinkedServerId = $linkedservice_id AND PipelineId = $pipelineid"
+     $SqlCmd.ExecuteNonQuery()
+     }
+     Write-Host 'in'
+     
+    [pscustomobject] @{
+    id = $linkedservice_id
+    name = $linkedservicename
+    }
+
+}
 
 
-<# traverse through the pipelines tag in the XML file #>
+foreach($ppdetail in $MetaDetails.Metadata.Pipelines.Pipeline)
+{
+    $pipelinename = $ppdetail.Name
+    Sql-Execute -Qry "EXEC usp_InsertPipelineDetails '$pipelinename'" -Qrydetails "Insert pipeline details in T_Pipelines table"
+    $pipelineid = Sql-ExecuteScalar -Qry "SELECT MAX(Id) FROM [T_Pipelines] " -Qrydetails "max pipeline id"
+    
+    $out = Insert-LinkedServicesAndParameters -PipelineId $pipelineid -LinkedServiceType 'azurekeyvault' -resourceGroupName 'RG-data-pipeline-framework-poc'
+    
+    $kvlinkedserviceid = $out.id
+    $kvlinkedservicename = $out.name
 
-<# Linked service and dataset for the metadata datab #>
+    write-host "key vault id: $kvlinkedserviceid "
+        <# Linked service and dataset for the metadata database #>
+       foreach($MetadataDB in $MetaDetails.Metadata.MetadataDB)
+        {
 
+            $type = $MetadataDB.Type
+            $metatype = $type
+            $out = ""
+           $out = Insert-LinkedServicesAndParameters -PipelineId $pipelineid -LinkedServiceType $metatype -resourceGroupName 'RG-data-pipeline-framework-poc'
+           
+            $metadblinkedservice_id = $out.id
+            $metadblinkedservicename = $out.name
+
+            if($type -eq 'azureSQLDatabase')
+            {
+            write-host 'inside kv ref for meta db'
+            Insert-KeyVaultReferenceToSQLDBLinkedService -Linkedservice_id $metadblinkedservice_id -kvlinkedservicename $kvlinkedservicename -pipelineid $pipelineid -type $type -keyvaultname $keyvaultname -messagetype 'Metadata' 
+            }
+
+            
+            foreach($parameterdetail in $MetadataDB.Parameters.Parameter)
+            {
+                $paramval = '"'+$parameterdetail.Value+'"'
+                $paramname = $parameterdetail.Name.Replace('$','$'+$metadblinkedservice_id+'_')
+                Sql-Execute -Qry "EXEC usp_UpdateLinkedServiceParameters '$paramname','$paramval',$pipelineid,$metadblinkedservice_id" -Qrydetails  "Update linked service parameter : $paramname"
+                
+            }
+          $od =  Insert-DatasetsAndParameters -PipelineId $pipelineid -LinkedServiceType $metatype -LinkedServiceId $metadblinkedservice_id -AdditionalType $null -AdditionalVal $null
+            
+
+
+
+            }
+  
 
 <# traverse through the sink tag in the XML file #>
-foreach($sinkdetail in $ppdetail.Sink)
-{
-Log-Message "Start :  Insert the ADLS sink details to T_Pipeline_LinkedServices table"
+    foreach($sinkdetail in $ppdetail.Sink)
+    {
+    $type = $sinkdetail.Type
+    
+    $out = Insert-LinkedServicesAndParameters -PipelineId $pipelineid -LinkedServiceType $type -resourceGroupName 'RG-data-pipeline-framework-poc'
 
-$type = $sinkdetail.Type
-$SqlCmd.CommandText = "INSERT INTO [dbo].[T_Pipeline_LinkedServices] (PipelineId, LinkedServiceId) SELECT $pipelineid,Id   FROM [dbo].[T_List_LinkedServices] WHERE LinkedService_Name = '" + $sinkdetail.Type + "'"
-$SqlCmd.ExecuteNonQuery()
-$SqlCmd.CommandText = "SELECT MAX(Id) FROM [T_Pipeline_LinkedServices] "
-$linkedservice_id = $SqlCmd.ExecuteScalar()
-$sinklinkedservicename = '"LS_POC_'+$type+'_'+$linkedservice_id +'"'
-$linkedserviceparameter = '$'+$linkedservice_id+'_'+$type+'LinkedServiceName'
+    $sinklinkedservice_id = $out.id
+    $sinklinkedservicename = $out.name
+    
+    write-host "sink db  id: $sinklinkedservice_id "
 
+    foreach($parameterdetail in $sinkdetail.Parameters.Parameter)
+    {
+        $paramval = '"'+$parameterdetail.Value+'"'
+        $paramname = $parameterdetail.Name.Replace('$','$'+$sinklinkedservice_id+'_')
+        Write-Host $paramname
+       Sql-Execute -Qry "EXEC usp_UpdateLinkedServiceParameters '$paramname','$paramval',$pipelineid,$sinklinkedservice_id" -Qrydetails "Insert value for parameter : $paramname"
 
-Log-Message "End :  Insert the ADLS sink details to T_Pipeline_LinkedServices table"
-
-Log-Message "Start :  Insert the ADLS sink parameter details to T_Pipeline_LinkedService_Parameters table"
-
-$SqlCmd.CommandText = "EXEC [dbo].[usp_Insert_Pipeline_LinkedServiceParameters_New] $linkedservice_id, $pipelineid"
-
-Write-Host "EXEC [dbo].[usp_Insert_Pipeline_LinkedServiceParameters_New] $linkedservice_id, $pipelineid"
-
-$SqlCmd.ExecuteNonQuery()
+    }
 
 
-foreach($parameterdetail in $sinkdetail.Parameters.Parameter){
-$paramval = '"'+$parameterdetail.Value+'"'
-$paramname = $parameterdetail.Name.Replace('$','$'+$linkedservice_id+'_')
+    $sinkfileformat = $sinkdetail.FileFormat
+    $od =  Insert-DatasetsAndParameters -PipelineId $pipelineid -LinkedServiceType $type -LinkedServiceId $sinklinkedservice_id -AdditionalType 'SinkFileFormat' -AdditionalVal $sinkfileformat
+    
+    $sinkdataset_id = $od.id
+    $refname = '$'+$sinklinkedservice_id +'_LInkedServerReferneceName'
+    $sinklinkedservicename1 = $sinklinkedservicename.Replace('"','')
+    
+    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$refname','$sinklinkedservicename1',$sinkdataset_id" -Qrydetails  "Insert dataset parameters for sink : $sinkparamname"
+    
 
-$SqlCmd.CommandText = "UPDATE [dbo].[T_Pipeline_LinkedService_Parameters] SET ParameterValue = '$paramval' WHERE LinkedServerId = $linkedservice_id AND PipelineId = $pipelineid AND ParameterName = '$paramname'"
-Write-Host "UPDATE [dbo].[T_Pipeline_LinkedService_Parameters] SET ParameterValue = '$paramval' WHERE LinkedServerId = $linkedservice_id AND PipelineId = $pipelineid AND ParameterName = '$paramname'"
-$SqlCmd.ExecuteNonQuery()
+    $filesystemfolder = $sinkdetail.FolderName
+    $filesystemparam = '$'+$sinklinkedservice_id+'_fileSystemFolderName'
+    $CompressionCodectype = $sinkdetail.CompressionCodectype
+    $compressioncodeparam = '$'+$sinklinkedservice_id+'_CompressionCodectype'
+    $sinkfileformatParamName = '$'+$sinklinkedservice_id+'_fileformat'
+    $sinkfileextensionParamName = '$'+$sinklinkedservice_id+'_fileextension'
+    $sinkcolumndelimiterParamName = '$'+$sinklinkedservice_id+'_columndelimiter'
+    $sinkfileextension = $sinkdetail.FileExtension
+    $sinkcolumndelimiter = $sinkdetail.ColumnDelimiter
 
-Log-Message "End :  Insert the ADLS sink parameter details to T_Pipeline_LinkedService_Parameters"
+    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$filesystemparam','$filesystemfolder',$sinkdataset_id" -Qrydetails  "Insert dataset parameters for sink : $filesystemparam"
+    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$compressioncodeparam','$CompressionCodectype',$sinkdataset_id" -Qrydetails  "Insert dataset parameters for sink : $compressioncodeparam"
+    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$sinkfileformatParamName','$sinkfileformat',$sinkdataset_id" -Qrydetails  "Insert dataset parameters for sink : $sinkfileformatParamName"
+    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$sinkfileextensionParamName','$sinkfileextension',$sinkdataset_id" -Qrydetails  "Insert dataset parameters for sink : $sinkfileextensionParamName"
+    
 
+    if($sinkfileformat -eq 'DelimitedText')
+    {
+       Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$sinkcolumndelimiterParamName','$sinkcolumndelimiter',$sinkdataset_id" -Qrydetails  "Insert dataset parameters for sink : $sinkcolumndelimiterParamName"
+    }
 }
 
 
-$SqlCmd.CommandText = "UPDATE [dbo].[T_Pipeline_LinkedService_Parameters]  SET ParameterValue = '$sinklinkedservicename' WHERE ParameterName = '$linkedserviceparameter' AND LinkedServerId = $linkedservice_id AND PipelineId = $pipelineid"
-
-$SqlCmd.ExecuteNonQuery()
-
-
-$SqlCmd.CommandText = "UPDATE T_Pipeline_LinkedService_Parameters SET ParameterValue = '$irname' WHERE ParameterName like '%nameofintegrationruntime%' AND LinkedServerId = $linkedservice_id AND PipelineId = $pipelineid"
-$SqlCmd.ExecuteNonQuery()
-
-
-Log-Message "Start :  Insert the ADLS sink dataset"
-
-$sinkfileformat = $sinkdetail.FileFormat
-
-$SqlCmd.CommandText = "
-INSERT INTO dbo.T_Pipeline_DataSets (PipelineId,LinkedServericeId,DataSetId )
-SELECT $pipelineid,tpl.Id,tld.id FROM dbo.T_List_DataSets tld inner join dbo.T_List_LinkedServices tll on tld.LinkedService_id = tll.Id inner join dbo.T_Pipeline_LinkedServices tpl 
-ON tpl.LinkedServiceId = tll.Id where tll.LinkedService_Name = '$type' AND AdditionalConfigurationType = 'SinkFileFormat' AND AdditionalConfigurationValue = '$sinkfileformat'
-"
-
-$SqlCmd.ExecuteNonQuery()
-
-$SqlCmd.CommandText = "SELECT MAX(Id) FROM [T_Pipeline_DataSets] "
-$sinkdataset_id = $SqlCmd.ExecuteScalar()
-$sinkparamname = '$'+$linkedservice_id+'_'+$type+'DatasetName'
-$sinkds = 'DS_POC_'+$type+'_'+$linkedservice_id
-$SqlCmd.CommandText = '
-INSERT INTO dbo.T_Pipeline_DataSet_Parameters (ParameterName,ParameterValue,DataSetId )
-VALUES('''+$sinkparamname+''','''+ $sinkds+''','+$sinkdataset_id+')'
-
-$SqlCmd.ExecuteNonQuery()
-
-Log-Message "End :  Insert the ADLS sink dataset"
-
-
-Log-Message "Start :  Insert the ADLS sink dataset parameters"
-
-$refname = '$'+$linkedservice_id +'_LInkedServerReferneceName'
-
-$SqlCmd.CommandText = '
-INSERT INTO dbo.T_Pipeline_DataSet_Parameters (ParameterName,ParameterValue,DataSetId )
-VALUES('''+$refname+''','''+$sinklinkedservicename.Replace('"','')+''','+$sinkdataset_id+')'
-
-$SqlCmd.ExecuteNonQuery()
-
-$filesystemfolder = $sinkdetail.FolderName
-$filesystemparam = '$'+$linkedservice_id+'_fileSystemFolderName'
-$CompressionCodectype = $sinkdetail.CompressionCodectype
-
-$compressioncodeparam = '$'+$linkedservice_id+'_CompressionCodectype'
-$sinkfileformatParamName = '$'+$linkedservice_id+'_fileformat'
-$sinkfileextensionParamName = '$'+$linkedservice_id+'_fileextension'
-$sinkcolumndelimiterParamName = '$'+$linkedservice_id+'_columndelimiter'
-$sinkfileextension = $sinkdetail.FileExtension
-$sinkcolumndelimiter = $sinkdetail.ColumnDelimiter
-
-$SqlCmd.CommandText = '
-INSERT INTO dbo.T_Pipeline_DataSet_Parameters (ParameterName,ParameterValue,DataSetId )
-VALUES('''+$filesystemparam+''','''+$filesystemfolder+''','+$sinkdataset_id+')'
-
-$SqlCmd.ExecuteNonQuery()
-
-$SqlCmd.CommandText = '
-INSERT INTO dbo.T_Pipeline_DataSet_Parameters (ParameterName,ParameterValue,DataSetId )
-VALUES('''+$compressioncodeparam+''','''+$CompressionCodectype+''','+$sinkdataset_id+')'
-
-$SqlCmd.ExecuteNonQuery()
-
-
-$SqlCmd.CommandText = '
-INSERT INTO dbo.T_Pipeline_DataSet_Parameters (ParameterName,ParameterValue,DataSetId )
-VALUES('''+$sinkfileformatParamName+''','''+$sinkfileformat+''','+$sinkdataset_id+')'
-$SqlCmd.ExecuteNonQuery()
-
-
-$SqlCmd.CommandText = '
-INSERT INTO dbo.T_Pipeline_DataSet_Parameters (ParameterName,ParameterValue,DataSetId )
-VALUES('''+$sinkfileextensionParamName+''','''+$sinkfileextension+''','+$sinkdataset_id+')'
-$SqlCmd.ExecuteNonQuery()
-
-
-if($sinkfileformat -eq 'DelimitedText')
-{
-$SqlCmd.CommandText = '
-INSERT INTO dbo.T_Pipeline_DataSet_Parameters (ParameterName,ParameterValue,DataSetId )
-VALUES('''+$sinkcolumndelimiterParamName+''','''+$sinkcolumndelimiter +''','+$sinkdataset_id+')'
-
-$SqlCmd.ExecuteNonQuery()
-}
-
-
-
-Log-Message "End :  Insert the ADLS sink dataset parameters"
-}
 
 foreach($srcdetail in $ppdetail.Sources.Source)
+    {
+    $type = $srcdetail.Type
+    $o = Insert-LinkedServicesAndParameters -PipelineId $pipelineid -LinkedServiceType $type -resourceGroupName 'RG-data-pipeline-framework-poc'
+    $linkedservice_id = $o.id
+    $linkedservicename = $o.name
+
+    
+    foreach($parameterdetail in $srcdetail.Parameters.Parameter)
+    {
+        $paramval = '"'+$parameterdetail.Value+'"'
+        $paramname = $parameterdetail.Name.Replace('$','$'+$linkedservice_id+'_')
+        Sql-Execute -Qry "EXEC usp_UpdateLinkedServiceParameters '$paramname','$paramval',$pipelineid,$linkedservice_id" -Qrydetails "Insert value for parameter : $paramname"
+
+    }
+
+    if(($type -eq 'azureSQLDatabase') -or ($type -eq 'OnPremiseSQLServer'))
+    {
+        Insert-KeyVaultReferenceToSQLDBLinkedService -Linkedservice_id $linkedservice_id -kvlinkedservicename $kvlinkedservicename -pipelineid $pipelineid -type $type -keyvaultname $keyvaultname -messagetype 'Source' 
+    }
+    
+
+    $od =  Insert-DatasetsAndParameters -PipelineId $pipelineid -LinkedServiceType $type -LinkedServiceId $linkedservice_id     
+    $dataset_id = $od.id
+    
+    $ls = $linkedservicename.Replace('"','')
+    $metls = $metadblinkedservicename.Replace('"','')
+    $lssls = $ls+'_'+$sinklinkedservicename.Replace('"','')
+    Write-Host "EXEC usp_insertpipelinesteps $pipelineid,'LKP_$metls','CP_$lssls','Foreach_SourceEntity_$linkedservice_id'"
+    
+    Sql-Execute -Qry "EXEC usp_insertpipelinesteps $pipelineid,'LKP_$metls','CP_$lssls','Foreach_SourceEntity_$linkedservice_id'" -Qrydetails  "Insert pipeline steps"
+    Sql-Execute -Qry "EXEC usp_Insert_Pipeline_Parameters 'LKP_$metls','Foreach_SourceEntity_$linkedservice_id' ,'CP_$lssls',$pipelineid" -Qrydetails  "Insert pipeline activity parameters"
+        
+
+    $dsparamval = 'DS_POC_'+$metatype+'_'+$metadblinkedservice_id
+    $linksetname = '$LKP_'+$metadblinkedservicename.Replace('"','')+'_dataset'
+    
+    Sql-Execute -Qry "EXEC usp_updatepipelineactivityparameters '$linksetname','$dsparamval',$pipelineid" -Qrydetails  "update pipeline activity parameter :$linksetname "
+    
+    $dsparamval1 = 'DS_POC_'+$type+'_'+$linkedservice_id
+
+    $cpactparamname = '$CP_'+$linkedservicename.Replace('"','')+'_'+$sinklinkedservicename.Replace('"','')+"_inputDatasetReference"
+    
+    $SqlCmd.CommandText = "UPDATE tap set tap.Parametervalue = '$dsparamval1' FROM dbo.T_Pipeline_Activity_Parameters tap INNER JOIN
+     dbo.T_Pipelines_steps tps ON tap.PipelineActivityId = tps.id WHERE ParameterName = '$cpactparamname' and tap.pipelineid = $pipelineid and tps.Activityname = 'CP_$lssls' "
+
+
+    $SqlCmd.ExecuteNonQuery()
+
+
+    $cpactparamname = '$CP_'+$linkedservicename.Replace('"','')+'_'+$sinklinkedservicename.Replace('"','')+"_outputDatasetReference"
+    $outref = 'DS_POC_'+$sinkdetail.Type+ '_'+$sinklinkedservice_id
+
+    $SqlCmd.CommandText = "UPDATE tap set tap.Parametervalue = '$outref' FROM dbo.T_Pipeline_Activity_Parameters tap INNER JOIN dbo.T_Pipelines_steps tps ON tap.PipelineActivityId = tps.id WHERE ParameterName = '$cpactparamname' and tap.pipelineid = $pipelineid and tps.Activityname = 'CP_$lssls' "
+
+      $SqlCmd.ExecuteNonQuery()
+
+    foreach($tbldetail in $srcdetail.Tables.Table){
+    $tblname = $tbldetail.Name
+    $schname = $tbldetail.schema
+
+    Sql-Execute -Qry "EXEC  usp_InsertPipelineTablesToBeMoved $pipelineid,'$tblname','$schname',$linkedservice_id" -Qrydetails  "insert tables to be moved "
+
+    }
+
+
+    $qry = "SELECT Schema_Name,Table_Name,''$sinkfileformat'' as fileformat,''$sinkfileextension'' as fileextension,''$sinkcolumndelimiter'' as columnDelimiter FROM t_pipeline_tables_tobemoved WHERE pipelineid = $pipelineid and linkedserviceid = $linkedservice_id"
+
+    $qryparamname = '$LKP_'+$metadblinkedservicename.Replace('"','') + '_query'
+    
+    
+     Sql-Execute -Qry "EXEC  usp_updatepipelineactivityparameters '$qryparamname','$qry',$pipelineid" -Qrydetails  "update activity parameter :  $qryparamname"
+
+
+    }
+
+
+    }
+
+    $SqlConnection.Close()
+   #     }
+<#
+catch
 {
-$type = $srcdetail.Type
-$SqlCmd.CommandText = "INSERT INTO [dbo].[T_Pipeline_LinkedServices] (PipelineId, LinkedServiceId) SELECT $pipelineid,Id   FROM [dbo].[T_List_LinkedServices] WHERE LinkedService_Name = '" + $srcdetail.Type + "'"
-$SqlCmd.ExecuteNonQuery()
-$SqlCmd.CommandText = "SELECT MAX(Id) FROM [T_Pipeline_LinkedServices] "
-$linkedservice_id = $SqlCmd.ExecuteScalar()
 
-$metalinkedservicename = '"LS_POC_'+$type+'_'+$metadblinkedservice_id +'"'
-
-$linkedservicename = '"LS_POC_'+$type+'_'+$linkedservice_id +'"'
-$linkedserviceparamname = '$'+$type +'_'+$linkedservice_id + 'LinkedServiceName'
-
-
-
-$SqlCmd.CommandText = "EXEC [dbo].[usp_Insert_Pipeline_LinkedServiceParameters_New] $linkedservice_id, $pipelineid"
-
-Write-Host "EXEC [dbo].[usp_Insert_Pipeline_LinkedServiceParameters_New] $linkedservice_id, $pipelineid"
-
-$SqlCmd.ExecuteNonQuery()
-
-
-foreach($parameterdetail in $srcdetail.Parameters.Parameter){
-$paramval = '"'+$parameterdetail.Value+'"'
-$paramname = $parameterdetail.Name.Replace('$','$'+$linkedservice_id+'_')
-$SqlCmd.CommandText = "UPDATE [dbo].[T_Pipeline_LinkedService_Parameters] SET ParameterValue = '$paramval' WHERE LinkedServerId = $linkedservice_id AND PipelineId = $pipelineid AND ParameterName = '$paramname'"
-Write-Host "UPDATE [dbo].[T_Pipeline_LinkedService_Parameters] SET ParameterValue = '$paramval' WHERE LinkedServerId = $linkedservice_id AND PipelineId = $pipelineid AND ParameterName = '$paramname'"
-$SqlCmd.ExecuteNonQuery()
-
-}
-
-$linkedserviceparamname = '$'+$linkedservice_id +'_'+$type+'LinkedServiceName'
-$SqlCmd.CommandText = "UPDATE [dbo].[T_Pipeline_LinkedService_Parameters]  SET ParameterValue = '$linkedservicename' WHERE ParameterName = '$linkedserviceparamname' AND LinkedServerId = $linkedservice_id AND PipelineId = $pipelineid"
-
-$SqlCmd.ExecuteNonQuery()
-
-$SqlCmd.CommandText = "UPDATE T_Pipeline_LinkedService_Parameters SET ParameterValue = '$irname' WHERE ParameterName like '%nameofintegrationruntime%' AND LinkedServerId = $linkedservice_id AND PipelineId = $pipelineid"
-$SqlCmd.ExecuteNonQuery()
-
-
-$SqlCmd.CommandText = "
-INSERT INTO dbo.T_Pipeline_DataSets (PipelineId,LinkedServericeId,DataSetId )
-SELECT $pipelineid,tpl.Id,tld.id FROM dbo.T_List_DataSets tld inner join dbo.T_List_LinkedServices tll on tld.LinkedService_id = tll.Id inner join dbo.T_Pipeline_LinkedServices tpl 
-ON tpl.LinkedServiceId = tll.Id where tll.LinkedService_Name = '$type' and tpl.id = $linkedservice_id
-"
-
-$SqlCmd.ExecuteNonQuery()
-
-$SqlCmd.CommandText = "SELECT MAX(Id) FROM [T_Pipeline_DataSets] "
-$dataset_id = $SqlCmd.ExecuteScalar()
-$datasetname = '$'+$linkedservice_id+'_'+$type+'DatasetName'
-$datasetval = 'DS_POC_'+$type+'_'+$linkedservice_id
-
-$SqlCmd.CommandText = '
-INSERT INTO dbo.T_Pipeline_DataSet_Parameters (ParameterName,ParameterValue,DataSetId )
-VALUES('''+$datasetname+''','''+$datasetval+''','+$dataset_id+')'
-$SqlCmd.ExecuteNonQuery()
-
-
-$SqlCmd.CommandText = '
-INSERT INTO dbo.T_Pipelines_steps (PipelineId,Activity_ID,DependsOn,Child_Activity,EmailNotificationEnabled,ActivityName)
-SELECT ' + $pipelineid + ',id,0,0,1,''LKP_'+$metalinkedservicename.Replace('"','')+''' 
-FROM dbo.T_List_Activities where ActivityName = ''Lookup Activity'''
-
-$SqlCmd.ExecuteNonQuery()
-
-$SqlCmd.CommandText = '
-INSERT INTO dbo.T_Pipelines_steps (PipelineId,Activity_ID,DependsOn,Child_Activity,EmailNotificationEnabled,ActivityName)
-SELECT ' + $pipelineid + ' ,id,0,0,1,''CP_'+$linkedservicename.Replace('"','')+'_'+$sinklinkedservicename.Replace('"','')+''' FROM dbo.T_List_Activities where ActivityName = ''Copy Activity'''
-
-$SqlCmd.ExecuteNonQuery()
-
-$ls = $linkedservicename.Replace('"','')
-
-$metls = $metalinkedservicename.Replace('"','')
-
-
-$lssls = $ls+'_'+$sinklinkedservicename.Replace('"','')
-
-
-$SqlCmd.CommandText = '
-
-SELECT tps.id from [dbo].[T_Pipelines_Steps] tps inner join dbo.t_list_activities tla 
-on tps.activity_id = tla.id
-where tla.activityname = ''Lookup Activity'' and tps.pipelineid = ' + $pipelineid +' and tps.activityname = ''LKP_'+$metls+''''
-
-
-$dependsonid = $SqlCmd.ExecuteScalar()
-
-$SqlCmd.CommandText = '
-
-SELECT tps.id from [dbo].[T_Pipelines_Steps] tps inner join dbo.t_list_activities tla 
-on tps.activity_id = tla.id
-where tla.activityname = ''Copy Activity'' and tps.pipelineid = ' + $pipelineid +' and tps.activityname = ''CP_'+$lssls+''''
-
-$childid = $SqlCmd.ExecuteScalar()
-
-
-$SqlCmd.CommandText = '
-INSERT INTO dbo.T_Pipelines_steps (PipelineId,Activity_ID,DependsOn,Child_Activity,EmailNotificationEnabled,ActivityName)
-SELECT ' + $pipelineid + ' ,id,'+$dependsonid+','+$childid+',1,''Foreach_SourceEntity_'+ $linkedservice_id +''' 
-FROM dbo.T_List_Activities where ActivityName = ''For Each Activity'''
-
-$SqlCmd.ExecuteNonQuery()
-
-
-
-$SqlCmd.CommandText = "EXEC [dbo].[usp_Insert_Pipeline_Parameters_New] 'LKP_$metls','Foreach_SourceEntity_$linkedservice_id' ,'CP_$lssls'"
-Write-Host   "EXEC [dbo].[usp_Insert_Pipeline_Parameters_New] 'LKP_$metls','Foreach_SourceEntity_$linkedservice_id' ,'CP_$lssls'"
-
-$SqlCmd.ExecuteNonQuery()
-
-$dsparamval = 'DS_POC_'+$type+'_'+$metadblinkedservice_id
-$linksetname = '$LKP_'+$metalinkedservicename.Replace('"','')+'_dataset'
-$SqlCmd.CommandText = "
-UPDATE dbo.T_Pipeline_Activity_Parameters SET ParameterValue = '$dsparamval' WHERE ParameterName = '$linksetname' and pipelineid = $pipelineid "
-
-$SqlCmd.ExecuteNonQuery()
-
-$dsparamval1 = 'DS_POC_'+$type+'_'+$linkedservice_id
-
-$cpactparamname = '$CP_'+$linkedservicename.Replace('"','')+'_'+$sinklinkedservicename.Replace('"','')+"_inputDatasetReference"
-$SqlCmd.CommandText = "UPDATE tap set tap.Parametervalue = '$dsparamval1' FROM dbo.T_Pipeline_Activity_Parameters tap INNER JOIN dbo.T_Pipelines_steps tps ON tap.PipelineActivityId = tps.id WHERE ParameterName = '$cpactparamname' and tap.pipelineid = $pipelineid and tps.Activityname = 'CP_$lssls' "
-
-
-$SqlCmd.ExecuteNonQuery()
-
-
-$cpactparamname = '$CP_'+$linkedservicename.Replace('"','')+'_'+$sinklinkedservicename.Replace('"','')+"_outputDatasetReference"
-$outref = 'DS_POC_'+$sinkdetail.Type+ '_'+$sinkdataset_id
-
-$SqlCmd.CommandText = "UPDATE tap set tap.Parametervalue = '$outref' FROM dbo.T_Pipeline_Activity_Parameters tap INNER JOIN dbo.T_Pipelines_steps tps ON tap.PipelineActivityId = tps.id WHERE ParameterName = '$cpactparamname' and tap.pipelineid = $pipelineid and tps.Activityname = 'CP_$lssls' "
-
-Write-Host "UPDATE tap set tap.Parametervalue = '$outref' FROM dbo.T_Pipeline_Activity_Parameters tap INNER JOIN dbo.T_Pipelines_steps tps ON tap.PipelineActivityId = tps.id WHERE ParameterName = '$cpactparamname' and tap.pipelineid = $pipelineid and tps.Activityname = 'CP_$lssls' "
-
-
-$SqlCmd.ExecuteNonQuery()
-
-#$qry = ' ' 
-foreach($tbldetail in $srcdetail.Tables.Table){
-#$qry = $qry + 'SELECT '''''+$tbldetail.schema +''''' as Schema_Name , ''''' + $tbldetail.Name + ''' as Table_Name UNION ALL '
-$tblname = $tbldetail.Name
-$schname = $tbldetail.schema
-
-$SqlCmd.CommandText = "INSERT INTO dbo.t_pipeline_tables_tobemoved (pipelineid,Table_Name,Schema_Name,linkedserviceid) VALUES ($pipelineid, '$tblname','$schname',$linkedservice_id)"
-$SqlCmd.ExecuteNonQuery()
-
-}
-
-
-$qry = "SELECT Schema_Name,Table_Name,''$sinkfileformat'' as fileformat,''$sinkfileextension'' as fileextension,''$sinkcolumndelimiter'' as columnDelimiter FROM t_pipeline_tables_tobemoved WHERE pipelineid = $pipelineid and linkedserviceid = $linkedservice_id"
-
-$qryparamname = '$LKP_'+$metadblinkedservicename.Replace('"','') + '_query'
-$SqlCmd.CommandText = "UPDATE dbo.T_Pipeline_Activity_Parameters SET ParameterValue = '$qry' WHERE ParameterName = '$qryparamname' and pipelineid = $pipelineid "
-Write-Host "UPDATE dbo.T_Pipeline_Activity_Parameters SET ParameterValue = '$qry' WHERE ParameterName = '$qryparamname' and pipelineid = $pipelineid "
-$SqlCmd.ExecuteNonQuery()
-
-}
-
-
-}
-
-
-$SqlConnection.Close()
+Add-Content $LogFilePath $error
+Add-Content $LogFilePath "Deployment failed with errors. Please check log file"
+Write-Host "Deployment Failed with Errors. Please refer log file"
+}#>

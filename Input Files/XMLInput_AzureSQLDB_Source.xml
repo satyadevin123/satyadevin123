@@ -6,19 +6,20 @@
 <Parameter Name='$subscriptionid' Value = '81ec4907-9db6-4d56-86d4-d997209d7be6'/>
 <Parameter Name='$dataFactoryNameLocation' Value = 'WEST US'/>
 <Parameter Name='$SinkAccountName' Value = 'satyatestadls'/>
+<Parameter Name='$keyvaultname' Value = 'pocmetadatakeyvault'/>
+<Parameter Name='$keyvaultlocation' Value = 'WEST US'/>
 </Parameters>
 </AzureEnvSetup>
-<Pipelines>
-<Pipeline Name = 'AdventureWorksData_From_AzureSqlDB_To_ADLS'>
 <MetadataDB>
 <Type>azureSQLDatabase</Type>
 <Parameters>
 <Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
-<Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDB'/>
+<Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDBPublishTest'/>
 <Parameter Name='$azureSqlDBUserName' Value = 'vsagala'/>
-<Parameter Name='$azureSqlDBPassword' Value = ''/>
 </Parameters>
 </MetadataDB>
+<Pipelines>
+<Pipeline Name = 'AdventureWorksData_From_AzureSqlDB_To_ADLS'>
 <Sources>
 <Source>
 <Type>azureSQLDatabase</Type>
@@ -26,7 +27,6 @@
 <Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
 <Parameter Name='$azureSqlDatabaseName' Value = 'AdventureWorksSample'/>
 <Parameter Name='$azureSqlDBUserName' Value = 'vsagala'/>
-<Parameter Name='$azureSqlDBPassword' Value = ''/>
 </Parameters>
 <Tables>
 <Table Name='ErrorLog' schema='dbo'/>
@@ -51,9 +51,9 @@
 </Parameters>
 <FolderName>adventureworkssampledata</FolderName>
 <CompressionCodectype>none</CompressionCodectype>
-<FileFormat>Avro</FileFormat>
-<FileExtension>avro</FileExtension>
-<ColumnDelimiter></ColumnDelimiter>
+<FileFormat>DelimitedText</FileFormat>
+<FileExtension>csv</FileExtension>
+<ColumnDelimiter>,</ColumnDelimiter>
 </Sink>
 </Pipeline>
 </Pipelines>
