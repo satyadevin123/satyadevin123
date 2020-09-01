@@ -38,7 +38,7 @@ TPS.PipelineId = @PipelineId
 
 UPDATE [T_Pipeline_Activity_Parameters]
 SET Parametervalue = REPLACE(@LkpActName,'LKP_','')
-WHERE ParameterName like '%MetadataDBLinkedServiceName%'
+WHERE ParameterName like '%MetadataDBLinkedServiceName%' AND pipelineid = @PipelineId
 GO
 
 

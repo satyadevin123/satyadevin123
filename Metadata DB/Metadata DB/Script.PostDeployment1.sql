@@ -245,6 +245,7 @@ VALUES
 ('$onpremSqlDatabaseName','','OnPremiseSQLServer'),
 ('$onpremSqlDBUserName','','OnPremiseSQLServer'),
 ('$onpremSqlDBPassword','','OnPremiseSQLServer'),
+('$azurekeyvaultlinkedservicereference','','OnPremiseSQLServer'),
 ('$azureSqlDataWarehouseLinkedServiceName','','azureSQLDataWarehouse'),
 ('$azureSqlDWServerName','','azureSQLDataWarehouse'),
 ('$azureSqlDWDBName','','azureSQLDataWarehouse'),

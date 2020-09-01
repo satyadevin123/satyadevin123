@@ -11,7 +11,7 @@
 #try
 #{
 $XMLfile = 'D:\Metadata PoC\XMLInput.xml'
-[XML]$MetaDetails = Get-Content $XMLfile
+[XML]$MetaDetails = Get-Content $ConfigXMLFilePath
 
 $logdate = get-date
 $logfilepath = "D:\Metadata PoC\MetadataCreationLogFile.txt"
@@ -152,7 +152,7 @@ Param([int]$PipelineId,[String]$LinkedServiceType,[int]$LinkedServiceId,[String]
             $datasetparamname = '$'+$LinkedServiceId+'_'+$LinkedServiceType+'DatasetName'
             $datasetparamval = 'DS_POC_'+$LinkedServiceType+'_'+$LinkedServiceId.ToString()
             Write-Host "EXEC usp_InsertPipelineDataSetParameters '$datasetparamname','$datasetparamval',$dataset_id"
-            Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$datasetparamname','$datasetparamval',$dataset_id" -Qrydetails  "Insert dataset parameters for metadata db"
+            Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$datasetparamname','$datasetparamval',$dataset_id,$PipelineId" -Qrydetails  "Insert dataset parameters for metadata db"
             
       
     [pscustomobject] @{
@@ -310,7 +310,7 @@ foreach($ppdetail in $MetaDetails.Metadata.Pipelines.Pipeline)
     $refname = '$'+$sinklinkedservice_id +'_LInkedServerReferneceName'
     $sinklinkedservicename1 = $sinklinkedservicename.Replace('"','')
     
-    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$refname','$sinklinkedservicename1',$sinkdataset_id" -Qrydetails  "Insert dataset parameters for sink : $sinkparamname"
+    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$refname','$sinklinkedservicename1',$sinkdataset_id,$pipelineid" -Qrydetails  "Insert dataset parameters for sink : $sinkparamname"
     
 
     $filesystemfolder = $sinkdetail.FolderName
@@ -323,15 +323,15 @@ foreach($ppdetail in $MetaDetails.Metadata.Pipelines.Pipeline)
     $sinkfileextension = $sinkdetail.FileExtension
     $sinkcolumndelimiter = $sinkdetail.ColumnDelimiter
 
-    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$filesystemparam','$filesystemfolder',$sinkdataset_id" -Qrydetails  "Insert dataset parameters for sink : $filesystemparam"
-    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$compressioncodeparam','$CompressionCodectype',$sinkdataset_id" -Qrydetails  "Insert dataset parameters for sink : $compressioncodeparam"
-    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$sinkfileformatParamName','$sinkfileformat',$sinkdataset_id" -Qrydetails  "Insert dataset parameters for sink : $sinkfileformatParamName"
-    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$sinkfileextensionParamName','$sinkfileextension',$sinkdataset_id" -Qrydetails  "Insert dataset parameters for sink : $sinkfileextensionParamName"
+    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$filesystemparam','$filesystemfolder',$sinkdataset_id,$pipelineid" -Qrydetails  "Insert dataset parameters for sink : $filesystemparam"
+    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$compressioncodeparam','$CompressionCodectype',$sinkdataset_id,$pipelineid" -Qrydetails  "Insert dataset parameters for sink : $compressioncodeparam"
+    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$sinkfileformatParamName','$sinkfileformat',$sinkdataset_id,$pipelineid" -Qrydetails  "Insert dataset parameters for sink : $sinkfileformatParamName"
+    Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$sinkfileextensionParamName','$sinkfileextension',$sinkdataset_id,$pipelineid" -Qrydetails  "Insert dataset parameters for sink : $sinkfileextensionParamName"
     
 
     if($sinkfileformat -eq 'DelimitedText')
     {
-       Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$sinkcolumndelimiterParamName','$sinkcolumndelimiter',$sinkdataset_id" -Qrydetails  "Insert dataset parameters for sink : $sinkcolumndelimiterParamName"
+       Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$sinkcolumndelimiterParamName','$sinkcolumndelimiter',$sinkdataset_id,$pipelineid" -Qrydetails  "Insert dataset parameters for sink : $sinkcolumndelimiterParamName"
     }
 }
 
@@ -352,7 +352,7 @@ foreach($srcdetail in $ppdetail.Sources.Source)
         Sql-Execute -Qry "EXEC usp_UpdateLinkedServiceParameters '$paramname','$paramval',$pipelineid,$linkedservice_id" -Qrydetails "Insert value for parameter : $paramname"
 
     }
-
+    Write-Host $kvlinkedservicename
     if(($type -eq 'azureSQLDatabase') -or ($type -eq 'OnPremiseSQLServer'))
     {
         Insert-KeyVaultReferenceToSQLDBLinkedService -Linkedservice_id $linkedservice_id -kvlinkedservicename $kvlinkedservicename -pipelineid $pipelineid -type $type -keyvaultname $keyvaultname -messagetype 'Source' 
