@@ -3,6 +3,6 @@
     [ParameterName]  VARCHAR (100) NOT NULL,
     [ParameterValue] VARCHAR (500) NOT NULL,
     [DatasetId]      INT           NOT NULL,
-    [pipelineid]     INT           NULL
+    [pipelineid]     INT           NULL Foreign Key References [dbo].[T_Pipelines] ([Id])
 );
 
