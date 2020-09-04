@@ -171,10 +171,10 @@ GO
 Print 'Start - Inserting data to list linkedservices table'
 
 DECLARE @SrcLinkedServices as TABLE
-( LinkedService_Name VARCHAR(100), Jsoncode VARCHAR(4000))
+( LinkedService_Name VARCHAR(100), Jsoncode VARCHAR(4000),AuthenticationType VARCHAR(200),KeyVaultReferenceReq INT)
 
 INSERT INTO @SrcLinkedServices
-( LinkedService_Name,Jsoncode)
+( LinkedService_Name,Jsoncode,AuthenticationType,KeyVaultReferenceReq)
 VALUES
 ('azureSQLDatabase',' 
 	 {
@@ -196,25 +196,31 @@ VALUES
             "referenceName": "$nameofintegrationruntime",
             "type": "IntegrationRuntimeReference"
         }
-    }} '),
-('azureSQLDataWarehouse','{      "name": "$azureSqlDataWarehouseLinkedServiceName",      "properties": {          "type": "AzureSqlDW",          "typeProperties": {              "connectionString": {                  "type": "SecureString",                  "value": "Server=tcp:$azureSqlDWServerName.database.windows.net,1433;Database=$azureSqlDWDBName;Integrated Security=False;Encrypt=True;Connection Timeout=30"              }          }      }  }'),
-('ADLSv2','{      "name": "$ADLSv2LinkedServiceName",      "properties": {          "annotations": [],          "type": "AzureBlobFS",          "typeProperties": {              "url": "$URL"          },          "connectVia": {              "referenceName": "$nameofintegrationruntime",              "type": "IntegrationRuntimeReference"          }      }  }'),
-('AzureBlobStorage','{      "name": "$AzureBlobStorageLinkedServiceName" ,     "properties": {          "type": "AzureBlobStorage",          "typeProperties": {              "connectionString": "DefaultEndpointsProtocol=https;AccountName=$AccountName;AccountKey=$AccountKey"          },          "connectVia": {              "referenceName": "$nameofintegrationruntime",              "type": "IntegrationRuntimeReference"          }      }  }'),
-('OnPremiseSQLServer','{      "name": "$OnPremiseSQLServerLinkedServiceName",      "type": "Microsoft.DataFactory/factories/linkedservices",      "properties": { "type": "SqlServer",          "typeProperties":{              "connectionString": "Integrated Security=False;Data Source=$onpremSqlDBServerName;Initial Catalog=$onpremSqlDatabaseName;User ID=$onpremSqlDBUserName",               "password": {                  "type": "AzureKeyVaultSecret",                  "store": {                         "referenceName": "$azurekeyvaultlinkedservicereference",                      "type": "LinkedServiceReference"                  },      "secretName": "$onpremSqlDBPassword"              }          },           "connectVia": {              "referenceName": "$IRName",              "type": "IntegrationRuntimeReference"          }      }  }  '),
-('azureSQLDatabasewithManagedIdentity','     { "name": "$azureSqlDatabaseLinkedServiceName",      "type": "Microsoft.DataFactory/factories/linkedservices",      "properties": {          "annotations": [],          "type": "AzureSqlDatabase",          "typeProperties": {              "connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=$azureSqlDBServerName.database.windows.net;Initial Catalog=$azureSqlDatabaseName"          }      }  }'),
-('azureKeyVault','{    "name": "$azureKeyVaultLinkedServiceName",    "properties": {        "annotations": [],        "type": "AzureKeyVault",       "typeProperties": {            "baseUrl": "https://$keyvaultname.vault.azure.net/"        }    }}')
-
+    }} ','SQL authentication',1),
+('azureSQLDataWarehouse','{      "name": "$azureSqlDataWarehouseLinkedServiceName",      "properties": {          "type": "AzureSqlDW",          "typeProperties": {              "connectionString": {                  "type": "SecureString",                  "value": "Server=tcp:$azureSqlDWServerName.database.windows.net,1433;Database=$azureSqlDWDBName;Integrated Security=False;Encrypt=True;Connection Timeout=30"              }          }      }  }','SQL authentication',1),
+('ADLSv2','{      "name": "$ADLSv2LinkedServiceName",      "properties": {          "annotations": [],          "type": "AzureBlobFS",          "typeProperties": {              "url": "$URL"          },          "connectVia": {              "referenceName": "$nameofintegrationruntime",              "type": "IntegrationRuntimeReference"          }      }  }','Managed Identity',0),
+('AzureBlobStorage','{      "name": "$AzureBlobStorageLinkedServiceName" ,     "properties": {          "type": "AzureBlobStorage",          "typeProperties": {              "connectionString": "DefaultEndpointsProtocol=https;AccountName=$AccountName;AccountKey=$AccountKey"          },          "connectVia": {              "referenceName": "$nameofintegrationruntime",              "type": "IntegrationRuntimeReference"          }      }  }','Managed Identity',NULL),
+('OnPremiseSQLServer','{      "name": "$OnPremiseSQLServerLinkedServiceName",      "type": "Microsoft.DataFactory/factories/linkedservices",      "properties": { "type": "SqlServer",          "typeProperties":{              "connectionString": "Integrated Security=False;Data Source=$onpremSqlDBServerName;Initial Catalog=$onpremSqlDatabaseName;User ID=$onpremSqlDBUserName",               "password": {                  "type": "AzureKeyVaultSecret",                  "store": {                         "referenceName": "$azurekeyvaultlinkedservicereference",                      "type": "LinkedServiceReference"                  },      "secretName": "$onpremSqlDBPassword"              }          },           "connectVia": {              "referenceName": "$IRName",              "type": "IntegrationRuntimeReference"          }      }  }  ','SQL authentication',1),
+('azureSQLDatabasewithManagedIdentity','     { "name": "$azureSqlDatabaseLinkedServiceName",      "type": "Microsoft.DataFactory/factories/linkedservices",      "properties": {          "annotations": [],          "type": "AzureSqlDatabase",          "typeProperties": {              "connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=$azureSqlDBServerName.database.windows.net;Initial Catalog=$azureSqlDatabaseName"          }      }  }','Managed Identity',0),
+('azureKeyVault','{    "name": "$azureKeyVaultLinkedServiceName",    "properties": {        "annotations": [],        "type": "AzureKeyVault",       "typeProperties": {            "baseUrl": "https://$keyvaultname.vault.azure.net/"        }    }}','Managed Identity',0),
+('RestService','    {      "name": "RestService1",      "type": "Microsoft.DataFactory/factories/linkedservices",      "properties": {          "annotations": [],          "type": "RestService",          "typeProperties": {              "url": "$restapiurl" ,         "enableServerCertificateValidation": true,              "authenticationType": "Anonymous"          }      }  }  ','Anonymous',0)
 MERGE [T_List_LinkedServices] AS mrg
 USING (SELECT * FROM @SrcLinkedServices) AS src
 ON mrg.LinkedService_Name = src.LinkedService_Name
+AND mrg.AuthenticationType = src.AuthenticationType
 WHEN MATCHED THEN 
-   UPDATE SET mrg.Jsoncode = src.Jsoncode
+   UPDATE SET mrg.Jsoncode = src.Jsoncode,
+   mrg.KeyVaultReferenceReq = src.KeyVaultReferenceReq
 WHEN NOT MATCHED THEN
 INSERT (LinkedService_Name
            ,Jsoncode
+		   ,AuthenticationType
+		   ,KeyVaultReferenceReq
            )
 VALUES(src.LinkedService_Name
            ,src.Jsoncode
+		   ,src.AuthenticationType
+		   ,src.KeyVaultReferenceReq
            );
 
 Print 'End - Inserting data to list linkedservices table'
@@ -260,8 +266,9 @@ VALUES
 ('$azureSqlDatabaseName','','azureSQLDatabasewithManagedIdentity'),
 ('$nameofintegrationruntime','','azureSQLDatabasewithManagedIdentity'),
 ('$azureKeyVaultLinkedServiceName','','azureKeyVault'),
-('$keyvaultName','','azureKeyVault')
-
+('$restapiurl','','RestService'),
+('$nameofintegrationruntime','','RestService'),
+('$RestServiceLinkedServiceName','','RestService')
 
 MERGE [T_List_LinkedService_Parameters] AS mrg
 USING (
@@ -306,7 +313,8 @@ VALUES
 ('azureADLSv2DataSet','ADLSv2','{  "name": "$azureADLSV2DataSetName",  "properties": {    "linkedServiceName": {      "referenceName": "$LInkedServerReferneceName",        "type": "LinkedServiceReference"      },      "parameters": {        "filename": { "type": "string" },        "directory": { "type": "string" },        "fileformat": { "type": "string" },        "fileextension": { "type": "string" },        "columnDelimiter": { "type": "string" }      },      "annotations": [],      "type": "$fileformat",      "typeProperties": {        "location": {          "type": "AzureBlobFSLocation",          "fileName": {            "value": "@concat(dataset().filename,''.'',dataset().fileextension)",            "type": "Expression"          },          "folderPath": {            "value": "@dataset().directory",            "type": "Expression"          },          "fileSystem": "$fileSystemFolderName"        }      },      "schema": []    }  }','azureADLSv2DataSet','SinkFileFormat','Json'),
 ('azureADLSv2DataSet','ADLSv2','{  "name": "$azureADLSV2DataSetName",  "properties": {    "linkedServiceName": {      "referenceName": "$LInkedServerReferneceName",        "type": "LinkedServiceReference"      },      "parameters": {        "filename": { "type": "string" },        "directory": { "type": "string" },        "fileformat": { "type": "string" },        "fileextension": { "type": "string" },        "columnDelimiter": { "type": "string" }      },      "annotations": [],      "type": "$fileformat",      "typeProperties": {        "location": {          "type": "AzureBlobFSLocation",          "fileName": {            "value": "@concat(dataset().filename,''.'',dataset().fileextension)",            "type": "Expression"          },          "folderPath": {            "value": "@dataset().directory",            "type": "Expression"          },          "fileSystem": "$fileSystemFolderName"        }      },      "schema": []    }  }','azureADLSv2DataSet','SinkFileFormat','Avro'),
 ('azureSQLDatabasewithManagedIdentityDataset','azureSQLDatabasewithManagedIdentity','{  "name": "$azureSQLDatabasewithManagedIdentityDatasetName",  "properties": {    "type": "AzureSqlTable",    "linkedServiceName": {      "referenceName": "$azureSQLDatabasewithManagedIdentityLinkedServiceName", "type": "LinkedServiceReference"},  "typeProperties": { "tableName": "dummy" }}}','azureSQLDatabasewithManagedIdentityDataset',NULL,NULL),
-('OnPremiseSQLServerDataset','OnPremiseSQLServer','{"name": "$OnPremiseSQLServerDatasetName","properties": {"type": "SqlServerTable","linkedServiceName":{"referenceName": "$OnPremiseSQLServerLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','OnPremiseSQLServerDataset',NULL,NULL)
+('OnPremiseSQLServerDataset','OnPremiseSQLServer','{"name": "$OnPremiseSQLServerDatasetName","properties": {"type": "SqlServerTable","linkedServiceName":{"referenceName": "$OnPremiseSQLServerLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','OnPremiseSQLServerDataset',NULL,NULL),
+('RestServiceDataset','RestService','  {      "name": "$RestServiceDatasetName",      "properties": {          "linkedServiceName": {              "referenceName": "$RestServiceLinkedServiceName",              "type": "LinkedServiceReference"          },          "annotations": [],          "type": "RestResource",          "schema": []      },      "type": "Microsoft.DataFactory/factories/datasets"  }','RestServiceDataset',NULL,NULL)
 
 
 MERGE [T_List_DataSets] AS mrg
@@ -360,21 +368,29 @@ VALUES
 ('$CompressionCodectype','snappy','azureADLSv2DataSet','SinkFileFormat','Parquet'),
 ('$fileformat','','azureADLSv2DataSet','SinkFileFormat','Parquet'),
 ('$fileextension','','azureADLSv2DataSet','SinkFileFormat','Parquet'),
-('$azureADLSV2DataSetName','DS_POC_ADLS','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
+('$ADLSV2DataSetName','DS_POC_ADLS','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
 ('$LInkedServerReferneceName','','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
 ('$fileSystemFolderName','','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
 ('$CompressionCodectype','snappy','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
 ('$fileformat','','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
 ('$fileextension','','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
-('$ColumnDelimiter',',','azureADLSv2DataSet','SinkFileFormat','DelimitedText')
+('$ColumnDelimiter',',','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
+('$azureSqlDatabaseDatasetName','','azureSqlDatabaseDataset',NULL,NULL),
+('$azureSqlDatabaseLinkedServiceName','','azureSqlDatabaseDataset',NULL,NULL),
+('$azureSQLDatabasewithManagedIdentityDatasetName','','azureSQLDatabasewithManagedIdentityDataset',NULL,NULL),
+('$azureSQLDatabasewithManagedIdentityLinkedServiceName','','azureSQLDatabasewithManagedIdentityDataset',NULL,NULL),
+('$OnPremiseSQLServerDatasetName','','OnPremiseSQLServerDataset',NULL,NULL),
+('$OnPremiseSQLServerLinkedServiceName','','OnPremiseSQLServerDataset',NULL,NULL),
+('$RestServiceDatasetName','','RestServiceDataset',NULL,NULL),
+('$RestServiceDatasetName','','RestServiceDataset',NULL,NULL)
 
 MERGE [T_List_Dataset_Parameters] AS mrg
 USING (
     SELECT S.*,t.Id FROM @SrcdatasetParameters s
     INNER JOIN T_List_Datasets t
     ON s.DatasetName = t.[DataSet_name]
-    AND s.[AdditionalConfigurationType] = t.[AdditionalConfigurationType]
-    AND s.[AdditionalConfigurationValue] = t.[AdditionalConfigurationValue]
+    AND ISNULL(s.[AdditionalConfigurationType],'') = ISNULL(t.[AdditionalConfigurationType],'')
+    AND ISNULL(s.[AdditionalConfigurationValue],'') = ISNULL(t.[AdditionalConfigurationValue],'')
       ) AS src
 ON mrg.[DatasetId] = src.Id
 AND mrg.ParameterName = src.ParameterName
@@ -401,39 +417,39 @@ DECLARE @SrcActivities as TABLE
 ActivityStandardName NVARCHAR (255),
 Enabled INT,
 code VARCHAR(8000),
-linkedserverrequired CHAR(3),datasetrequired CHAR(3))
+linkedserverrequired CHAR(3),datasetrequired CHAR(3),SourceType VARCHAR(200))
 
 INSERT INTO @SrcActivities
-( ActivityName,ActivityStandardName,Enabled,code,linkedserverrequired,datasetrequired)
+( ActivityName,ActivityStandardName,Enabled,code,linkedserverrequired,datasetrequired,SourceType)
 VALUES
-('Execute Pipeline','Exe_Pipeline',1,'{                  "name": "ExecutePipelineActivity",                  "type": "ExecutePipeline",                  "typeProperties": {                      "parameters": {                                                  "mySourceDatasetFolderPath": {                              "value": "@pipeline().parameters.mySourceDatasetFolderPath",                              "type": "Expression"                          }                      },                      "pipeline": {                          "referenceName": "<InvokedPipelineName>",                          "type": "PipelineReference"                      },                      "waitOnCompletion": true                   }              }          ],          "parameters": [              {                  "mySourceDatasetFolderPath": {                      "type": "String"                  }              }',NULL,NULL),
-('Lookup Activity','LKP_DataSource_Name',1,'     {                  "name": "$LookupActivityname",                  "type": "Lookup",                      "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],                  "policy": {                      "timeout": "7.00:00:00",                      "retry": 0,                      "retryIntervalInSeconds": 30,                      "secureOutput": false,                      "secureInput": false                  },                  "userProperties": [],                  "typeProperties": {                      "source": {                          "type": "AzureSqlSource",                          "sqlReaderQuery": {                              "value": "$query",                              "type": "Expression"                          },                          "queryTimeout": "02:00:00"                      },                      "dataset": {                          "referenceName": "$dataset",                          "type": "DatasetReference"                      },       "firstRowOnly": $firstrow                  }              }       ',NULL,1),
-('Copy Activity','CP_DataSource_DataDestination',1,'{"name": "$CopyActivityName","type": "Copy","dependsOn": [],"policy": {    "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},"userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "sqlReaderQuery": {            "value": "$sqlReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },    "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }',NULL,1),
-('For Each Activity','ForEachActivity',1,'   {                  "name": "$foreachactivityname",                  "type": "ForEach",                  "dependsOn": [                      {                          "activity": "$dependson",                          "dependencyConditions": [                              "$dependencyConditions"                          ]                      }                  ],                  "userProperties": [],                  "typeProperties": {                      "items": {                          "value": "@activity(''$dependentactivityname'').output.value",                          "type": "Expression"                      },                      "batchCount": $batchCount,       "isSequential": $isSequential,       "activities": [$activityjsoncode]                         }              }',NULL,NULL),
-('Wait Activity','Wait',1,'{     "name":"Wait1",     "type":"Wait",     "dependsOn":[       ],     "userProperties":[        {           "name":"Description",           "value":"Wait time for 30 seconds"        }     ],     "typeProperties":{        "waitTimeInSeconds":30     }  } ',NULL,NULL),
-('Filter Activity','FilterActivity',1,'{   "name": "MyFilterActivity",   "type": "filter",   "typeProperties": {    "condition": "$condition",    "items": "$inputarray"   }  }',NULL,NULL),
-('Get Metadata Activity','Metadata Activity',1,'{   "name": "$Metadataactivityname",   "type": "GetMetadata",   "typeProperties": {    "fieldList" : "$filedlist",    "dataset": {     "referenceName": "$MyDataset",     "type": "DatasetReference"    }   }  }',NULL,NULL),
-('If Activity','IfActivity',1,'{      "name": "$Name_of_the_activity>",      "type": "IfCondition",      "typeProperties": {        "expression": {              "value": "$expression_that_evaluates_to_trueorfalse>",              "type": "Expression"        },          "ifTrueActivities": [              {                  "Activity 1 definition>"              },              {                  "<Activity 2 definition>"              },              {                  "<Activity N definition>"              }          ],            "ifFalseActivities": [              {                  "<Activity 1 definition>"              },              {                  "<Activity 2 definition>"              },              {                  "<Activity N definition>"              }        ]      }  }',NULL,NULL),
-('Custom Logging','SP_Custom_Logging',1,'   {      "name": "$SPActivityName",      "description":"Description",      "type": "SqlServerStoredProcedure",     "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],     "linkedServiceName": {          "referenceName": "$MetadataDBLinkedServiceName",       "type": "LinkedServiceReference"      },      "typeProperties": {              "storedProcedureName": "$SPName",          "storedProcedureParameters": $SPParameters            }      }  }','1',NULL)
-
+('Execute Pipeline','Exe_Pipeline',1,'{                  "name": "ExecutePipelineActivity",                  "type": "ExecutePipeline",                  "typeProperties": {                      "parameters": {                                                  "mySourceDatasetFolderPath": {                              "value": "@pipeline().parameters.mySourceDatasetFolderPath",                              "type": "Expression"                          }                      },                      "pipeline": {                          "referenceName": "<InvokedPipelineName>",                          "type": "PipelineReference"                      },                      "waitOnCompletion": true                   }              }          ],          "parameters": [              {                  "mySourceDatasetFolderPath": {                      "type": "String"                  }              }',NULL,NULL,NULL),
+('Lookup Activity','LKP_DataSource_Name',1,'     {                  "name": "$LookupActivityname",                  "type": "Lookup",                      "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],                  "policy": {                      "timeout": "7.00:00:00",                      "retry": 0,                      "retryIntervalInSeconds": 30,                      "secureOutput": false,                      "secureInput": false                  },                  "userProperties": [],                  "typeProperties": {                      "source": {                          "type": "AzureSqlSource",                          "sqlReaderQuery": {                              "value": "$query",                              "type": "Expression"                          },                          "queryTimeout": "02:00:00"                      },                      "dataset": {                          "referenceName": "$dataset",                          "type": "DatasetReference"                      },       "firstRowOnly": $firstrow                  }              }       ',NULL,1,NULL),
+('Copy Activity','CP_DataSource_DataDestination',1,'{"name": "$CopyActivityName","type": "Copy","dependsOn": [],"policy": {    "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},"userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "sqlReaderQuery": {            "value": "$sqlReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },    "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }',NULL,1,'azureSQLDatabase'),
+('For Each Activity','ForEachActivity',1,'   {                  "name": "$foreachactivityname",                  "type": "ForEach",                  "dependsOn": [                      {                          "activity": "$dependson",                          "dependencyConditions": [                              "$dependencyConditions"                          ]                      }                  ],                  "userProperties": [],                  "typeProperties": {                      "items": {                          "value": "@activity(''$dependentactivityname'').output.value",                          "type": "Expression"                      },                      "batchCount": $batchCount,       "isSequential": $isSequential,       "activities": [$activityjsoncode]                         }              }',NULL,NULL,NULL),
+('Custom Logging','SP_Custom_Logging',1,'   {      "name": "$SPActivityName",      "description":"Description",      "type": "SqlServerStoredProcedure",     "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],     "linkedServiceName": {          "referenceName": "$MetadataDBLinkedServiceName",       "type": "LinkedServiceReference"      },      "typeProperties": {              "storedProcedureName": "$SPName",          "storedProcedureParameters": $SPParameters            }      }  }','1',NULL,NULL),
+('Copy Activity','CP_DataSource_DataDestination',1,'  {"name": "$CopyActivityName","type": "Copy","dependsOn": [],"policy": {   "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},  "userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "sqlReaderQuery": {        "value": "$sqlReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },     "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }   ',NULL,NULL,'OnPremiseSQLServer'),
+('Copy Activity','CP_DataSource_DataDestination',1,'          {"name": "$CopyActivityName","type": "Copy","dependsOn": [],"policy": {      "timeout": "7.00:00:00",    "retry": 0,     "retryIntervalInSeconds": 30,       "secureOutput": false,    "secureInput": false},  "userProperties": [],    "typeProperties": {          "source": {                          "type": "RestSource",                                "httpRequestTimeout": "00:01:40",                            "requestInterval": "00.00:00:00.010",                         "requestMethod": "GET"                      },    "sink": {          "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }  ,"formatSettings": {          "type": "JsonWriteSettings",          "filePattern": "setOfObjects"        }  },      "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",              "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",               "type": "DatasetReference" ,"parameters": {            $parameters            }         } ]                          }             ',NULL,NULL,'RestService')
 
 MERGE [T_List_Activities] AS mrg
 USING (SELECT s.* FROM @SrcActivities s
       ) AS src
 ON mrg.ActivityName = src.ActivityName
+AND ISNULL(mrg.SourceType,'') = ISNULL(src.SourceType,'')
 WHEN MATCHED THEN 
    UPDATE SET mrg.ActivityStandardName = src.ActivityStandardName,
    mrg.Enabled = src.Enabled,
    mrg.code = src.code,
    mrg.linkedserverrequired = src.linkedserverrequired,
-   mrg.datasetrequired = src.datasetrequired
+   mrg.datasetrequired = src.datasetrequired,
+   mrg.SourceType = src.SourceType
 WHEN NOT MATCHED THEN
 INSERT (ActivityName,
 ActivityStandardName,
            Enabled,
            code,
            linkedserverrequired,
-           datasetrequired
+           datasetrequired,
+           SourceType
            )
 VALUES(    src.ActivityName
            ,src.ActivityStandardName
@@ -441,7 +457,7 @@ VALUES(    src.ActivityName
            ,src.code
            ,src.linkedserverrequired,
            src.datasetrequired
-           );
+           ,src.SourceType);
 
 
 
@@ -454,38 +470,38 @@ Print 'Start - Inserting data to list activity parameters table'
 
 
 DECLARE @SrcactivityParameters as TABLE
-( ParameterName VARCHAR (100) , ParameterValue VARCHAR (8000) , ActivityName NVARCHAR (255))
+( ParameterName VARCHAR (100) , ParameterValue VARCHAR (8000) , ActivityName NVARCHAR (255),SourceType VARCHAR(200))
 
 INSERT INTO @SrcactivityParameters
-( ParameterName,ParameterValue,ActivityName)
+( ParameterName,ParameterValue,ActivityName,SourceType)
 VALUES
-('InvokedPipelineName','','Execute Pipeline'),
-('condition','','Filter Activity'),
-('inputarray','','Filter Activity'),
-('isSequential','false','For Each Activity'),
-('Metadataactivityname','','Get Metadata Activity'),
-('filedlist','','Get Metadata Activity'),
-('MyDataset','','Get Metadata Activity'),
-('Name_of_the_activity','','If Activity'),
-('LookupActivityname','','Lookup Activity'),
-('query','select SS.Name as Schema_Name, ST.Name as Table_Name FROM SYS.TABLES ST JOIN SYS.SCHEMAS SS ON SS.schema_id= ST.schema_id','Lookup Activity'),
-('dataset','','Lookup Activity'),
-('firstrow','false','Lookup Activity'),
-('foreachactivityname','','For Each Activity'),
-('dependson','','For Each Activity'),
-('dependencyConditions','','For Each Activity'),
-('dependentactivityname','','For Each Activity'),
-('batchCount','20','For Each Activity'),
-('activityjsoncode','','For Each Activity'),
-('dependson','','Lookup Activity'),
-('CopyActivityName','CP_SqlServer_ADLSParquet','Copy Activity'),
-('Source','AzureSqlSource','Copy Activity'),
-('Sink','ParquetSink','Copy Activity'),
-('inputDatasetReference','','Copy Activity'),
-('outputDatasetReference','','Copy Activity'),
-('parameters','       ""filename"": ""@item().table_name"",                                          ""directory"": ""@item().table_name"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity'),
-('sqlReaderQuery','@concat(''select * from '',''['',item().schema_name,'']'',''.'',''['',item().table_name,'']'')','Copy Activity'),
-('SPName','usp_Log_PipelineStatus','Custom Logging'),
+('InvokedPipelineName','','Execute Pipeline',NULL),
+('condition','','Filter Activity',NULL),
+('inputarray','','Filter Activity',NULL),
+('isSequential','false','For Each Activity',NULL),
+('Metadataactivityname','','Get Metadata Activity',NULL),
+('filedlist','','Get Metadata Activity',NULL),
+('MyDataset','','Get Metadata Activity',NULL),
+('Name_of_the_activity','','If Activity',NULL),
+('LookupActivityname','','Lookup Activity',NULL),
+('query','select SS.Name as Schema_Name, ST.Name as Table_Name FROM SYS.TABLES ST JOIN SYS.SCHEMAS SS ON SS.schema_id= ST.schema_id','Lookup Activity',NULL),
+('dataset','','Lookup Activity',NULL),
+('firstrow','false','Lookup Activity',NULL),
+('foreachactivityname','','For Each Activity',NULL),
+('dependson','','For Each Activity',NULL),
+('dependencyConditions','','For Each Activity',NULL),
+('dependentactivityname','','For Each Activity',NULL),
+('batchCount','20','For Each Activity',NULL),
+('activityjsoncode','','For Each Activity',NULL),
+('dependson','','Lookup Activity',NULL),
+('CopyActivityName','CP_SqlServer_ADLSParquet','Copy Activity','azureSQLDatabase'),
+('Source','AzureSqlSource','Copy Activity','azureSQLDatabase'),
+('Sink','ParquetSink','Copy Activity','azureSQLDatabase'),
+('inputDatasetReference','','Copy Activity','azureSQLDatabase'),
+('outputDatasetReference','','Copy Activity','azureSQLDatabase'),
+('parameters','       ""filename"": ""@item().table_name"",                                          ""directory"": ""@item().table_name"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','azureSQLDatabase'),
+('sqlReaderQuery','@concat(''select * from '',''['',item().schema_name,'']'',''.'',''['',item().table_name,'']'')','Copy Activity','azureSQLDatabase'),
+('SPName','usp_Log_PipelineStatus','Custom Logging',NULL),
 ('SPParameters','   {""In_PipelineName"": {""value"": 
    {""value"": ""@pipeline().Pipeline"",""type"": ""Expression""},                
    ""type"": ""String""                          },                     
@@ -497,13 +513,26 @@ VALUES
    ""type"": ""Datetime""                          },                      
    ""In_ExecutionEndTime"": {                              ""value"": ""@utcnow()"",                    
    ""type"": ""Datetime""                          }    
-                    ','Custom Logging'),
-('MetadataDBLinkedServiceName','','Custom Logging'),
+                    ','Custom Logging',NULL),
+('MetadataDBLinkedServiceName','','Custom Logging',NULL),
+('SPActivityName','','Custom Logging',NULL),
+('dependson','','Custom Logging',NULL),
+('dependencyConditions','','Custom Logging',NULL),
+('dependencyConditions','','Lookup Activity',NULL),
+('CopyActivityName','CP_SqlServer_ADLSParquet','Copy Activity','OnPremiseSQLServer'),
+('Source','AzureSqlSource','Copy Activity','OnPremiseSQLServer'),
+('Sink','ParquetSink','Copy Activity','OnPremiseSQLServer'),
+('inputDatasetReference','','Copy Activity','OnPremiseSQLServer'),
+('outputDatasetReference','','Copy Activity','OnPremiseSQLServer'),
+('parameters','       ""filename"": ""@item().table_name"",                                          ""directory"": ""@item().table_name"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','OnPremiseSQLServer'),
+('sqlReaderQuery','@concat(''select * from '',''['',item().schema_name,'']'',''.'',''['',item().table_name,'']'')','Copy Activity','OnPremiseSQLServer'),
+('CopyActivityName','CP_RESTService_ADLSParquet','Copy Activity','RestService'),
+('Source','RestService','Copy Activity','RestService'),
+('Sink','ParquetSink','Copy Activity','RestService'),
+('inputDatasetReference','','Copy Activity','RestService'),
+('outputDatasetReference','','Copy Activity','RestService'),
+('parameters','filename"": ""output"",                                         ""directory"": ""restserviceoutput"",                                                ""fileformat"": ""json"",                                                ""fileextension"": ""json"",                                ""columnDelimiter"": """"','Copy Activity','RestService')
 
-('SPActivityName','','Custom Logging'),
-('dependson','','Custom Logging'),
-('dependencyConditions','','Custom Logging'),
-('dependencyConditions','','Lookup Activity')
 
 
 MERGE [T_List_Activity_Parameters] AS mrg
@@ -511,6 +540,7 @@ USING (
     SELECT S.*,t.Id FROM @SrcactivityParameters s
     INNER JOIN T_List_Activities t
     ON s.ActivityName = t.[ActivityName]
+    AND s.SourceType = t.SourceType
       ) AS src
 ON mrg.[ActivityId] = src.Id
 AND mrg.ParameterName = src.ParameterName
@@ -520,6 +550,7 @@ WHEN NOT MATCHED THEN
 INSERT (ParameterName
            ,ParameterValue
            ,[ActivityId]
+           
            )
 VALUES(src.ParameterName
            ,src.ParameterValue

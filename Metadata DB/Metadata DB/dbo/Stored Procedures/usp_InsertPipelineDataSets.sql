@@ -1,5 +1,6 @@
 ﻿
-CREATE PROCEDURE usp_InsertPipelineDataSets
+
+CREATE PROCEDURE [dbo].[usp_InsertPipelineDataSets]
 (@LinkedServiceName NVARCHAR(200),@LinkedServiceId INT,@PipelineId INT,@AdditionalConfigurationType NVARCHAR(100) = '',@AdditionalConfigurationValue NVARCHAR(100)='')
 AS
 BEGIN
@@ -13,4 +14,6 @@ AND ISNULL(tld.AdditionalConfigurationType,'')=@AdditionalConfigurationType
 AND ISNULL(tld.AdditionalConfigurationValue,'')=@AdditionalConfigurationValue
 
 END
+GO
+
 

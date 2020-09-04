@@ -6,6 +6,7 @@
     [code]                 VARCHAR (8000) NULL,
     [linkedserverrequired] CHAR (3)       NULL,
     [datasetrequired]      CHAR (3)       NULL,
+    SourceType        VARCHAR(200) NULL,
     PRIMARY KEY CLUSTERED ([id] ASC)
 );
 

@@ -1,4 +1,5 @@
-﻿CREATE procedure [dbo].[final_execution_ps_new] 
+﻿
+CREATE procedure [dbo].[final_execution_ps_new] 
  (@PipelineId INT)
 as
 
@@ -133,10 +134,10 @@ insert into @ActivityJsoncode select  'New-AzDataFactoryV2Pipeline -DataFactoryN
 
 --select * from @DataSetJsoncode
 IF (Select MAX(EmailNotificationEnabled) From T_Pipelines_steps) =1
-SELECT *
+SELECT Parameter
 FROM (
 		select '$pipelinename = "'+ @pipelinename +'"' AS Parameter,0 AS ID, 'MasterParameterList' AS DescType 
-	   union all
+	    union all
 		select ParameterName+' = '+ ParameterValue AS Parameter,ID, 'MasterParameterList' AS DescType from T_Master_Parameters_List
 		--union all
 		--Select '#Pass values to Linked Service Parameters',0,'comments'
@@ -182,7 +183,7 @@ ORDER BY CASE WHEN DescType Like '%MasterParameterList%' THEN 1
 
 
 ELSE
-SELECT *
+SELECT Parameter
 FROM (  
        select '$pipelinename = "'+ @pipelinename +'"' AS Parameter,0 AS ID, 'MasterParameterList' AS DescType 
 	   union all

@@ -60,14 +60,9 @@
     <Folder Include="Audit\Tables\" />
     <Folder Include="dbo\" />
     <Folder Include="dbo\Tables\" />
-    <Folder Include="procfwk\" />
-    <Folder Include="procfwk\Tables\" />
     <Folder Include="dbo\Views\" />
-    <Folder Include="procfwk\Views\" />
     <Folder Include="Security\" />
     <Folder Include="dbo\Stored Procedures\" />
-    <Folder Include="procfwk\Stored Procedures\" />
-    <Folder Include="procfwk\Synonyms\" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Audit\Tables\ExceptionLogDetails.sql">
@@ -76,13 +71,9 @@
     <Build Include="Audit\Tables\PipelineStatusDetails.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="dbo\Tables\Log_DataFeedRepository.sql" />
-    <Build Include="dbo\Tables\Log_DBX_DataValidations_ErrorDetails.sql" />
-    <Build Include="dbo\Tables\Scale_resources.sql" />
     <Build Include="dbo\Tables\ServicePrincipals.sql" />
     <Build Include="dbo\Tables\T_ChildPipelines_Activities.sql" />
     <Build Include="dbo\Tables\T_Columns.sql" />
-    <Build Include="dbo\Tables\T_Components.sql" />
     <Build Include="dbo\Tables\T_ConfigurationDetails.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
@@ -96,7 +87,6 @@
     </Build>
     <Build Include="dbo\Tables\T_LinkedServices.sql" />
     <Build Include="dbo\Tables\T_List_Activities.sql" />
-    <Build Include="dbo\Tables\t_list_activities_bkup.sql" />
     <Build Include="dbo\Tables\T_List_Activities_config.sql" />
     <Build Include="dbo\Tables\T_List_Activity_Parameters.sql">
       <AnsiNulls>Off</AnsiNulls>
@@ -148,30 +138,6 @@
     <Build Include="dbo\Tables\T_Pipelines_steps.sql" />
     <Build Include="dbo\Tables\T_SourceDataSet.sql" />
     <Build Include="dbo\Tables\T_Tables.sql" />
-    <Build Include="dbo\Tables\TBL_DataSource_List_table.sql" />
-    <Build Include="dbo\Tables\TBL_DataSource_load_Tables.sql" />
-    <Build Include="dbo\Tables\TBL_DataSource_load_Tables_Columns_Scripts.sql" />
-    <Build Include="dbo\Tables\tbl_List_Data_Sources.sql" />
-    <Build Include="dbo\Tables\TBL_LookUp_Range.sql" />
-    <Build Include="dbo\Tables\TBL_Start_Load.sql" />
-    <Build Include="dbo\Tables\TBL_Teradata_Load_Tables_Reconcile.sql" />
-    <Build Include="dbo\Tables\TBL_Teradata_load_Tables_Scripts.sql" />
-    <Build Include="dbo\Tables\TBL_Teradata_query.sql" />
-    <Build Include="dbo\Tables\TBL_Teradata_Table_Indices.sql" />
-    <Build Include="dbo\Tables\TBL_Teradata_to_SQL_Datatype.sql" />
-    <Build Include="dbo\Tables\TBL_UpScale_DownScale_DWU.sql" />
-    <Build Include="procfwk\Tables\CurrentExecution.sql" />
-    <Build Include="procfwk\Tables\DataFactorys.sql" />
-    <Build Include="procfwk\Tables\ExecutionLog.sql" />
-    <Build Include="procfwk\Tables\PipelineAuthLink.sql" />
-    <Build Include="procfwk\Tables\PipelineParameters.sql" />
-    <Build Include="procfwk\Tables\Pipelines.sql" />
-    <Build Include="procfwk\Tables\Properties.sql" />
-    <Build Include="procfwk\Tables\Stages.sql" />
-    <Build Include="dbo\Views\vw_ProcessQualifiedFiles.sql" />
-    <Build Include="dbo\Views\vw_ProcessRawFiles.sql" />
-    <Build Include="procfwk\Views\CurrentProperties.sql" />
-    <Build Include="procfwk\Views\LastExecution.sql" />
     <Build Include="dbo\Stored Procedures\FailProcedure.sql" />
     <Build Include="dbo\Stored Procedures\final_execution_ps_new.sql" />
     <Build Include="dbo\Stored Procedures\SetRandomWaitValues.sql" />
@@ -189,38 +155,13 @@
     <Build Include="dbo\Stored Procedures\usp_return_activitycode.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="dbo\Stored Procedures\USP_TABLE_CREATION.sql" />
     <Build Include="dbo\Stored Procedures\usp_TruncateParameterTables.sql" />
     <Build Include="dbo\Stored Procedures\usp_Update_PipelineStatus.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="procfwk\Stored Procedures\AddProperty.sql" />
-    <Build Include="procfwk\Stored Procedures\AddServicePrincipal.sql" />
-    <Build Include="procfwk\Stored Procedures\CheckForBlockedPipelines.sql" />
-    <Build Include="procfwk\Stored Procedures\CheckMetadataIntegrity.sql" />
-    <Build Include="procfwk\Stored Procedures\CheckStageAndPiplineIntegrity.sql" />
-    <Build Include="procfwk\Stored Procedures\CreateNewExecution.sql" />
-    <Build Include="procfwk\Stored Procedures\DeleteServicePrincipal.sql" />
-    <Build Include="procfwk\Stored Procedures\ExecutionWrapper.sql" />
-    <Build Include="procfwk\Stored Procedures\GetPipelineParameters.sql" />
-    <Build Include="procfwk\Stored Procedures\GetPipelinesInStage.sql" />
-    <Build Include="procfwk\Stored Procedures\GetPropertyValue.sql" />
-    <Build Include="procfwk\Stored Procedures\GetServicePrincipal.sql" />
-    <Build Include="procfwk\Stored Procedures\GetStages.sql" />
-    <Build Include="procfwk\Stored Procedures\ResetExecution.sql" />
-    <Build Include="procfwk\Stored Procedures\SetLogActivityFailed.sql" />
-    <Build Include="procfwk\Stored Procedures\SetLogPipelineFailed.sql" />
-    <Build Include="procfwk\Stored Procedures\SetLogPipelineRunning.sql" />
-    <Build Include="procfwk\Stored Procedures\SetLogPipelineSuccess.sql" />
-    <Build Include="procfwk\Stored Procedures\SetLogPipelineUnknown.sql" />
-    <Build Include="procfwk\Stored Procedures\SetLogStagePreparing.sql" />
-    <Build Include="procfwk\Stored Procedures\UpdateExecutionLog.sql" />
     <Build Include="Security\Audit.sql" />
     <Build Include="Security\config.sql" />
     <Build Include="Security\procfwk.sql" />
-    <Build Include="procfwk\Synonyms\DataFactoryDetails.sql" />
-    <Build Include="procfwk\Synonyms\PipelineProcesses.sql" />
-    <Build Include="procfwk\Synonyms\ProcessingStageDetails.sql" />
     <Build Include="dbo\Stored Procedures\usp_InsertPipelineDetails.sql" />
     <Build Include="dbo\Stored Procedures\usp_UpdateMasterParametersList.sql" />
     <Build Include="dbo\Stored Procedures\usp_InsertPipelineLinkedServiceDetails.sql" />
@@ -231,6 +172,7 @@
     <Build Include="dbo\Stored Procedures\usp_updatepipelineactivityparameters.sql" />
     <Build Include="dbo\Stored Procedures\usp_InsertPipelineTablesToBeMoved.sql" />
     <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_LinkedServiceParameters.sql" />
+    <Build Include="dbo\Stored Procedures\usp_UpdatePipelineDataSetParameters.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Script.PostDeployment1.sql" />
