@@ -368,7 +368,6 @@ VALUES
 ('$fileformat','','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
 ('$fileextension','','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
 ('$ColumnDelimiter',',','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
-('$azureSqlDatabaseDatasetName','','azureSqlDatabaseDataset',NULL,NULL),
 ('$azureSqlDatabaseLinkedServiceName','','azureSqlDatabaseDataset',NULL,NULL),
 ('$azureSQLDatabasewithManagedIdentityDatasetName','','azureSQLDatabasewithManagedIdentityDataset',NULL,NULL),
 ('$azureSQLDatabasewithManagedIdentityLinkedServiceName','','azureSQLDatabasewithManagedIdentityDataset',NULL,NULL),
@@ -533,7 +532,7 @@ USING (
     SELECT S.*,t.ActivityId AS Id FROM @SrcactivityParameters s
     INNER JOIN T_List_Activities t
     ON s.ActivityName = t.[ActivityName]
-    AND s.SourceType = t.SourceType
+    AND ISNULL(s.SourceType,'') = ISNULL(t.SourceType,'')
       ) AS src
 ON mrg.[ActivityId] = src.Id
 AND mrg.ParameterName = src.ParameterName
