@@ -135,7 +135,7 @@
     <Build Include="dbo\Tables\t_pipeline_tables_tobemoved.sql" />
     <Build Include="dbo\Tables\T_PipelineParameters.sql" />
     <Build Include="dbo\Tables\T_Pipelines.sql" />
-    <Build Include="dbo\Tables\T_Pipelines_steps.sql" />
+    <Build Include="dbo\Tables\T_Pipeline_Activities.sql" />
     <Build Include="dbo\Tables\T_SourceDataSet.sql" />
     <Build Include="dbo\Tables\T_Tables.sql" />
     <Build Include="dbo\Stored Procedures\FailProcedure.sql" />
