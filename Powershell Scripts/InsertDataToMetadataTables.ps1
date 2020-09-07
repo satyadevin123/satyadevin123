@@ -102,8 +102,8 @@ Param([int]$PipelineId,[String]$LinkedServiceType,[int]$LinkedServiceId,[String]
     Write-Host "EXEC usp_InsertPipelineDataSets '$LinkedServiceType',$LinkedServiceId,$PipelineId,'$AdditionalType','$AdditionalVal'"
            Sql-Execute -Qry "EXEC usp_InsertPipelineDataSets '$LinkedServiceType',$LinkedServiceId,$PipelineId,'$AdditionalType','$AdditionalVal'" -Qrydetails  "Insert datasets for metadata db"
             
-            $SqlCmd.CommandText = "SELECT MAX(Id) FROM [T_Pipeline_DataSets] "
-            $dataset_id = Sql-ExecuteScalar -Qry "SELECT MAX(Id) FROM [T_Pipeline_DataSets] " -Qrydetails "max dataset id"
+            $SqlCmd.CommandText = "SELECT MAX(PipelineDatasetId) FROM [T_Pipeline_DataSets] "
+            $dataset_id = Sql-ExecuteScalar -Qry "SELECT MAX(PipelineDatasetId) FROM [T_Pipeline_DataSets] " -Qrydetails "max dataset id"
             Write-Host  "EXEC usp_InsertPipelineDataSetParameters $LinkedServiceId,$dataset_id,$PipelineId"
             Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters $LinkedServiceId,$dataset_id,$PipelineId" -Qrydetails  "Insert dataset parameters for metadata db"
             
@@ -152,7 +152,7 @@ Param([int]$PipelineId,[String]$LinkedServiceType,[String]$resourceGroupName,[st
     $QryDetails = "Insert the $LinkedServiceType details to T_Pipeline_LinkedServices table"
     Write-Host $QryDetails
     Sql-Execute -Qry $Qry -Qrydetails $QryDetails 
-    $SqlCmd.CommandText = "SELECT MAX(Id) FROM [T_Pipeline_LinkedServices] "
+    $SqlCmd.CommandText = "SELECT MAX(PipelineLinkedServicesId) FROM [T_Pipeline_LinkedServices] "
     $linkedservice_id = $SqlCmd.ExecuteScalar()
     $linkedservicename = '"LS_POC_'+$LinkedServiceType+'_'+$linkedservice_id +'"'
     Write-Host "EXEC [dbo].[usp_Insert_Pipeline_LinkedServiceParameters] $linkedservice_id, $pipelineid,'$ir'"
@@ -205,7 +205,7 @@ Log-Message "End :  Opening Connection to Metadata database"
     {
         $pipelinename = $ppdetail.Name
         Sql-Execute -Qry "EXEC usp_InsertPipelineDetails '$pipelinename'" -Qrydetails "Insert pipeline details in T_Pipelines table"
-        $pipelineid = Sql-ExecuteScalar -Qry "SELECT MAX(Id) FROM [T_Pipelines] " -Qrydetails "max pipeline id"
+        $pipelineid = Sql-ExecuteScalar -Qry "SELECT MAX(PipelineId) FROM [T_Pipelines] " -Qrydetails "max pipeline id"
         <#start - Insert linked service for the key vault#>
         $out = Insert-LinkedServicesAndParameters -PipelineId $pipelineid -LinkedServiceType 'azurekeyvault' -resourceGroupName $resourceGroupName -AuthenticationType 'Managed Identity' -ir $irname
         $kvlinkedserviceid = $out.id
@@ -324,11 +324,11 @@ Log-Message "End :  Opening Connection to Metadata database"
             $dsparamval1 = 'DS_POC_'+$type+'_'+$linkedservice_id
             $cpactparamname = '$CP_'+$linkedservicename.Replace('"','')+'_'+$sinklinkedservicename.Replace('"','')+"_inputDatasetReference"
             $SqlCmd.CommandText = "UPDATE tap set tap.Parametervalue = '$dsparamval1' FROM dbo.T_Pipeline_Activity_Parameters tap INNER JOIN
-             dbo.T_Pipelines_steps tps ON tap.PipelineActivityId = tps.id WHERE ParameterName = '$cpactparamname' and tap.pipelineid = $pipelineid and tps.Activityname = 'CP_$lssls' "
+             dbo.T_Pipeline_Activities tps ON tap.PipelineActivityId = tps.PipelineStepsid WHERE ParameterName = '$cpactparamname' and tap.pipelineid = $pipelineid and tps.Activityname = 'CP_$lssls' "
             $SqlCmd.ExecuteNonQuery()
             $cpactparamname = '$CP_'+$linkedservicename.Replace('"','')+'_'+$sinklinkedservicename.Replace('"','')+"_outputDatasetReference"
             $outref = 'DS_POC_'+$sinkdetail.Type+ '_'+$sinklinkedservice_id
-            $SqlCmd.CommandText = "UPDATE tap set tap.Parametervalue = '$outref' FROM dbo.T_Pipeline_Activity_Parameters tap INNER JOIN dbo.T_Pipelines_steps tps ON tap.PipelineActivityId = tps.id WHERE ParameterName = '$cpactparamname' and tap.pipelineid = $pipelineid and tps.Activityname = 'CP_$lssls' "
+            $SqlCmd.CommandText = "UPDATE tap set tap.Parametervalue = '$outref' FROM dbo.T_Pipeline_Activity_Parameters tap INNER JOIN dbo.T_Pipeline_Activities tps ON tap.PipelineActivityId = tps.Pipelinestepsid WHERE ParameterName = '$cpactparamname' and tap.pipelineid = $pipelineid and tps.Activityname = 'CP_$lssls' "
             $SqlCmd.ExecuteNonQuery()
             foreach($tbldetail in $srcdetail.Tables.Table)
             {
@@ -357,7 +357,7 @@ Log-Message "End :  Opening Connection to Metadata database"
 
 catch
 {
-
+Write-host $error
 Add-Content $LogFilePath $error
 Add-Content $LogFilePath "Script failed with errors. Please check log file"
 Write-Host "Deployment Failed with Errors. Please refer log file"
