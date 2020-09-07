@@ -89,14 +89,7 @@ VALUES(src.MasterPipelineName
            ,src.JsonCode
            );
 
-
-
 Print 'End - Inserting data to master pipelines table'
-GO
-
-Print 'Start - Inserting data to master pipelines parameters table'
-
-
 
 DECLARE @SrcMasterPipelinesparams as TABLE
 (ParameterName NVARCHAR(255), ParameterValue VARCHAR (MAX),MasterPipelineName NVARCHAR(255))
@@ -115,7 +108,7 @@ VALUES
 
 
 MERGE [T_Master_Pipelines_Parameters_List] AS mrg
-USING (SELECT s.*,m.Id FROM @SrcMasterPipelinesparams s 
+USING (SELECT s.*,m.MasterPipelineId as Id FROM @SrcMasterPipelinesparams s 
     INNER JOIN 
     T_Master_Pipelines m 
     on s.MasterPipelineName = m.MasterPipelineName
@@ -141,28 +134,28 @@ GO
 Print 'Start - Inserting data to list datasources table'
 
 DECLARE @SrcDataSources as TABLE
-( DataSource_name NVARCHAR(255), created_date date,source_Type VARCHAR(100),source_metadata_query varchar(max))
+( DataSourcename NVARCHAR(255), created_date date,sourceType VARCHAR(100),sourcemetadataquery varchar(max))
 
 INSERT INTO @SrcDataSources
-( DataSource_name,created_date,source_Type,source_metadata_query)
+( DataSourcename,created_date,sourceType,sourcemetadataquery)
 VALUES
 ('On Premise SQLServer',getdate(),'SqlServer','DECLARE @version VARCHAR(1000) =            (                SELECT @@version            );    DECLARE @Tables TABLE    (        sql_ServerName NVARCHAR(128),        sql_TableSchema_type NVARCHAR(128),        sql_TableName_Full NVARCHAR(256),        sql_Table_Catalog NVARCHAR(128),        sql_Table_Schema NVARCHAR(128),        sql_Table_Name NVARCHAR(128),        sql_Column_Name NVARCHAR(128),        sql_Ordinal_Position INT,        sql_Is_Nullable VARCHAR(3),        sql_Data_Type NVARCHAR(128),        sql_Character_Maximum_Length INT,        sql_isPrimaryKey INT    );        INSERT INTO @Tables    (        sql_ServerName ,        sql_TableSchema_type ,        sql_TableName_Full ,        sql_TABLE_CATALOG,        sql_TABLE_SCHEMA ,        sql_TABLE_NAME ,        sql_Column_Name  ,        sql_Ordinal_Position ,        sql_Is_Nullable ,        sql_Data_Type  ,        sql_Character_Maximum_Length,     sql_isPrimaryKey      )      SELECT DISTINCT           @@SERVERNAME src_ServerName,           t.type_desc AS src_TableSchema_type,           ''['' + s.name + '']'' + ''.['' + t.name + '']'' COLLATE DATABASE_DEFAULT AS src_TableName_Full,           c.TABLE_CATALOG,           c.TABLE_SCHEMA,           c.TABLE_NAME,           c.COLUMN_NAME,           c.ORDINAL_POSITION,           c.IS_NULLABLE,           c.DATA_TYPE,           c.CHARACTER_MAXIMUM_LENGTH,           ISNULL(CAST(ix.is_primary_key AS INT), 0) is_primary_key               FROM    (        SELECT name,               type_desc,               schema_id,               t.object_id        FROM sys.tables t        UNION        SELECT name,               type_desc,               schema_id,               v.object_id        FROM sys.views v    ) t        JOIN sys.schemas s            ON t.schema_id = s.schema_id        JOIN INFORMATION_SCHEMA.COLUMNS c            ON c.TABLE_NAME = t.name COLLATE DATABASE_DEFAULT               AND c.TABLE_SCHEMA = s.name        JOIN sys.columns co            ON co.object_id = t.object_id               AND co.name = c.COLUMN_NAME        JOIN sys.types ty            ON co.user_type_id = ty.user_type_id        LEFT JOIN        (            SELECT ic.object_id,                   ic.index_id,                   ic.index_column_id,                   ic.column_id,                   i.is_primary_key            FROM sys.index_columns ic                JOIN sys.indexes i                    ON i.index_id = ic.index_id                       AND i.object_id = ic.object_id            WHERE  i.is_primary_key = 1        ) ix            ON ix.object_id = co.object_id               AND ix.column_id = co.column_id    WHERE c.TABLE_CATALOG NOT IN ( ''master'', ''tempdb'', ''msdb'', ''model'' )    SELECT * FROM @Tables ;'),
 ('AzureDataLakeStorageV2',getdate(),'ADLSV2','')
 
 MERGE [T_List_DataSources] AS mrg
 USING (SELECT * FROM @SrcDataSources) AS src
-ON mrg.DataSource_name = src.DataSource_name
-AND mrg.source_Type = src.source_Type
+ON mrg.DataSourceName = src.DataSourceName
+AND mrg.SourceType = src.SourceType
 WHEN MATCHED THEN 
-   UPDATE SET mrg.source_metadata_query = src.source_metadata_query
+   UPDATE SET mrg.[SourceMetadataQuery] = src.SourceMetadataQuery
 WHEN NOT MATCHED THEN
-INSERT (DataSource_name
-           ,source_Type
-           ,source_metadata_query
+INSERT ([DataSourceName]
+           ,[SourceType]
+           ,[SourceMetadataQuery]
            )
-VALUES(src.DataSource_name
-           ,src.source_Type
-           ,src.source_metadata_query
+VALUES(src.DataSourceName
+           ,src.SourceType
+           ,src.SourceMetadataQuery
            );
 
 Print 'End - Inserting data to list datasources table'
@@ -171,10 +164,10 @@ GO
 Print 'Start - Inserting data to list linkedservices table'
 
 DECLARE @SrcLinkedServices as TABLE
-( LinkedService_Name VARCHAR(100), Jsoncode VARCHAR(4000),AuthenticationType VARCHAR(200),KeyVaultReferenceReq INT)
+( LinkedServiceName VARCHAR(100), Jsoncode VARCHAR(4000),AuthenticationType VARCHAR(200),KeyVaultReferenceReq INT)
 
 INSERT INTO @SrcLinkedServices
-( LinkedService_Name,Jsoncode,AuthenticationType,KeyVaultReferenceReq)
+( LinkedServiceName,Jsoncode,AuthenticationType,KeyVaultReferenceReq)
 VALUES
 ('azureSQLDatabase',' 
 	 {
@@ -206,18 +199,18 @@ VALUES
 ('RestService','    {      "name": "RestService1",      "type": "Microsoft.DataFactory/factories/linkedservices",      "properties": {          "annotations": [],          "type": "RestService",          "typeProperties": {              "url": "$restapiurl" ,         "enableServerCertificateValidation": true,              "authenticationType": "Anonymous"          }      }  }  ','Anonymous',0)
 MERGE [T_List_LinkedServices] AS mrg
 USING (SELECT * FROM @SrcLinkedServices) AS src
-ON mrg.LinkedService_Name = src.LinkedService_Name
+ON mrg.LinkedServiceName = src.LinkedServiceName
 AND mrg.AuthenticationType = src.AuthenticationType
 WHEN MATCHED THEN 
    UPDATE SET mrg.Jsoncode = src.Jsoncode,
    mrg.KeyVaultReferenceReq = src.KeyVaultReferenceReq
 WHEN NOT MATCHED THEN
-INSERT (LinkedService_Name
+INSERT ([LinkedServiceName]
            ,Jsoncode
 		   ,AuthenticationType
 		   ,KeyVaultReferenceReq
            )
-VALUES(src.LinkedService_Name
+VALUES(src.LinkedServiceName
            ,src.Jsoncode
 		   ,src.AuthenticationType
 		   ,src.KeyVaultReferenceReq
@@ -272,9 +265,9 @@ VALUES
 
 MERGE [T_List_LinkedService_Parameters] AS mrg
 USING (
-    SELECT S.*,t.Id FROM @SrcLinkedServicesParameters s
+    SELECT S.*,t.LinkedServiceId as Id FROM @SrcLinkedServicesParameters s
     INNER JOIN T_List_LinkedServices t
-    ON s.LinkedServiceName = t.[LinkedService_Name]
+    ON s.LinkedServiceName = t.[LinkedServiceName]
       ) AS src
 ON mrg.[LinkedServiceId] = src.Id
 AND mrg.ParameterName = src.ParameterName
@@ -297,13 +290,13 @@ Print 'Start - Inserting data to list datasets table'
 
 
 DECLARE @SrcDatasets as TABLE
-( [DataSet_name] NVARCHAR (255), [LinkedServiceName] NVARCHAR (255),
+( [DataSetName] NVARCHAR (255), [LinkedServiceName] NVARCHAR (255),
     [Jsoncode] VARCHAR(8000)
     ,[DataSetStandardName] nvarchar(200),
     [AdditionalConfigurationType] nvarchar(100),[AdditionalConfigurationValue] nvarchar(100))
 
 INSERT INTO @SrcDatasets
-( [DataSet_name],[LinkedServiceName],Jsoncode,[DataSetStandardName],[AdditionalConfigurationType],[AdditionalConfigurationValue])
+( [DataSetName],[LinkedServiceName],Jsoncode,[DataSetStandardName],[AdditionalConfigurationType],[AdditionalConfigurationValue])
 VALUES
 ('azureSqlDatabaseDataset','azureSQLDatabase','{"name": "$azureSqlDatabaseDatasetName","properties": {"type": "AzureSqlTable","linkedServiceName": {"referenceName": "$azureSqlDatabaseLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','azureSqlDatabaseDataset',NULL,NULL),
 ('azureSqlDataWarehouseDataset','azureSQLDataWarehouse','{"name": "$azureSqlDWDatasetName","properties": {"type": "AzureSqlDWTable","linkedServiceName": {"referenceName": "$azureSqlDataWarehouseLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','azureSqlDataWarehouseDataset',NULL,NULL),
@@ -318,26 +311,26 @@ VALUES
 
 
 MERGE [T_List_DataSets] AS mrg
-USING (SELECT s.*,l.Id FROM @SrcDatasets s
+USING (SELECT s.*,l.LinkedServiceId as Id FROM @SrcDatasets s
     INNER JOIN T_List_LinkedServices l
-    ON s.[LinkedServiceName] = l.[LinkedService_Name]
+    ON s.[LinkedServiceName] = l.[LinkedServiceName]
     ) AS src
-ON mrg.[LinkedService_id] = src.Id
-AND mrg.[DataSet_name] = src.[DataSet_name]
+ON mrg.[LinkedServiceid] = src.Id
+AND mrg.[DataSetName] = src.[DataSetName]
 AND ISNULL(mrg.[AdditionalConfigurationType],'') = ISNULL(src.[AdditionalConfigurationType],'')
 AND ISNULL(mrg.[AdditionalConfigurationValue],'') = ISNULL(src.[AdditionalConfigurationValue],'')
 WHEN MATCHED THEN 
    UPDATE SET mrg.Jsoncode = src.Jsoncode,
    mrg.[DataSetStandardName] = src.[DataSetStandardName]
 WHEN NOT MATCHED THEN
-INSERT ([DataSet_name],
-[LinkedService_id],
+INSERT ([DataSetName],
+[LinkedServiceId],
            Jsoncode,
            [DataSetStandardName],
            [AdditionalConfigurationType],
            [AdditionalConfigurationValue]
            )
-VALUES(src.[DataSet_name]
+VALUES(src.[DataSetName]
 ,src.Id
            ,src.Jsoncode
            ,src.[DataSetStandardName]
@@ -386,9 +379,9 @@ VALUES
 
 MERGE [T_List_Dataset_Parameters] AS mrg
 USING (
-    SELECT S.*,t.Id FROM @SrcdatasetParameters s
-    INNER JOIN T_List_Datasets t
-    ON s.DatasetName = t.[DataSet_name]
+    SELECT S.*,t.DataSetId AS Id FROM @SrcdatasetParameters s
+    INNER JOIN T_List_Datasets t 
+    ON s.DatasetName = t.[DataSetName]
     AND ISNULL(s.[AdditionalConfigurationType],'') = ISNULL(t.[AdditionalConfigurationType],'')
     AND ISNULL(s.[AdditionalConfigurationValue],'') = ISNULL(t.[AdditionalConfigurationValue],'')
       ) AS src
@@ -423,7 +416,7 @@ INSERT INTO @SrcActivities
 ( ActivityName,ActivityStandardName,Enabled,code,linkedserverrequired,datasetrequired,SourceType)
 VALUES
 ('Execute Pipeline','Exe_Pipeline',1,'{                  "name": "ExecutePipelineActivity",                  "type": "ExecutePipeline",                  "typeProperties": {                      "parameters": {                                                  "mySourceDatasetFolderPath": {                              "value": "@pipeline().parameters.mySourceDatasetFolderPath",                              "type": "Expression"                          }                      },                      "pipeline": {                          "referenceName": "<InvokedPipelineName>",                          "type": "PipelineReference"                      },                      "waitOnCompletion": true                   }              }          ],          "parameters": [              {                  "mySourceDatasetFolderPath": {                      "type": "String"                  }              }',NULL,NULL,NULL),
-('Lookup Activity','LKP_DataSource_Name',1,'     {                  "name": "$LookupActivityname",                  "type": "Lookup",                      "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],                  "policy": {                      "timeout": "7.00:00:00",                      "retry": 0,                      "retryIntervalInSeconds": 30,                      "secureOutput": false,                      "secureInput": false                  },                  "userProperties": [],                  "typeProperties": {                      "source": {                          "type": "AzureSqlSource",                          "sqlReaderQuery": {                              "value": "$query",                              "type": "Expression"                          },                          "queryTimeout": "02:00:00"                      },                      "dataset": {                          "referenceName": "$dataset",                          "type": "DatasetReference"                      },       "firstRowOnly": $firstrow                  }              }       ',NULL,1,NULL),
+('Lookup Activity','LKP_DataSourceName',1,'     {                  "name": "$LookupActivityname",                  "type": "Lookup",                      "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],                  "policy": {                      "timeout": "7.00:00:00",                      "retry": 0,                      "retryIntervalInSeconds": 30,                      "secureOutput": false,                      "secureInput": false                  },                  "userProperties": [],                  "typeProperties": {                      "source": {                          "type": "AzureSqlSource",                          "sqlReaderQuery": {                              "value": "$query",                              "type": "Expression"                          },                          "queryTimeout": "02:00:00"                      },                      "dataset": {                          "referenceName": "$dataset",                          "type": "DatasetReference"                      },       "firstRowOnly": $firstrow                  }              }       ',NULL,1,NULL),
 ('Copy Activity','CP_DataSource_DataDestination',1,'{"name": "$CopyActivityName","type": "Copy","dependsOn": [],"policy": {    "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},"userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "sqlReaderQuery": {            "value": "$sqlReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },    "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }',NULL,1,'azureSQLDatabase'),
 ('For Each Activity','ForEachActivity',1,'   {                  "name": "$foreachactivityname",                  "type": "ForEach",                  "dependsOn": [                      {                          "activity": "$dependson",                          "dependencyConditions": [                              "$dependencyConditions"                          ]                      }                  ],                  "userProperties": [],                  "typeProperties": {                      "items": {                          "value": "@activity(''$dependentactivityname'').output.value",                          "type": "Expression"                      },                      "batchCount": $batchCount,       "isSequential": $isSequential,       "activities": [$activityjsoncode]                         }              }',NULL,NULL,NULL),
 ('Custom Logging','SP_Custom_Logging',1,'   {      "name": "$SPActivityName",      "description":"Description",      "type": "SqlServerStoredProcedure",     "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],     "linkedServiceName": {          "referenceName": "$MetadataDBLinkedServiceName",       "type": "LinkedServiceReference"      },      "typeProperties": {              "storedProcedureName": "$SPName",          "storedProcedureParameters": $SPParameters            }      }  }','1',NULL,NULL),
@@ -438,7 +431,7 @@ AND ISNULL(mrg.SourceType,'') = ISNULL(src.SourceType,'')
 WHEN MATCHED THEN 
    UPDATE SET mrg.ActivityStandardName = src.ActivityStandardName,
    mrg.Enabled = src.Enabled,
-   mrg.code = src.code,
+   mrg.[JsonCode] = src.code,
    mrg.linkedserverrequired = src.linkedserverrequired,
    mrg.datasetrequired = src.datasetrequired,
    mrg.SourceType = src.SourceType
@@ -446,7 +439,7 @@ WHEN NOT MATCHED THEN
 INSERT (ActivityName,
 ActivityStandardName,
            Enabled,
-           code,
+           [JsonCode],
            linkedserverrequired,
            datasetrequired,
            SourceType
@@ -537,7 +530,7 @@ VALUES
 
 MERGE [T_List_Activity_Parameters] AS mrg
 USING (
-    SELECT S.*,t.Id FROM @SrcactivityParameters s
+    SELECT S.*,t.ActivityId AS Id FROM @SrcactivityParameters s
     INNER JOIN T_List_Activities t
     ON s.ActivityName = t.[ActivityName]
     AND s.SourceType = t.SourceType

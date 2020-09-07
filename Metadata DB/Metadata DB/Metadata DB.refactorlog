@@ -1,0 +1,262 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Operations Version="1.0" xmlns="http://schemas.microsoft.com/sqlserver/dac/Serialization/2012/02">
+  <Operation Name="Rename Refactor" Key="ac946870-9e34-4c8f-bf23-47c5c49b0759" ChangeDateTime="09/07/2020 05:13:51">
+    <Property Name="ElementName" Value="[dbo].[T_Master_Parameters_List].[Id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Master_Parameters_List]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[ParameterId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="ab41af3e-3bd9-4e1a-94f3-6311cdd8ecce" ChangeDateTime="09/07/2020 05:16:07">
+    <Property Name="ElementName" Value="[dbo].[T_Master_Parameters_List].[ParameterId]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Master_Parameters_List]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[MasterParameterId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="54194c3e-7fea-42df-9549-f4e9a7ae45d9" ChangeDateTime="09/07/2020 05:17:10">
+    <Property Name="ElementName" Value="[dbo].[T_Master_Pipelines].[id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Master_Pipelines]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[MasterPipelineId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="a721154e-0df5-4425-9ad2-693c758e68c2" ChangeDateTime="09/07/2020 05:18:37">
+    <Property Name="ElementName" Value="[dbo].[T_Master_Pipelines_Parameters_List].[Id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Master_Pipelines_Parameters_List]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[MasterParameterPipelineId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="ea501b0e-0d24-4e10-9b0a-a7bae02ab8d2" ChangeDateTime="09/07/2020 05:22:24">
+    <Property Name="ElementName" Value="[dbo].[T_Pipelines].[id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Pipelines]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[PipelineId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="78ed5aaa-e5f1-43b8-af6f-e45aa247cc33" ChangeDateTime="09/07/2020 05:38:17">
+    <Property Name="ElementName" Value="[dbo].[t_pipeline_tables_tobemoved].[id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[t_pipeline_tables_tobemoved]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[PipelineSourceId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="291ebb39-c013-4f55-9db3-2d3e7845c054" ChangeDateTime="09/07/2020 05:38:47">
+    <Property Name="ElementName" Value="[dbo].[t_pipeline_tables_tobemoved].[Table_Name]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[t_pipeline_tables_tobemoved]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[TableName]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="86b52799-2809-4b61-b130-1f6f564a387d" ChangeDateTime="09/07/2020 05:39:00">
+    <Property Name="ElementName" Value="[dbo].[t_pipeline_tables_tobemoved].[Schema_Name]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[t_pipeline_tables_tobemoved]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[SchemaName]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="9aa945bf-b63c-4806-a178-fc9a06fdaf33" ChangeDateTime="09/07/2020 05:40:44">
+    <Property Name="ElementName" Value="[dbo].[T_Pipelines_steps].[id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Pipelines_steps]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[PipelineStepsId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="f035eafa-12a9-4a7d-b95b-fe795f0d9bc4" ChangeDateTime="09/07/2020 05:41:06">
+    <Property Name="ElementName" Value="[dbo].[T_Pipelines_steps].[Activity_ID]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Pipelines_steps]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[ActivityID]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="5fe0aeb4-a6a8-459f-9221-3335c0bc1191" ChangeDateTime="09/07/2020 05:41:21">
+    <Property Name="ElementName" Value="[dbo].[T_Pipelines_steps].[Child_Activity]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Pipelines_steps]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[ChildActivity]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="45ec4a4e-6057-4e59-9529-d0e073d6a30b" ChangeDateTime="09/07/2020 05:43:13">
+    <Property Name="ElementName" Value="[dbo].[T_Pipeline_DataSets].[Id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Pipeline_DataSets]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[PipelineDatasetId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="20211f75-6ff0-4cca-89ab-92e5a9330637" ChangeDateTime="09/07/2020 05:46:01">
+    <Property Name="ElementName" Value="[dbo].[T_Pipeline_LinkedServices].[Id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Pipeline_LinkedServices]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[PipelineLinkedServiceID]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="a568c0b5-529d-41e6-bf44-2b975a2c29e0" ChangeDateTime="09/07/2020 05:47:30">
+    <Property Name="ElementName" Value="[dbo].[T_Pipelines_steps]" />
+    <Property Name="ElementType" Value="SqlTable" />
+    <Property Name="ParentElementName" Value="[dbo]" />
+    <Property Name="ParentElementType" Value="SqlSchema" />
+    <Property Name="NewName" Value="[T_Pipeline_Activities]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="855ce48b-3038-4576-810a-1fc526700e46" ChangeDateTime="09/07/2020 05:48:31">
+    <Property Name="ElementName" Value="[dbo].[T_Pipeline_LinkedService_Parameters].[id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Pipeline_LinkedService_Parameters]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[PipelineLinkedServicesParameterID]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="b7cdbe20-d982-4276-ac09-833184d7576e" ChangeDateTime="09/07/2020 05:49:52">
+    <Property Name="ElementName" Value="[dbo].[T_Pipeline_Dataset_Parameters].[id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Pipeline_Dataset_Parameters]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[PipelineDatasetParameterId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="bc33081f-e382-4d8c-9aaa-efd5f959e9d4" ChangeDateTime="09/07/2020 05:50:37">
+    <Property Name="ElementName" Value="[dbo].[T_Pipeline_Activity_Parameters].[id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Pipeline_Activity_Parameters]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[PipelineActivityParamaterId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="fcbf7c99-fa4b-49ed-a1f1-c756b241304a" ChangeDateTime="09/07/2020 05:51:32">
+    <Property Name="ElementName" Value="[dbo].[T_List_DataSources].[id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_DataSources]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[DataSourceId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="b27ec1ed-8e55-4a4e-a739-edd52550fdd8" ChangeDateTime="09/07/2020 05:51:50">
+    <Property Name="ElementName" Value="[dbo].[T_List_DataSources].[DataSource_name]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_DataSources]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[DataSourceName]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="16d2c6e9-1a8e-45c1-b267-6e3a70ab4b26" ChangeDateTime="09/07/2020 05:52:06">
+    <Property Name="ElementName" Value="[dbo].[T_List_DataSources].[created_date]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_DataSources]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[CreatedDate]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="dd30c5e4-a714-4c4d-93f7-71b412484a7e" ChangeDateTime="09/07/2020 05:52:29">
+    <Property Name="ElementName" Value="[dbo].[T_List_DataSources].[source_Type]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_DataSources]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[SourceType]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="391ce52f-d14c-488e-b001-9ac9527b1b89" ChangeDateTime="09/07/2020 05:52:47">
+    <Property Name="ElementName" Value="[dbo].[T_List_DataSources].[source_metadata_query]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_DataSources]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[SourceMetadataQuery]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="71bd851d-04ec-4b7a-b75b-5332b54d7ca8" ChangeDateTime="09/07/2020 05:53:58">
+    <Property Name="ElementName" Value="[dbo].[T_List_LinkedServices].[Id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_LinkedServices]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[LinkedServiceId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="6ef010d5-ebb8-4790-8583-3a42025c1fc9" ChangeDateTime="09/07/2020 05:54:39">
+    <Property Name="ElementName" Value="[dbo].[T_List_LinkedServices].[LinkedService_Name]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_LinkedServices]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[LinkedServiceName]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="dba852b8-5c36-47ed-b6cf-f84df225eecc" ChangeDateTime="09/07/2020 05:54:55">
+    <Property Name="ElementName" Value="[dbo].[T_List_LinkedServices].[DataSource_Id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_LinkedServices]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[DataSourceId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="fbf9343b-0f8c-4184-8908-1b81bb532218" ChangeDateTime="09/07/2020 05:55:59">
+    <Property Name="ElementName" Value="[dbo].[T_List_DataSets].[id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_DataSets]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[DatasetId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="6986fb5e-ca13-4a62-9420-2265c7b34611" ChangeDateTime="09/07/2020 05:56:19">
+    <Property Name="ElementName" Value="[dbo].[T_List_DataSets].[DataSet_name]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_DataSets]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[DataSetName]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="1c0c5722-50fc-4a35-b0b6-c6d75b8fe01e" ChangeDateTime="09/07/2020 05:56:31">
+    <Property Name="ElementName" Value="[dbo].[T_List_DataSets].[LinkedService_id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_DataSets]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[LinkedServiceId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="98c4edef-3f5c-4685-aab1-068acdbcc042" ChangeDateTime="09/07/2020 05:56:46">
+    <Property Name="ElementName" Value="[dbo].[T_List_DataSets].[created_date]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_DataSets]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[CreatedDate]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="d5781807-8b36-4f35-9942-2a0e78ea9c04" ChangeDateTime="09/07/2020 05:57:50">
+    <Property Name="ElementName" Value="[dbo].[T_List_Dataset_Parameters].[id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_Dataset_Parameters]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[DatasetParameterId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="bc84ec4c-630b-4ad7-a05c-39611552d6be" ChangeDateTime="09/07/2020 05:58:41">
+    <Property Name="ElementName" Value="[dbo].[T_List_Activities].[id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_Activities]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[ActivityId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="aa5d865a-403a-480e-b90c-05084cfc450c" ChangeDateTime="09/07/2020 05:59:19">
+    <Property Name="ElementName" Value="[dbo].[T_List_Activities].[code]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_Activities]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[JsonCode]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="90e9264d-2d93-423a-affd-8f839c27b32b" ChangeDateTime="09/07/2020 06:00:06">
+    <Property Name="ElementName" Value="[dbo].[T_List_Activity_Parameters].[id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_Activity_Parameters]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[ActivityParameterId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="eefbf11e-dc60-496a-91e4-5347e5d49f02" ChangeDateTime="09/07/2020 06:00:55">
+    <Property Name="ElementName" Value="[dbo].[T_List_Activities_config].[id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_Activities_config]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[ActivityConfigId]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="9a9cc4d2-9cef-4499-a8f6-8ae245b710d9" ChangeDateTime="09/07/2020 06:01:38">
+    <Property Name="ElementName" Value="[dbo].[T_List_Activities_config].[Code]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_List_Activities_config]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[JsonCode]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="81a237e1-57c9-4df7-a0e8-fbec58b5fe81" ChangeDateTime="09/07/2020 06:12:11">
+    <Property Name="ElementName" Value="[dbo].[t_pipeline_tables_tobemoved]" />
+    <Property Name="ElementType" Value="SqlTable" />
+    <Property Name="ParentElementName" Value="[dbo]" />
+    <Property Name="ParentElementType" Value="SqlSchema" />
+    <Property Name="NewName" Value="[T_Pipeline_Tables_ToBeMoved]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="7499d398-45dd-464a-8560-4a005f20f474" ChangeDateTime="09/07/2020 06:19:08">
+    <Property Name="ElementName" Value="[dbo].[T_Pipeline_Activity_Parameters].[PipelineActivityParamaterId]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Pipeline_Activity_Parameters]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[PipelineActivityParameterId]" />
+  </Operation>
+</Operations>

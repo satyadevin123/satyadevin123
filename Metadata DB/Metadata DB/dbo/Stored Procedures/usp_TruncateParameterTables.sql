@@ -5,10 +5,10 @@ BEGIN
 truncate table dbo.t_pipeline_linkedservice_parameters
 truncate table dbo.t_pipeline_dataset_parameters
 truncate table dbo.t_pipeline_activity_parameters
-truncate table dbo.t_pipelines_steps
+truncate table dbo.[T_Pipeline_Activities]
 truncate table dbo.t_pipeline_datasets
 truncate table dbo.t_pipeline_linkedservices
-truncate table dbo.t_pipeline_tables_tobemoved
+truncate table dbo.[T_Pipeline_Tables_ToBeMoved]
 truncate table dbo.t_pipelineparameters
 delete  from dbo.t_pipelines
 END

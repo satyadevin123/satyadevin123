@@ -10,10 +10,10 @@ DECLARE @lsparamname varchar(200)
 DECLARE @lsparamval varchar(200)
 
 
-SELECT @LinkedServiceType = tll.LinkedService_Name
+SELECT @LinkedServiceType = tll.[LinkedServiceName]
 FROM T_Pipeline_LinkedServices tpl JOIN T_List_LinkedServices tll
-ON tpl.LinkedServiceId = tll.Id
-WHERE tpl.Id = @LinkedServiceId
+ON tpl.LinkedServiceId = tll.[LinkedServiceId]
+WHERE tpl.[PipelineLinkedServicesID] = @LinkedServiceId
 
 SET @datasetparamname = '$'+CAST(@LinkedServiceId AS NVARCHAR(10))+'_'+@LinkedServiceType+'DatasetName'
 SET @datasetparamval = 'DS_POC_'+@LinkedServiceType+'_'+CAST(@LinkedServiceId AS NVARCHAR(10))
@@ -27,10 +27,10 @@ SELECT REPLACE(tldp.ParameterName,'$','$'+CAST(@LinkedServiceId AS nvarchar)+'_'
 ParameterValue,@DatasetId,@PipelineId
 FROM T_List_Dataset_Parameters tldp
 INNER JOIN T_List_DataSets tld
-ON tldp.DatasetId = tld.id
+ON tldp.DatasetId = tld.[DatasetId]
 INNER JOIN T_Pipeline_DataSets tpd
-ON tld.id = tpd.DataSetId
-WHERE tpd.Id = @DatasetId
+ON tld.[DatasetId] = tpd.DataSetId
+WHERE tpd.[PipelineDatasetId] = @DatasetId
 
 UPDATE T_Pipeline_DataSet_Parameters
 SET ParameterValue = @datasetparamval

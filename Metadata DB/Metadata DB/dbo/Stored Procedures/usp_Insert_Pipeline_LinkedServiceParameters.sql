@@ -12,22 +12,22 @@ declare @Keyvaultparamname VARCHAR(200)
 
 
 insert into [dbo].[T_Pipeline_LinkedService_Parameters]
-select  REPLACE(tllp.ParameterName,'$','$'+CAST(tpl.id AS nvarchar)+'_') AS parameterName
-,  tllp.parametervalue as ParameterValue, TPl.Id, TP.id
+select  REPLACE(tllp.ParameterName,'$','$'+CAST(tpl.[PipelineLinkedServicesID] AS nvarchar)+'_') AS parameterName
+,  tllp.parametervalue as ParameterValue, TPl.[PipelineLinkedServicesID], TP.[PipelineId]
 FROM [dbo].[T_Pipelines] TP
 JOIN dbo.T_Pipeline_LinkedServices tpl
-ON tp.id = tpl.PipelineId
+ON tp.[PipelineId] = tpl.PipelineId
 INNER JOIN dbo.T_List_LinkedServices tll
-ON tpl.LinkedServiceId = tll.Id
+ON tpl.LinkedServiceId = tll.[LinkedServiceId]
 INNER JOIN dbo.T_List_LinkedService_Parameters tllp
-ON tllp.LinkedServiceId = tll.Id
-WHERE TP.Id = @PipelineId AND TPL.Id = @LinkedServiceId
+ON tllp.LinkedServiceId = tll.[LinkedServiceId]
+WHERE TP.[PipelineId] = @PipelineId AND TPL.[PipelineLinkedServicesID] = @LinkedServiceId
 
 
-SELECT @LinkedServiceType = tll.LinkedService_Name
+SELECT @LinkedServiceType = tll.[LinkedServiceName]
 FROM T_Pipeline_LinkedServices tpl JOIN T_List_LinkedServices tll
-ON tpl.LinkedServiceId = tll.Id
-WHERE tpl.Id = @LinkedServiceId
+ON tpl.LinkedServiceId = tll.[LinkedServiceId]
+WHERE tpl.[PipelineLinkedServicesID] = @LinkedServiceId
 
 select @LinkedServiceType
 

@@ -1,14 +1,14 @@
-﻿CREATE TABLE [dbo].[T_Pipelines_steps] (
-    [id]                       INT           IDENTITY (1, 1) NOT NULL,
+﻿CREATE TABLE [dbo].[T_Pipeline_Activities] (
+    [PipelineStepsId]                       INT           IDENTITY (1, 1) NOT NULL,
     [PipelineId]               INT           NULL,
-    [Activity_ID]              INT           NULL,
+    [ActivityID]              INT           NULL,
     [DependsOn]                VARCHAR (10)  NULL,
-    [Child_Activity]           INT           NULL,
+    [ChildActivity]           INT           NULL,
     [EmailNotificationEnabled] TINYINT       NULL,
     [Activityname]             VARCHAR (100) NULL,
     [DependencyCondition]        NVARCHAR(20)
-    PRIMARY KEY CLUSTERED ([id] ASC),
-    FOREIGN KEY ([Activity_ID]) REFERENCES [dbo].[T_List_Activities] ([id]),
-    FOREIGN KEY ([PipelineId]) REFERENCES [dbo].[T_Pipelines] ([id])
+    PRIMARY KEY CLUSTERED ([PipelineStepsId] ASC),
+    FOREIGN KEY ([ActivityID]) REFERENCES [dbo].[T_List_Activities] ([ActivityId]),
+    FOREIGN KEY ([PipelineId]) REFERENCES [dbo].[T_Pipelines] ([PipelineId])
 );
 

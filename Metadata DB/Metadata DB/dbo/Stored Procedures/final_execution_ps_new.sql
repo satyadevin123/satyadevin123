@@ -32,13 +32,13 @@ insert into @MasterPipelineActivityJsoncode select '$pipelineDefinition | Out-Fi
 insert into @MasterPipelineActivityJsoncode select  'New-AzDataFactoryV2Pipeline -DataFactoryName $dataFactoryName -ResourceGroupName $resourceGroupName -Name $sendmailMasterPipelineName -Force -File "c:\$finaloutput.json"'
 
 Declare @pipelinename varchar(100)
-set @pipelinename = (select PipelineName from [dbo].[T_Pipelines] where id=@PipelineId )
+set @pipelinename = (select PipelineName from [dbo].[T_Pipelines] where [PipelineId]=@PipelineId )
 
 declare @activity_code varchar(max)
-SELECT  @activity_code=coalesce(@activity_code+ ',','')+code from [dbo].[T_Pipelines] P
-Join [dbo].[T_Pipelines_Steps] PS on P.Id = PS.PipelineiD
-join [dbo].[T_List_Activities] LS on LS.ID = PS.Activity_ID
-where p.Enabled=1 AND PipelineId = @PipelineId
+SELECT  @activity_code=coalesce(@activity_code+ ',','')+[JsonCode] from [dbo].[T_Pipelines] P
+Join [dbo].[T_Pipeline_Activities] PS on P.[PipelineId] = PS.PipelineiD
+join [dbo].[T_List_Activities] LS on LS.[ActivityId] = PS.[ActivityID]
+where p.Enabled=1 AND P.PipelineId = @PipelineId
 
 Declare @LSCount int,@LinkedService varchar(200),@name varchar(200),@LSInit int
 Declare @LinkedServiceJsoncode table(Jsoncode varchar(max), ID INT IDENTITY(1,1))
@@ -49,23 +49,23 @@ declare @tbl table
 (rownum int, id int)
 
 insert into @tbl
-select row_number() over(order by id ),id from dbo.T_Pipeline_LinkedServices where PipelineId = @PipelineId
+select row_number() over(order by [PipelineLinkedServicesID] ),[PipelineLinkedServicesID] from dbo.T_Pipeline_LinkedServices where PipelineId = @PipelineId
 
 set @LSInit = 1
 
 while @LSInit <=  @LSCount
 begin
-SELECT @LinkedService= LinkedService_Name , @name = parametervalue, @lsid = tpl.Id from [dbo].[T_Pipeline_LinkedServices] TPL 
-JOIN [dbo].[T_List_LinkedServices] TLL ON TLL.ID = TPL.LinkedServiceID 
-JOIN [T_Pipeline_LinkedService_Parameters] TPLP on TPLP.LinkedServerId =TPL.Id
-JOIN @tbl t ON t.id = tpl.Id
+SELECT @LinkedService= [LinkedServiceName] , @name = parametervalue, @lsid = tpl.[PipelineLinkedServicesID] from [dbo].[T_Pipeline_LinkedServices] TPL 
+JOIN [dbo].[T_List_LinkedServices] TLL ON TLL.[LinkedServiceId] = TPL.LinkedServiceID 
+JOIN [T_Pipeline_LinkedService_Parameters] TPLP on TPLP.LinkedServerId =TPL.[PipelineLinkedServicesID]
+JOIN @tbl t ON t.id = tpl.[PipelineLinkedServicesID]
 where TPLP.ParameterName like '%linkedservicename%'
 AND t.rownum =@LSInit AND tplp.PipelineId = @PipelineId
 
 
 insert into @LinkedServiceJsoncode select '$'+@LinkedService+'Definition = @"'
-insert into @LinkedServiceJsoncode select REPLACE(Jsoncode,'$','$'+CAST(TPL.Id AS nvarchar)+'_') from [dbo].[T_Pipeline_LinkedServices] 
-TPL JOIN [dbo].[T_List_LinkedServices] TLL ON TLL.ID = TPL.LinkedServiceID where TPL.id=@lsid
+insert into @LinkedServiceJsoncode select REPLACE(Jsoncode,'$','$'+CAST(TPL.[PipelineLinkedServicesID] AS nvarchar)+'_') from [dbo].[T_Pipeline_LinkedServices] 
+TPL JOIN [dbo].[T_List_LinkedServices] TLL ON TLL.[LinkedServiceId] = TPL.LinkedServiceID where TPL.[PipelineLinkedServicesID]=@lsid
 insert into @LinkedServiceJsoncode select '"@'
 insert into @LinkedServiceJsoncode select '$'+@LinkedService+'Definition | Out-File c:\'+@LinkedService+'.json'
 insert into @LinkedServiceJsoncode select  'New-AzDataFactoryV2LinkedService -DataFactoryName $dataFactoryName -ResourceGroupName $resourceGroupName -Force -Name '+@name+' -File "c:\'+@LinkedService+'.json"'
@@ -83,22 +83,22 @@ declare @tbl1 table
 (rownum int, id int)
 
 insert into @tbl1
-select row_number() over(order by id),id from dbo.[T_Pipeline_DataSets] where PipelineId = @PipelineId
+select row_number() over(order by [PipelineDatasetId]),[PipelineDatasetId] from dbo.[T_Pipeline_DataSets] where PipelineId = @PipelineId
 
 while @DSCount >0
 begin
 
-SELECT @DataSet= DataSet_name , @name = parametervalue,@DSJsonCode=Jsoncode,@dsid=TPD.Id from [dbo].[T_Pipeline_DataSets] TPD
-JOIN [dbo].[T_List_DataSets] TLD ON TLD.ID = TPD.DataSetId 
-JOIN [T_Pipeline_DataSet_Parameters] TPDP on TPDP.DatasetId =TPD.Id
-JOIN @tbl1 t ON t.Id = TPD.Id
+SELECT @DataSet= TLD.[DataSetName] , @name = parametervalue,@DSJsonCode=Jsoncode,@dsid=TPD.[PipelineDatasetId] from [dbo].[T_Pipeline_DataSets] TPD
+JOIN [dbo].[T_List_DataSets] TLD ON TLD.[DatasetId] = TPD.DataSetId 
+JOIN [T_Pipeline_DataSet_Parameters] TPDP on TPDP.DatasetId =TPD.[PipelineDatasetId]
+JOIN @tbl1 t ON t.Id = TPD.[PipelineDatasetId]
 where TPDP.ParameterName like '%datasetname%'
 AND t.rownum =@DSCount AND tpdp.pipelineid = @PipelineId
 
 --set @Dataset= (select DataSet_Name from [dbo].[T_Pipeline_DataSets] TPD JOIN [T_List_DataSets] TLD ON TPD.DataSetId= TLD.id where TPD.id =@DSCount)
 
 insert into @DataSetJsoncode select '$'+@DataSet+'Definition = @"'
-insert into @DataSetJsoncode select REPLACE(TLD.Jsoncode,'$','$'+CAST(TPL.Id AS nvarchar)+'_') from [dbo].[T_Pipeline_DataSets] TPD JOIN [T_List_DataSets] TLD ON TPD.DataSetId= TLD.id JOIN T_Pipeline_LinkedServices TPL ON TPL.ID = TPD.LinkedServericeId JOIN T_List_LinkedServices TLL ON TLL.Id = TPL.LinkedServiceId where TPD.id=@dsid AND TPL.PipelineId = @PipelineId
+insert into @DataSetJsoncode select REPLACE(TLD.Jsoncode,'$','$'+CAST(TPL.[PipelineLinkedServicesID] AS nvarchar)+'_') from [dbo].[T_Pipeline_DataSets] TPD JOIN [T_List_DataSets] TLD ON TPD.DataSetId= TLD.[DatasetId] JOIN T_Pipeline_LinkedServices TPL ON TPL.[PipelineLinkedServicesID] = TPD.LinkedServericeId JOIN T_List_LinkedServices TLL ON TLL.[LinkedServiceId] = TPL.LinkedServiceId where TPD.[PipelineDatasetId]=@dsid AND TPL.PipelineId = @PipelineId
 insert into @DataSetJsoncode select '"@'
 insert into @DataSetJsoncode select '$'+@DataSet+'Definition | Out-File c:\'+@DataSet+'.json'
 insert into @DataSetJsoncode select  'New-AzDataFactoryV2DataSet -DataFactoryName $dataFactoryName -ResourceGroupName $resourceGroupName -Force -Name "'+@name+'" -File "c:\'+@DataSet+'.json"'
@@ -133,26 +133,26 @@ insert into @ActivityJsoncode select  'New-AzDataFactoryV2Pipeline -DataFactoryN
 
 
 --select * from @DataSetJsoncode
-IF (Select MAX(EmailNotificationEnabled) From T_Pipelines_steps) =1
+IF (Select MAX(EmailNotificationEnabled) From [T_Pipeline_Activities]) =1
 SELECT Parameter
 FROM (
 		select '$pipelinename = "'+ @pipelinename +'"' AS Parameter,0 AS ID, 'MasterParameterList' AS DescType 
 	    union all
-		select ParameterName+' = '+ ParameterValue AS Parameter,ID, 'MasterParameterList' AS DescType from T_Master_Parameters_List
+		select ParameterName+' = '+ ParameterValue AS Parameter,[MasterParameterId], 'MasterParameterList' AS DescType from T_Master_Parameters_List
 		--union all
 		--Select '#Pass values to Linked Service Parameters',0,'comments'
 		union all
-		select ParameterName+' = '+ ParameterValue AS Parameter,ID, 'LinkedServiceParameterList' AS DescType from [dbo].[T_Pipeline_LinkedService_Parameters] WHERE pipelineid = @PipelineId
+		select ParameterName+' = '+ ParameterValue AS Parameter,[PipelineLinkedServicesParameterID], 'LinkedServiceParameterList' AS DescType from [dbo].[T_Pipeline_LinkedService_Parameters] WHERE pipelineid = @PipelineId
 		--union all
 		--Select '#Pass values to Dataset Parameters',0,'comments'
 		union all
-		select ParameterName+' = "'+ ParameterValue+'"' AS Parameter,ID, 'DatasetParameterList' AS DescType from [dbo].[T_Pipeline_Dataset_Parameters]  WHERE pipelineid = @PipelineId
+		select ParameterName+' = "'+ ParameterValue+'"' AS Parameter,[PipelineDatasetParameterId], 'DatasetParameterList' AS DescType from [dbo].[T_Pipeline_Dataset_Parameters]  WHERE pipelineid = @PipelineId
 		--union all
 		--Select '#Pass values to Activity Parameters',0,'comments'
 		union all
-		select ParameterName+' = "'+ ParameterValue+'"' AS Parameter,ID, 'ActivityParameterList' AS DescType from [dbo].[T_Pipeline_Activity_Parameters] where parametername not like '%activityjsoncode%'  AND pipelineid = @PipelineId
+		select ParameterName+' = "'+ ParameterValue+'"' AS Parameter,[PipelineActivityParameterId], 'ActivityParameterList' AS DescType from [dbo].[T_Pipeline_Activity_Parameters] where parametername not like '%activityjsoncode%'  AND pipelineid = @PipelineId
 		union all
-		select ParameterName+' = '+ ParameterValue+'' AS Parameter,ID, 'MasterPipelineParameterList' AS DescType from T_Master_Pipelines_Parameters_List
+		select ParameterName+' = '+ ParameterValue+'' AS Parameter,[MasterParameterPipelineId], 'MasterPipelineParameterList' AS DescType from T_Master_Pipelines_Parameters_List
 		union all
 		select Jsoncode AS Parameter,ID, 'DFCode' AS DescType from @DFCreationJsonCode 
 		union all
@@ -187,15 +187,15 @@ SELECT Parameter
 FROM (  
        select '$pipelinename = "'+ @pipelinename +'"' AS Parameter,0 AS ID, 'MasterParameterList' AS DescType 
 	   union all
-		select ParameterName+' = '+ ParameterValue AS Parameter,ID, 'MasterParameterList' AS DescType from T_Master_Parameters_List
+		select ParameterName+' = '+ ParameterValue AS Parameter,[MasterParameterId], 'MasterParameterList' AS DescType from T_Master_Parameters_List
 		union all
-		select ParameterName+' = '+ ParameterValue AS Parameter,ID, 'LinkedServiceParameterList' AS DescType from [dbo].[T_Pipeline_LinkedService_Parameters]  WHERE pipelineid = @PipelineId
+		select ParameterName+' = '+ ParameterValue AS Parameter,[PipelineLinkedServicesParameterID], 'LinkedServiceParameterList' AS DescType from [dbo].[T_Pipeline_LinkedService_Parameters]  WHERE pipelineid = @PipelineId
 		union all
-		select ParameterName+' = "'+ ParameterValue +'"' AS Parameter,ID, 'DatasetParameterList' AS DescType from [dbo].[T_Pipeline_Dataset_Parameters] WHERE pipelineid = @PipelineId
+		select ParameterName+' = "'+ ParameterValue +'"' AS Parameter,[PipelineDatasetParameterId], 'DatasetParameterList' AS DescType from [dbo].[T_Pipeline_Dataset_Parameters] WHERE pipelineid = @PipelineId
 		union all
-		select ParameterName+' = "'+ ParameterValue+'"' AS Parameter,ID, 'ActivityParameterList' AS DescType from [dbo].[T_Pipeline_Activity_Parameters] where parametername not like '%activityjsoncode%'  AND pipelineid = @PipelineId
+		select ParameterName+' = "'+ ParameterValue+'"' AS Parameter,[PipelineActivityParameterId], 'ActivityParameterList' AS DescType from [dbo].[T_Pipeline_Activity_Parameters] where parametername not like '%activityjsoncode%'  AND pipelineid = @PipelineId
 		union all
-		select ParameterName+' = '+ ParameterValue+'' AS Parameter,ID, 'MasterPipelineParameterList' AS DescType from T_Master_Pipelines_Parameters_List 
+		select ParameterName+' = '+ ParameterValue+'' AS Parameter,[MasterParameterPipelineId], 'MasterPipelineParameterList' AS DescType from T_Master_Pipelines_Parameters_List 
 		union all
 		select Jsoncode AS Parameter,ID, 'DFCode' AS DescType from @DFCreationJsonCode 
 		union all

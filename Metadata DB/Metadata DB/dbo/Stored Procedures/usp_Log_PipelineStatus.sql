@@ -9,7 +9,7 @@ AS
 BEGIN
 
 DECLARE @PipelineId INT
-SELECT @PipelineId = Id
+SELECT @PipelineId = [PipelineId]
 FROM T_Pipelines WHERE PipelineName = @In_PipelineName
 
 IF (@In_PipelineStatus = 'InProgress')
