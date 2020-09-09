@@ -1,0 +1,97 @@
+<Metadata>
+<AzureEnvSetup>
+<Parameters>
+<Parameter Name='$resourceGroupName' Value = 'RG-data-pipeline-framework-poc'/>
+<Parameter Name='$dataFactoryName' Value = 'satyatest'/>
+<Parameter Name='$subscriptionid' Value = '81ec4907-9db6-4d56-86d4-d997209d7be6'/>
+<Parameter Name='$dataFactoryNameLocation' Value = 'WEST US'/>
+<Parameter Name='$SinkAccountName' Value = 'satyatestadls'/>
+<Parameter Name='$keyvaultname' Value = 'pocmetadatakeyvault'/>
+<Parameter Name='$keyvaultlocation' Value = 'WEST US'/>
+<Parameter Name='$tenantid' Value = 'bdcfaa46-3f69-4dfd-b3f7-c582bdfbb820'/>
+</Parameters>
+</AzureEnvSetup>
+<LinkedServices>
+
+<LinkedService>
+<Type>azureKeyVault</Type>
+<AuthenticationType>Managed Identity</AuthenticationType>
+<Description>KeyVault</Description>
+<Parameters>
+<Parameter Name='$keyvaultname' Value = 'pocmetadatakeyvault'/>
+</Parameters>
+</LinkedService>
+<LinkedService>
+<Type>azureSQLDatabase</Type>
+<AuthenticationType>Service Principal</AuthenticationType>
+<Description>MetadataDB</Description>
+<Parameters>
+<Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
+<Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDBPublishTest'/>
+<Parameter Name='$servicePrincipalId' Value = '1afdcd77-3a79-4722-8f6b-a247cfbd0914'/>
+</Parameters>
+</LinkedService>
+
+<LinkedService>
+<Type>azureSQLDatabase</Type>
+<AuthenticationType>Managed Identity</AuthenticationType>
+<Description>AdventureWorksAzureSql</Description>
+<Parameters>
+<Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
+<Parameter Name='$azureSqlDatabaseName' Value = 'AdventureWorksSample'/>
+<Parameter Name='$azureSqlDBUserName' Value = 'vsagala'/>
+</Parameters>
+</LinkedService>
+<LinkedService>
+<Type>ADLSv2</Type>
+<AuthenticationType>Managed Identity</AuthenticationType>
+<Description>ADLSV2</Description>
+<Parameters>
+<Parameter Name='$ADLSv2AccountName' Value='satyatestadls'/>
+<Parameter Name='$URL' Value='https://satyatestadls.dfs.core.windows.net'/>
+</Parameters>
+</LinkedService>
+
+</LinkedServices>
+<MetadataDB>
+<Type>azureSQLDatabase</Type>
+<AuthenticationType>SQL Authentication</AuthenticationType>
+<Parameters>
+<Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
+<Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDBPublishTest'/>
+<Parameter Name='$azureSqlDBUserName' Value = 'vsagala'/>
+</Parameters>
+</MetadataDB>
+
+<Pipelines>
+<Pipeline Name = 'AdventureWorks_From_AzureDB_To_ADLS'>
+<Activities>
+<Activity>
+<Type>Lookup Activity</Type>
+<LinkedServiceReference>MetadataDB</LinkedServiceReference>
+</Activity>
+<Activity>
+<Type>Copy Activity</Type>
+<Source>
+<LinkedServiceReference>AdventureWorksAzureSql</LinkedServiceReference>
+<Tables>
+<Table Name='ErrorLog' schema='dbo'/>
+<Table Name='Address' schema='SalesLT'/>
+<Table Name='Customer' schema='SalesLT'/>
+</Tables>
+</Source>
+<Sink>
+<LinkedServiceReference>ADLSV2</LinkedServiceReference>
+<SinkParameters>
+<Parameter Name='$fileSystemFolderName' Value ='onpremsampledata'/>
+<Parameter Name='$CompressionCodectype' Value ='none'/>
+<Parameter Name='$fileformat' Value ='DelimitedText'/>
+<Parameter Name='$fileextension' Value ='csv'/>
+<Parameter Name='$columndelimiter' Value =','/>
+</SinkParameters>
+</Sink>
+</Activity>
+</Activities>
+</Pipeline>
+</Pipelines>
+</Metadata>
