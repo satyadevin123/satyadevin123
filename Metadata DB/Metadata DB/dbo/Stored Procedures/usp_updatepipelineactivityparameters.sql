@@ -8,12 +8,12 @@ DECLARE @DatasetName NVARCHAR(200)
 DECLARE @Lkpactid INT
 DECLARE @CPactid INT
 
-SELECT @Lkpactid = TPA.PipelineStepsId
+SELECT @Lkpactid = TPA.[PipelineActivityId]
 FROM T_Pipeline_Activities TPA INNER JOIN T_List_Activities TLA
 ON TLA.ActivityId = TPA.ActivityID
 WHERE PipelineId = @PipelineId AND TLA.ActivityName = 'Lookup Activity'
 
-SELECT @CPactid = TPA.PipelineStepsId
+SELECT @CPactid = TPA.[PipelineActivityId]
 FROM T_Pipeline_Activities TPA INNER JOIN T_List_Activities TLA
 ON TLA.ActivityId = TPA.ActivityID
 WHERE PipelineId = @PipelineId AND TLA.ActivityName = 'Copy Activity'
@@ -25,7 +25,7 @@ BEGIN
 SELECT TOP 1 @DatasetName = TPDP.ParameterValue
 FROM T_Pipeline_DataSets TPD
 INNER JOIN T_Pipeline_Dataset_Parameters TPDP
-ON TPD.PipelineDatasetId = TPDP.DatasetId
+ON TPD.PipelineDatasetId = TPDP.PipelineDatasetId
 WHERE TPD.PipelineDatasetId = @DatasetId
 AND TPDP.ParameterName like '%DatasetName%'
 
@@ -70,15 +70,15 @@ declare @sinkcoldelimiter varchar(3)
 declare @qry varchar(2000)
 
 SELECT @sinkfileformat =  ParameterValue 
-FROM T_Pipeline_Dataset_Parameters WHERE DatasetId = @DatasetId
+FROM T_Pipeline_Dataset_Parameters WHERE PipelineDatasetId = @DatasetId
 AND ParameterName like '%fileformat%'
 
 SELECT @sinkfileextension =  ParameterValue 
-FROM T_Pipeline_Dataset_Parameters WHERE DatasetId = @DatasetId
+FROM T_Pipeline_Dataset_Parameters WHERE PipelineDatasetId = @DatasetId
 AND ParameterName like '%fileextension%'
 
 SELECT @sinkcoldelimiter =  ParameterValue 
-FROM T_Pipeline_Dataset_Parameters WHERE DatasetId = @DatasetId
+FROM T_Pipeline_Dataset_Parameters WHERE PipelineDatasetId  = @DatasetId
 AND ParameterName like '%ColumnDelimiter%'
 
 

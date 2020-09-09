@@ -31,12 +31,12 @@ REPLACE(ParameterValue,'$pipelinestatus','Failed') +
    ""value"": ""@activity('''+DEPTLA.Activityname +''').Error.Message"",            
    ""type"": ""string""                          }   '
    	 else parametervalue
-end as ParameterValue, TPS.[PipelineStepsId], TP.[PipelineId]
+end as ParameterValue, TPS.[PipelineActivityId], TP.[PipelineId]
 FROM [dbo].[T_Pipelines] TP
 JOIN [dbo].[T_Pipeline_Activities] TPS ON TPS.pipelineid = TP.[PipelineId]
 JOIN [dbo].[T_List_Activities] TLA ON TLA.[ActivityId] = TPS.[ActivityID]
 JOIN [dbo].[T_List_Activity_Parameters] TLAP ON TLAP.[ActivityId] = TLA.[ActivityId]
-LEFT JOIN [dbo].[T_Pipeline_Activities] DEPTLA ON TPS.DependsOn= DEPTLA.[PipelineStepsId]
+LEFT JOIN [dbo].[T_Pipeline_Activities] DEPTLA ON TPS.DependsOn= DEPTLA.[PipelineActivityId]
 WHERE 
 --TPS.Activityname IN (@LkpActName,@ForeachActName,@CPActName)
 TPS.PipelineId = @PipelineId
