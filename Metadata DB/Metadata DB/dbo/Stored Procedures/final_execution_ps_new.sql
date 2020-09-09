@@ -90,7 +90,7 @@ begin
 
 SELECT @DataSet= TLD.[DataSetName] , @name = parametervalue,@DSJsonCode=Jsoncode,@dsid=TPD.[PipelineDatasetId] from [dbo].[T_Pipeline_DataSets] TPD
 JOIN [dbo].[T_List_DataSets] TLD ON TLD.[DatasetId] = TPD.DataSetId 
-JOIN [T_Pipeline_DataSet_Parameters] TPDP on TPDP.DatasetId =TPD.[PipelineDatasetId]
+JOIN [T_Pipeline_DataSet_Parameters] TPDP on TPDP.[PipelineDatasetId] =TPD.[PipelineDatasetId]
 JOIN @tbl1 t ON t.Id = TPD.[PipelineDatasetId]
 where TPDP.ParameterName like '%datasetname%'
 AND t.rownum =@DSCount AND tpdp.pipelineid = @PipelineId

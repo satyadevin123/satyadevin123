@@ -259,4 +259,11 @@
     <Property Name="ParentElementType" Value="SqlTable" />
     <Property Name="NewName" Value="[PipelineActivityParameterId]" />
   </Operation>
+  <Operation Name="Rename Refactor" Key="8402a374-72f8-4c6b-aa35-f1302fe21001" ChangeDateTime="09/09/2020 06:14:33">
+    <Property Name="ElementName" Value="[dbo].[T_Pipeline_Dataset_Parameters].[DatasetId]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Pipeline_Dataset_Parameters]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[PipelineDatasetId]" />
+  </Operation>
 </Operations>

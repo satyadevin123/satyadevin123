@@ -6,7 +6,7 @@ BEGIN
 UPDATE T_Pipeline_DataSet_Parameters
 SET ParameterValue  = @ParameterValue
 WHERE ParameterName = @ParameterName
-AND DatasetId = @DatasetId
+AND [PipelineDatasetId] = @DatasetId
 AND pipelineid = @PipelineId
 
 END
