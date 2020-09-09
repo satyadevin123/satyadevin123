@@ -194,9 +194,11 @@ VALUES
 ('ADLSv2','{      "name": "$ADLSv2LinkedServiceName",      "properties": {          "annotations": [],          "type": "AzureBlobFS",          "typeProperties": {              "url": "$URL"          },          "connectVia": {              "referenceName": "$nameofintegrationruntime",              "type": "IntegrationRuntimeReference"          }      }  }','Managed Identity',0),
 ('AzureBlobStorage','{      "name": "$AzureBlobStorageLinkedServiceName" ,     "properties": {          "type": "AzureBlobStorage",          "typeProperties": {              "connectionString": "DefaultEndpointsProtocol=https;AccountName=$AccountName;AccountKey=$AccountKey"          },          "connectVia": {              "referenceName": "$nameofintegrationruntime",              "type": "IntegrationRuntimeReference"          }      }  }','Managed Identity',NULL),
 ('OnPremiseSQLServer','{      "name": "$OnPremiseSQLServerLinkedServiceName",      "type": "Microsoft.DataFactory/factories/linkedservices",      "properties": { "type": "SqlServer",          "typeProperties":{              "connectionString": "Integrated Security=False;Data Source=$onpremSqlDBServerName;Initial Catalog=$onpremSqlDatabaseName;User ID=$onpremSqlDBUserName",               "password": {                  "type": "AzureKeyVaultSecret",                  "store": {                         "referenceName": "$azurekeyvaultlinkedservicereference",                      "type": "LinkedServiceReference"                  },      "secretName": "$onpremSqlDBPassword"              }          },           "connectVia": {              "referenceName": "$IRName",              "type": "IntegrationRuntimeReference"          }      }  }  ','SQL authentication',1),
-('azureSQLDatabasewithManagedIdentity','     { "name": "$azureSqlDatabaseLinkedServiceName",      "type": "Microsoft.DataFactory/factories/linkedservices",      "properties": {          "annotations": [],          "type": "AzureSqlDatabase",          "typeProperties": {              "connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=$azureSqlDBServerName.database.windows.net;Initial Catalog=$azureSqlDatabaseName"          }      }  }','Managed Identity',0),
+('azureSQLDatabase','     { "name": "$azureSqlDatabaseLinkedServiceName",      "type": "Microsoft.DataFactory/factories/linkedservices",      "properties": {          "annotations": [],          "type": "AzureSqlDatabase",          "typeProperties": {              "connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=$azureSqlDBServerName.database.windows.net;Initial Catalog=$azureSqlDatabaseName"          }      }  }','Managed Identity',0),
 ('azureKeyVault','{    "name": "$azureKeyVaultLinkedServiceName",    "properties": {        "annotations": [],        "type": "AzureKeyVault",       "typeProperties": {            "baseUrl": "https://$keyvaultname.vault.azure.net/"        }    }}','Managed Identity',0),
 ('RestService','    {      "name": "RestService1",      "type": "Microsoft.DataFactory/factories/linkedservices",      "properties": {          "annotations": [],          "type": "RestService",          "typeProperties": {              "url": "$restapiurl" ,         "enableServerCertificateValidation": true,              "authenticationType": "Anonymous"          }      }  }  ','Anonymous',0)
+,
+('azureSQLDatabase', '{  "name": "$azureSqlDatabaseLinkedServiceName",  "properties": {    "type": "AzureSqlDatabase",    "typeProperties": {      "connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=$azureSqlDBServerName.database.windows.net;Initial Catalog=$azureSqlDatabaseName",      "servicePrincipalId": "$servicePrincipalId",      "servicePrincipalKey": {        "type": "AzureKeyVaultSecret",        "store": {          "referenceName": "$azurekeyvaultlinkedservicereference",          "type": "LinkedServiceReference"        },        "secretName": "$servicePrincipalKey"      }    },    "tenant": "$tenantid",    "connectVia": {      "referenceName": "$nameofintegrationruntime",      "type": "IntegrationRuntimeReference"    } }} ','Service Principal',1)
 MERGE [T_List_LinkedServices] AS mrg
 USING (SELECT * FROM @SrcLinkedServices) AS src
 ON mrg.LinkedServiceName = src.LinkedServiceName
@@ -223,64 +225,75 @@ GO
 Print 'Start - Inserting data to list linked service parameters table'
 
 DECLARE @SrcLinkedServicesParameters as TABLE
-( ParameterName VARCHAR(100), ParameterValue VARCHAR(500),LinkedServiceName VARCHAR (100))
+( ParameterName VARCHAR(100), ParameterValue VARCHAR(500),LinkedServiceName VARCHAR (100),ReferFromKeyVault INT,AuthenticationType VARCHAR(100))
 
 INSERT INTO @SrcLinkedServicesParameters
-( ParameterName,ParameterValue,LinkedServiceName)
+( ParameterName,ParameterValue,LinkedServiceName,ReferFromKeyVault,AuthenticationType)
 VALUES
-('$azureSqlDatabaseLinkedServiceName','AzureSQLDatabase','azureSQLDatabase'),
-('$azureSqlDBServerName','','azureSQLDatabase'),
-('$azureSqlDatabaseName','','azureSQLDatabase'),
-('$azureSqlDBUserName','','azureSQLDatabase'),
-('$azureSqlDBPassword','','azureSQLDatabase'),
-('$azurekeyvaultlinkedservicereference','','azureSQLDatabase'),
-('$AccountName','','AzureBlobStorage'),
-('$AccountKey','','AzureBlobStorage'),
-('$nameofintegrationruntime','','azureSQLDatabase'),
-('$AzureBlobStorageLinkedServiceName','','AzureBlobStorage'),
-('$OnPremiseSQLServerLinkedServiceName','','OnPremiseSQLServer'),
-('$IRName','IR-SelfHosted','OnPremiseSQLServer'),
-('$onpremSqlDBServerName','','OnPremiseSQLServer'),
-('$onpremSqlDatabaseName','','OnPremiseSQLServer'),
-('$onpremSqlDBUserName','','OnPremiseSQLServer'),
-('$onpremSqlDBPassword','','OnPremiseSQLServer'),
-('$azurekeyvaultlinkedservicereference','','OnPremiseSQLServer'),
-('$azureSqlDataWarehouseLinkedServiceName','','azureSQLDataWarehouse'),
-('$azureSqlDWServerName','','azureSQLDataWarehouse'),
-('$azureSqlDWDBName','','azureSQLDataWarehouse'),
-('$azureSqlDWUserName','','azureSQLDataWarehouse'),
-('$azureSqlDWUserPassword','','azureSQLDataWarehouse'),
-('$ADLSv2LinkedServiceName','','ADLSv2'),
-('$ADLSv2AccountName','','ADLSv2'),
-('$URL','','ADLSv2'),
-('$nameofintegrationruntime','','ADLSv2'),
-('$azureSQLDatabasewithManagedIdentityLinkedServiceName','','azureSQLDatabasewithManagedIdentity'),
-('$azureSqlDBServerName','','azureSQLDatabasewithManagedIdentity'),
-('$azureSqlDatabaseName','','azureSQLDatabasewithManagedIdentity'),
-('$nameofintegrationruntime','','azureSQLDatabasewithManagedIdentity'),
-('$azureKeyVaultLinkedServiceName','','azureKeyVault'),
-('$restapiurl','','RestService'),
-('$nameofintegrationruntime','','RestService'),
-('$RestServiceLinkedServiceName','','RestService')
+('$azureSqlDatabaseLinkedServiceName','AzureSQLDatabase','azureSQLDatabase',0,'SQL Authentication'),
+('$azureSqlDBServerName','','azureSQLDatabase',0,'SQL Authentication'),
+('$azureSqlDatabaseName','','azureSQLDatabase',0,'SQL Authentication'),
+('$azureSqlDBUserName','','azureSQLDatabase',0,'SQL Authentication'),
+('$azureSqlDBPassword','','azureSQLDatabase',1,'SQL Authentication'),
+('$azurekeyvaultlinkedservicereference','','azureSQLDatabase',0,'SQL Authentication'),
+('$AccountName','','AzureBlobStorage',0,'Managed Identity'),
+('$AccountKey','','AzureBlobStorage',0,'Managed Identity'),
+('$nameofintegrationruntime','','azureSQLDatabase',0,'SQL Authentication'),
+('$AzureBlobStorageLinkedServiceName','','AzureBlobStorage',0,'Managed Identity'),
+('$OnPremiseSQLServerLinkedServiceName','','OnPremiseSQLServer',0,'SQL Authentication'),
+('$IRName','IR-SelfHosted','OnPremiseSQLServer',0,'SQL Authentication'),
+('$onpremSqlDBServerName','','OnPremiseSQLServer',0,'SQL Authentication'),
+('$onpremSqlDatabaseName','','OnPremiseSQLServer',0,'SQL Authentication'),
+('$onpremSqlDBUserName','','OnPremiseSQLServer',0,'SQL Authentication'),
+('$onpremSqlDBPassword','','OnPremiseSQLServer',1,'SQL Authentication'),
+('$azurekeyvaultlinkedservicereference','','OnPremiseSQLServer',0,'SQL Authentication'),
+('$azureSqlDataWarehouseLinkedServiceName','','azureSQLDataWarehouse',0,'SQL Authentication'),
+('$azureSqlDWServerName','','azureSQLDataWarehouse',0,'SQL Authentication'),
+('$azureSqlDWDBName','','azureSQLDataWarehouse',0,'SQL Authentication'),
+('$azureSqlDWUserName','','azureSQLDataWarehouse',0,'SQL Authentication'),
+('$azureSqlDWUserPassword','','azureSQLDataWarehouse',1,'SQL Authentication'),
+('$ADLSv2LinkedServiceName','','ADLSv2',0,'Managed Identity'),
+('$ADLSv2AccountName','','ADLSv2',0,'Managed Identity'),
+('$URL','','ADLSv2',0,'Managed Identity'),
+('$nameofintegrationruntime','','ADLSv2',0,'Managed Identity'),
+('$azureSQLDatabaseLinkedServiceName','','azureSQLDatabase',0,'Managed Identity'),
+('$azureSqlDBServerName','','azureSQLDatabase',0,'Managed Identity'),
+('$azureSqlDatabaseName','','azureSQLDatabase',0,'Managed Identity'),
+('$nameofintegrationruntime','','azureSQLDatabase',0,'Managed Identity'),
+('$azureKeyVaultLinkedServiceName','','azureKeyVault',0,'Managed Identity'),
+('$restapiurl','','RestService',0,'Anonymous'),
+('$nameofintegrationruntime','','RestService',0,'Anonymous'),
+('$RestServiceLinkedServiceName','','RestService',0,'Anonymous'),
+('$azureSqlDatabaseLinkedServiceName','','azureSQLDatabase',0,'Service Principal'),
+
+$azureSqlDBServerName
+$azureSqlDatabaseName
+$azurekeyvaultlinkedservicereference
+$servicePrincipalKey
+$nameofintegrationruntime
 
 MERGE [T_List_LinkedService_Parameters] AS mrg
 USING (
     SELECT S.*,t.LinkedServiceId as Id FROM @SrcLinkedServicesParameters s
     INNER JOIN T_List_LinkedServices t
     ON s.LinkedServiceName = t.[LinkedServiceName]
+    AND s.AuthenticationType = t.AuthenticationType
       ) AS src
 ON mrg.[LinkedServiceId] = src.Id
 AND mrg.ParameterName = src.ParameterName
 WHEN MATCHED THEN 
    UPDATE SET mrg.ParameterValue = src.ParameterValue
+   ,mrg.ReferFromKeyVault = src.ReferFromKeyVault
 WHEN NOT MATCHED THEN
 INSERT (ParameterName
            ,ParameterValue
            ,[LinkedServiceId]
+           ,ReferFromKeyVault
            )
 VALUES(src.ParameterName
            ,src.ParameterValue
            ,src.Id
+           ,src.ReferFromKeyVault
            );
 
 Print 'End - Inserting data to list linked service parameters table'
@@ -291,29 +304,31 @@ Print 'Start - Inserting data to list datasets table'
 
 DECLARE @SrcDatasets as TABLE
 ( [DataSetName] NVARCHAR (255), [LinkedServiceName] NVARCHAR (255),
+AuthenticationType NVARCHAR(200),
     [Jsoncode] VARCHAR(8000)
     ,[DataSetStandardName] nvarchar(200),
     [AdditionalConfigurationType] nvarchar(100),[AdditionalConfigurationValue] nvarchar(100))
 
 INSERT INTO @SrcDatasets
-( [DataSetName],[LinkedServiceName],Jsoncode,[DataSetStandardName],[AdditionalConfigurationType],[AdditionalConfigurationValue])
+( [DataSetName],[LinkedServiceName],AuthenticationType,Jsoncode,[DataSetStandardName],[AdditionalConfigurationType],[AdditionalConfigurationValue])
 VALUES
-('azureSqlDatabaseDataset','azureSQLDatabase','{"name": "$azureSqlDatabaseDatasetName","properties": {"type": "AzureSqlTable","linkedServiceName": {"referenceName": "$azureSqlDatabaseLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','azureSqlDatabaseDataset',NULL,NULL),
-('azureSqlDataWarehouseDataset','azureSQLDataWarehouse','{"name": "$azureSqlDWDatasetName","properties": {"type": "AzureSqlDWTable","linkedServiceName": {"referenceName": "$azureSqlDataWarehouseLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','azureSqlDataWarehouseDataset',NULL,NULL),
-('azureADLSv2DataSet','ADLSv2','{    "name": "$azureADLSV2DataSetName",    "properties": {      "linkedServiceName": {        "referenceName": "$LInkedServerReferneceName",        "type": "LinkedServiceReference"      },      "parameters": {        "filename": { "type": "string" },        "directory": { "type": "string" },        "fileformat": { "type": "string" }      },      "annotations": [],      "type": "$fileformat",      "typeProperties": {        "location": {          "type": "AzureBlobFSLocation",          "fileName": {            "value": "@concat(dataset().filename,''.'',dataset().fileformat)",            "type": "Expression"          },          "folderPath": {            "value": "@dataset().directory",            "type": "Expression"          },          "fileSystem": "$fileSystemFolderName"        },        "compressionCodec": "$CompressionCodectype"      },      "schema": []    }  }','azureADLSv2DataSet','SinkFileFormat','Parquet'),
-('azureBlobStorageDataSet','AzureBlobStorage','{      "name": "$azureBlobDataSetName",      "properties": {          "linkedServiceName": {              "referenceName": "$AzureBlobStorageLinkedServiceName",              "type": "LinkedServiceReference"          },          "annotations": [],          "type": "DelimitedText",          "typeProperties": {              "location": {                  "type": "AzureBlobFSLocation",                  "fileSystem": "$fileslocation"              },              "columnDelimiter": ",",              "escapeChar": "\\",              "firstRowAsHeader": "true",              "quoteChar": "\""          },          "schema": []      }  }','azureBlobStorageDataSet',NULL,NULL),
-('azureADLSv2DataSet','ADLSv2','{    "name": "$azureADLSV2DataSetName",    "properties": {      "linkedServiceName": {        "referenceName": "$LInkedServerReferneceName",        "type": "LinkedServiceReference"      },      "parameters": {        "filename": { "type": "string" },        "directory": { "type": "string" },        "fileformat": { "type": "string" },        "fileextension": { "type": "string" },        "columnDelimiter": { "type": "string" }      },      "annotations": [],      "type": "$fileformat",      "typeProperties": {        "location": {          "type": "AzureBlobFSLocation",          "fileName": {            "value": "@concat(dataset().filename,''.'',dataset().fileextension)",            "type": "Expression"          },          "folderPath": {            "value": "@dataset().directory",            "type": "Expression"          },          "fileSystem": "$fileSystemFolderName"        },        "columnDelimiter": "@dataset().columndelimiter",        "compressionCodec": "$CompressionCodectype"      },      "schema": []    }  }','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
-('azureADLSv2DataSet','ADLSv2','{  "name": "$azureADLSV2DataSetName",  "properties": {    "linkedServiceName": {      "referenceName": "$LInkedServerReferneceName",        "type": "LinkedServiceReference"      },      "parameters": {        "filename": { "type": "string" },        "directory": { "type": "string" },        "fileformat": { "type": "string" },        "fileextension": { "type": "string" },        "columnDelimiter": { "type": "string" }      },      "annotations": [],      "type": "$fileformat",      "typeProperties": {        "location": {          "type": "AzureBlobFSLocation",          "fileName": {            "value": "@concat(dataset().filename,''.'',dataset().fileextension)",            "type": "Expression"          },          "folderPath": {            "value": "@dataset().directory",            "type": "Expression"          },          "fileSystem": "$fileSystemFolderName"        }      },      "schema": []    }  }','azureADLSv2DataSet','SinkFileFormat','Json'),
-('azureADLSv2DataSet','ADLSv2','{  "name": "$azureADLSV2DataSetName",  "properties": {    "linkedServiceName": {      "referenceName": "$LInkedServerReferneceName",        "type": "LinkedServiceReference"      },      "parameters": {        "filename": { "type": "string" },        "directory": { "type": "string" },        "fileformat": { "type": "string" },        "fileextension": { "type": "string" },        "columnDelimiter": { "type": "string" }      },      "annotations": [],      "type": "$fileformat",      "typeProperties": {        "location": {          "type": "AzureBlobFSLocation",          "fileName": {            "value": "@concat(dataset().filename,''.'',dataset().fileextension)",            "type": "Expression"          },          "folderPath": {            "value": "@dataset().directory",            "type": "Expression"          },          "fileSystem": "$fileSystemFolderName"        }      },      "schema": []    }  }','azureADLSv2DataSet','SinkFileFormat','Avro'),
-('azureSQLDatabasewithManagedIdentityDataset','azureSQLDatabasewithManagedIdentity','{  "name": "$azureSQLDatabasewithManagedIdentityDatasetName",  "properties": {    "type": "AzureSqlTable",    "linkedServiceName": {      "referenceName": "$azureSQLDatabasewithManagedIdentityLinkedServiceName", "type": "LinkedServiceReference"},  "typeProperties": { "tableName": "dummy" }}}','azureSQLDatabasewithManagedIdentityDataset',NULL,NULL),
-('OnPremiseSQLServerDataset','OnPremiseSQLServer','{"name": "$OnPremiseSQLServerDatasetName","properties": {"type": "SqlServerTable","linkedServiceName":{"referenceName": "$OnPremiseSQLServerLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','OnPremiseSQLServerDataset',NULL,NULL),
-('RestServiceDataset','RestService','  {      "name": "$RestServiceDatasetName",      "properties": {          "linkedServiceName": {              "referenceName": "$RestServiceLinkedServiceName",              "type": "LinkedServiceReference"          },          "annotations": [],          "type": "RestResource",          "schema": []      },      "type": "Microsoft.DataFactory/factories/datasets"  }','RestServiceDataset',NULL,NULL)
+('azureSqlDatabaseDataset','azureSQLDatabase','SQL Authentication','{"name": "$azureSqlDatabaseDatasetName","properties": {"type": "AzureSqlTable","linkedServiceName": {"referenceName": "$azureSqlDatabaseLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','azureSqlDatabaseDataset',NULL,NULL),
+('azureSqlDataWarehouseDataset','azureSQLDataWarehouse','SQL Authentication','{"name": "$azureSqlDWDatasetName","properties": {"type": "AzureSqlDWTable","linkedServiceName": {"referenceName": "$azureSqlDataWarehouseLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','azureSqlDataWarehouseDataset',NULL,NULL),
+('azureADLSv2DataSet','ADLSv2','Managed Identity','{    "name": "$azureADLSV2DataSetName",    "properties": {      "linkedServiceName": {        "referenceName": "$LInkedServerReferneceName",        "type": "LinkedServiceReference"      },      "parameters": {        "filename": { "type": "string" },        "directory": { "type": "string" },        "fileformat": { "type": "string" }      },      "annotations": [],      "type": "$fileformat",      "typeProperties": {        "location": {          "type": "AzureBlobFSLocation",          "fileName": {            "value": "@concat(dataset().filename,''.'',dataset().fileformat)",            "type": "Expression"          },          "folderPath": {            "value": "@dataset().directory",            "type": "Expression"          },          "fileSystem": "$fileSystemFolderName"        },        "compressionCodec": "$CompressionCodectype"      },      "schema": []    }  }','azureADLSv2DataSet','SinkFileFormat','Parquet'),
+('azureBlobStorageDataSet','AzureBlobStorage','Managed Identity','{      "name": "$azureBlobDataSetName",      "properties": {          "linkedServiceName": {              "referenceName": "$AzureBlobStorageLinkedServiceName",              "type": "LinkedServiceReference"          },          "annotations": [],          "type": "DelimitedText",          "typeProperties": {              "location": {                  "type": "AzureBlobFSLocation",                  "fileSystem": "$fileslocation"              },              "columnDelimiter": ",",              "escapeChar": "\\",              "firstRowAsHeader": "true",              "quoteChar": "\""          },          "schema": []      }  }','azureBlobStorageDataSet',NULL,NULL),
+('azureADLSv2DataSet','ADLSv2','Managed Identity','{    "name": "$azureADLSV2DataSetName",    "properties": {      "linkedServiceName": {        "referenceName": "$ADLSV2LinkedServiceName",        "type": "LinkedServiceReference"      },      "parameters": {        "filename": { "type": "string" },        "directory": { "type": "string" },        "fileformat": { "type": "string" },        "fileextension": { "type": "string" },        "columnDelimiter": { "type": "string" }      },      "annotations": [],      "type": "$fileformat",      "typeProperties": {        "location": {          "type": "AzureBlobFSLocation",          "fileName": {            "value": "@concat(dataset().filename,''.'',dataset().fileextension)",            "type": "Expression"          },          "folderPath": {            "value": "@dataset().directory",            "type": "Expression"          },          "fileSystem": "$fileSystemFolderName"        },        "columnDelimiter": "@dataset().columndelimiter",        "compressionCodec": "$CompressionCodectype"      },      "schema": []    }  }','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
+('azureADLSv2DataSet','ADLSv2','Managed Identity','{  "name": "$azureADLSV2DataSetName",  "properties": {    "linkedServiceName": {      "referenceName": "$LInkedServerReferneceName",        "type": "LinkedServiceReference"      },      "parameters": {        "filename": { "type": "string" },        "directory": { "type": "string" },        "fileformat": { "type": "string" },        "fileextension": { "type": "string" },        "columnDelimiter": { "type": "string" }      },      "annotations": [],      "type": "$fileformat",      "typeProperties": {        "location": {          "type": "AzureBlobFSLocation",          "fileName": {            "value": "@concat(dataset().filename,''.'',dataset().fileextension)",            "type": "Expression"          },          "folderPath": {            "value": "@dataset().directory",            "type": "Expression"          },          "fileSystem": "$fileSystemFolderName"        }      },      "schema": []    }  }','azureADLSv2DataSet','SinkFileFormat','Json'),
+('azureADLSv2DataSet','ADLSv2','Managed Identity','{  "name": "$azureADLSV2DataSetName",  "properties": {    "linkedServiceName": {      "referenceName": "$LInkedServerReferneceName",        "type": "LinkedServiceReference"      },      "parameters": {        "filename": { "type": "string" },        "directory": { "type": "string" },        "fileformat": { "type": "string" },        "fileextension": { "type": "string" },        "columnDelimiter": { "type": "string" }      },      "annotations": [],      "type": "$fileformat",      "typeProperties": {        "location": {          "type": "AzureBlobFSLocation",          "fileName": {            "value": "@concat(dataset().filename,''.'',dataset().fileextension)",            "type": "Expression"          },          "folderPath": {            "value": "@dataset().directory",            "type": "Expression"          },          "fileSystem": "$fileSystemFolderName"        }      },      "schema": []    }  }','azureADLSv2DataSet','SinkFileFormat','Avro'),
+('azureSQLDatabaseDataset','azureSQLDatabase','Managed Identity','{  "name": "$azureSQLDatabaseDatasetName",  "properties": {    "type": "AzureSqlTable",    "linkedServiceName": {      "referenceName": "$azureSQLDatabaseLinkedServiceName", "type": "LinkedServiceReference"},  "typeProperties": { "tableName": "dummy" }}}','azureSQLDatabaseDataset',NULL,NULL),
+('OnPremiseSQLServerDataset','OnPremiseSQLServer','SQL Authentication','{"name": "$OnPremiseSQLServerDatasetName","properties": {"type": "SqlServerTable","linkedServiceName":{"referenceName": "$OnPremiseSQLServerLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','OnPremiseSQLServerDataset',NULL,NULL),
+('RestServiceDataset','RestService','Anonymous','  {      "name": "$RestServiceDatasetName",      "properties": {          "linkedServiceName": {              "referenceName": "$RestServiceLinkedServiceName",              "type": "LinkedServiceReference"          },          "annotations": [],          "type": "RestResource",          "schema": []      },      "type": "Microsoft.DataFactory/factories/datasets"  }','RestServiceDataset',NULL,NULL)
 
 
 MERGE [T_List_DataSets] AS mrg
 USING (SELECT s.*,l.LinkedServiceId as Id FROM @SrcDatasets s
     INNER JOIN T_List_LinkedServices l
     ON s.[LinkedServiceName] = l.[LinkedServiceName]
+    AND s.AuthenticationType = l.AuthenticationType
     ) AS src
 ON mrg.[LinkedServiceid] = src.Id
 AND mrg.[DataSetName] = src.[DataSetName]
@@ -346,35 +361,37 @@ Print 'Start - Inserting data to list datasets parameters table'
 
 DECLARE @SrcdatasetParameters as TABLE
 ( ParameterName VARCHAR (100) , ParameterValue VARCHAR (500) , DatasetName NVARCHAR (255),
+LinkedServiceName VARCHAR(200),
+AuthenticationType VARCHAR(200),
 [AdditionalConfigurationType] NVARCHAR (100),
 [AdditionalConfigurationValue] NVARCHAR (100))
 
 INSERT INTO @SrcdatasetParameters
-( ParameterName,ParameterValue,DatasetName,[AdditionalConfigurationType],[AdditionalConfigurationValue])
+( ParameterName,ParameterValue,DatasetName,LinkedServiceName,AuthenticationType,[AdditionalConfigurationType],[AdditionalConfigurationValue])
 VALUES
-('$azureADLSV2DataSetName','DS_POC_ADLS','azureADLSv2DataSet','SinkFileFormat','Parquet'),
-('$LInkedServerReferneceName','','azureADLSv2DataSet','SinkFileFormat','Parquet'),
-('$azureSqlDWDatasetName','DS_POC_DWH','azureSqlDataWarehouseDataset',NULL,NULL),
-('$azureSqlDatabaseDatasetName','DS_POC_AzureSQL','azureSqlDatabaseDataset',NULL,NULL),
-('$azureBlobDataSetName','DS_AzureBlob','azureBlobStorageDataSet',NULL,NULL),
-('$fileSystemFolderName','','azureADLSv2DataSet','SinkFileFormat','Parquet'),
-('$CompressionCodectype','snappy','azureADLSv2DataSet','SinkFileFormat','Parquet'),
-('$fileformat','','azureADLSv2DataSet','SinkFileFormat','Parquet'),
-('$fileextension','','azureADLSv2DataSet','SinkFileFormat','Parquet'),
-('$ADLSV2DataSetName','DS_POC_ADLS','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
-('$LInkedServerReferneceName','','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
-('$fileSystemFolderName','','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
-('$CompressionCodectype','snappy','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
-('$fileformat','','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
-('$fileextension','','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
-('$ColumnDelimiter',',','azureADLSv2DataSet','SinkFileFormat','DelimitedText'),
-('$azureSqlDatabaseLinkedServiceName','','azureSqlDatabaseDataset',NULL,NULL),
-('$azureSQLDatabasewithManagedIdentityDatasetName','','azureSQLDatabasewithManagedIdentityDataset',NULL,NULL),
-('$azureSQLDatabasewithManagedIdentityLinkedServiceName','','azureSQLDatabasewithManagedIdentityDataset',NULL,NULL),
-('$OnPremiseSQLServerDatasetName','','OnPremiseSQLServerDataset',NULL,NULL),
-('$OnPremiseSQLServerLinkedServiceName','','OnPremiseSQLServerDataset',NULL,NULL),
-('$RestServiceDatasetName','','RestServiceDataset',NULL,NULL),
-('$RestServiceDatasetName','','RestServiceDataset',NULL,NULL)
+('$azureADLSV2DataSetName','DS_POC_ADLS','azureADLSv2DataSet','ADLSV2','Managed Identity','SinkFileFormat','Parquet'),
+('$LInkedServerReferneceName','','azureADLSv2DataSet','ADLSV2','Managed Identity','SinkFileFormat','Parquet'),
+('$azureSqlDWDatasetName','DS_POC_DWH','azureSqlDataWarehouseDataset','azureSqlDataWarehouse','SQL Authentication',NULL,NULL),
+('$azureSqlDatabaseDatasetName','DS_POC_AzureSQL','azureSqlDatabaseDataset','azureSqlDatabase','SQL Authentication',NULL,NULL),
+('$azureBlobDataSetName','DS_AzureBlob','azureBlobStorageDataSet','azureBlobStorage','Managed Identity',NULL,NULL),
+('$fileSystemFolderName','','azureADLSv2DataSet','ADLSV2','Managed Identity','SinkFileFormat','Parquet'),
+('$CompressionCodectype','snappy','azureADLSv2DataSet','ADLSV2','Managed Identity','SinkFileFormat','Parquet'),
+('$fileformat','','azureADLSv2DataSet','ADLSV2','Managed Identity','SinkFileFormat','Parquet'),
+('$fileextension','','azureADLSv2DataSet','ADLSV2','Managed Identity','SinkFileFormat','Parquet'),
+('$ADLSV2DataSetName','DS_POC_ADLS','azureADLSv2DataSet','ADLSV2','Managed Identity','SinkFileFormat','DelimitedText'),
+('$ADLSV2LinkedServiceName','','azureADLSv2DataSet','ADLSV2','Managed Identity','SinkFileFormat','DelimitedText'),
+('$fileSystemFolderName','','azureADLSv2DataSet','ADLSV2','Managed Identity','SinkFileFormat','DelimitedText'),
+('$CompressionCodectype','snappy','azureADLSv2DataSet','ADLSV2','Managed Identity','SinkFileFormat','DelimitedText'),
+('$fileformat','','azureADLSv2DataSet','ADLSV2','Managed Identity','SinkFileFormat','DelimitedText'),
+('$fileextension','','azureADLSv2DataSet','ADLSV2','Managed Identity','SinkFileFormat','DelimitedText'),
+('$ColumnDelimiter',',','azureADLSv2DataSet','ADLSV2','Managed Identity','SinkFileFormat','DelimitedText'),
+('$azureSqlDatabaseLinkedServiceName','','azureSqlDatabaseDataset','azureSqlDatabase','SQL Authentication',NULL,NULL),
+('$azureSQLDatabaseDatasetName','','azureSQLDatabaseDataset','azureSqlDatabase','Managed Identity',NULL,NULL),
+('$azureSQLDatabaseLinkedServiceName','','azureSQLDatabaseDataset','azureSqlDatabase','Managed Identity',NULL,NULL),
+('$OnPremiseSQLServerDatasetName','','OnPremiseSQLServerDataset','OnPremiseSQLServer','SQL Authentication',NULL,NULL),
+('$OnPremiseSQLServerLinkedServiceName','','OnPremiseSQLServerDataset','OnPremiseSQLServer','SQL Authentication',NULL,NULL),
+('$RestServiceDatasetName','','RestServiceDataset','RestService','Anonymous',NULL,NULL),
+('$RestServiceLinkedServiceName','','RestServiceDataset','RestService','Anonymous',NULL,NULL)
 
 MERGE [T_List_Dataset_Parameters] AS mrg
 USING (
@@ -383,6 +400,10 @@ USING (
     ON s.DatasetName = t.[DataSetName]
     AND ISNULL(s.[AdditionalConfigurationType],'') = ISNULL(t.[AdditionalConfigurationType],'')
     AND ISNULL(s.[AdditionalConfigurationValue],'') = ISNULL(t.[AdditionalConfigurationValue],'')
+    INNER JOIN T_List_LinkedServices t1
+    ON t1.LinkedServiceId = t.LinkedServiceId
+    AND t1.LinkedServiceName = s.LinkedServiceName
+    AND t1.AuthenticationType = s.AuthenticationType
       ) AS src
 ON mrg.[DatasetId] = src.Id
 AND mrg.ParameterName = src.ParameterName

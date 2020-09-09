@@ -1,8 +1,13 @@
 ﻿
 
 CREATE procedure [dbo].[usp_Insert_Pipeline_Parameters]
-(@LkpActName NVARCHAR(300),@ForeachActName NVARCHAR(300), @CPActName NVARCHAR(300),@PipelineId INT)
+(@PipelineId INT)
 as
+declare @LkpActName NVARCHAR(300),@ForeachActName NVARCHAR(300), @CPActName NVARCHAR(300)
+
+SET @LkpActName = 'LKP_'+CAST(@PipelineId AS VARCHAR)
+SET @CPActName = 'CP_'+CAST(@PipelineId AS VARCHAR)
+SET @ForeachActName = 'Foreach_SourceEntity_'+CAST(@PipelineId AS VARCHAR)
 
 --TRuncate table [T_Pipeline_Activity_Parameters]
 
@@ -37,9 +42,10 @@ WHERE
 TPS.PipelineId = @PipelineId
 
 
-UPDATE [T_Pipeline_Activity_Parameters]
-SET Parametervalue = REPLACE(@LkpActName,'LKP_','')
-WHERE ParameterName like '%MetadataDBLinkedServiceName%' AND pipelineid = @PipelineId
+--UPDATE [T_Pipeline_Activity_Parameters]
+--SET Parametervalue = REPLACE(@LkpActName,'LKP_','')
+--WHERE ParameterName like '%MetadataDBLinkedServiceName%' AND pipelineid = @PipelineId
+
 GO
 
 

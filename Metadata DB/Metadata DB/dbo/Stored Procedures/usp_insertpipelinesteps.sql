@@ -1,16 +1,26 @@
 ﻿
 CREATE PROCEDURE [dbo].[usp_insertpipelinesteps]
-(@PipelineId INT, @LkpActivityName NVARCHAR(200), @CpyActivityName NVARCHAR(200), @ForeachActivityName NVARCHAR(200),@type nvarchar(200))
+(@PipelineId INT, @sourcelinkedservicename nvarchar(200))
 AS 
 BEGIN
 declare @dependsonid int
 declare @childid int
 declare @failedactivityname nvarchar(200)
 declare @llinkedserviceid int
+declare @LkpActivityName NVARCHAR(200)
+declare @CpyActivityName NVARCHAR(200)
+declare @ForeachActivityName NVARCHAR(200)
+DECLARE @type VARCHAR(200)
 
-select @llinkedserviceid = [LinkedServiceId]
-from T_List_LinkedServices 
-where [LinkedServiceName] = @type
+SET @LkpActivityName = 'LKP_'+CAST(@PipelineId AS VARCHAR)
+SET @CpyActivityName = 'CP_'+CAST(@PipelineId AS VARCHAR)
+SET @ForeachActivityName = 'Foreach_SourceEntity_'+CAST(@PipelineId AS VARCHAR)
+
+select @type = TLL.LinkedServiceName
+from T_Pipeline_LinkedServices TPL
+INNER JOIN T_List_LinkedServices TLL
+ON TPL.LinkedServiceId  = TLL.LinkedServiceId
+where TPL.[LinkedServiceName] = @sourcelinkedservicename
 
 	INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
     SELECT @PipelineId,[ActivityId],0,0,1,'SPPipelineInprogressActivity','' 
