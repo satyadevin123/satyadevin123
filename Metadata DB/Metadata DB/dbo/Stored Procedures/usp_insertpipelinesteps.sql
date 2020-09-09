@@ -26,7 +26,7 @@ where TPL.[LinkedServiceName] = @sourcelinkedservicename
     SELECT @PipelineId,[ActivityId],0,0,1,'SPPipelineInprogressActivity','' 
     FROM dbo.T_List_Activities where ActivityName = 'Custom Logging' AND ISNULL(SourceType,@type)=@type
 	
-	SELECT @dependsonid = tps.[PipelineStepsId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
+	SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
     on tps.[ActivityID] = tla.[ActivityId]
     where tla.activityname = 'Custom Logging' and tps.pipelineid = @PipelineId and tps.activityname = 'SPPipelineInprogressActivity'
 
@@ -45,7 +45,7 @@ where TPL.[LinkedServiceName] = @sourcelinkedservicename
 	AND ISNULL(SourceType,@type)=@type
 
 	
-    SELECT @dependsonid = tps.[PipelineStepsId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
+    SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
     on tps.[ActivityID] = tla.[ActivityId]
     where tla.activityname = 'Copy Activity' and tps.pipelineid = @PipelineId and tps.activityname = @CpyActivityName
 
@@ -74,7 +74,7 @@ where TPL.[LinkedServiceName] = @sourcelinkedservicename
     SELECT @PipelineId,[ActivityId],0,0,1,@CpyActivityName,'' FROM dbo.T_List_Activities where ActivityName = 'Copy Activity'
 	AND ISNULL(SourceType,@type)=@type
 
-    SELECT @dependsonid = tps.[PipelineStepsId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
+    SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
     on tps.[ActivityID] = tla.[ActivityId]
     where tla.activityname = 'Lookup Activity' and tps.pipelineid = @PipelineId and tps.activityname = @LkpActivityName
 
@@ -83,7 +83,7 @@ where TPL.[LinkedServiceName] = @sourcelinkedservicename
     SELECT @PipelineId,[ActivityId],@dependsonid,0,1,@failedactivityname,'Failed' 
     FROM dbo.T_List_Activities where ActivityName = 'Custom Logging' AND ISNULL(SourceType,@type)=@type
 
-	SELECT @childid = tps.[PipelineStepsId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
+	SELECT @childid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
     on tps.[ActivityID] = tla.[ActivityId]
     where tla.activityname = 'Copy Activity' and tps.pipelineid = @PipelineId and tps.activityname = @CpyActivityName
 	AND ISNULL(SourceType,@type)=@type
@@ -93,7 +93,7 @@ where TPL.[LinkedServiceName] = @sourcelinkedservicename
     FROM dbo.T_List_Activities where ActivityName = 'For Each Activity'
 	AND ISNULL(SourceType,@type)=@type
 
-    SELECT @dependsonid = tps.[PipelineStepsId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
+    SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
     on tps.[ActivityID] = tla.[ActivityId]
     where tla.activityname = 'For Each Activity' and tps.pipelineid = @PipelineId and tps.activityname = @ForeachActivityName
 
