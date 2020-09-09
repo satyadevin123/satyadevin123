@@ -1,6 +1,6 @@
 ﻿
 CREATE PROCEDURE [dbo].[usp_InsertPipelineDataSetParameters]
-(@LinkedServiceId INT,@DatasetId INT,@PipelineId INT)
+(@LinkedServiceName VARCHAR(200),@DatasetId INT,@PipelineId INT)
 AS
 BEGIN
 declare @LinkedServiceType VARCHAR(200)
@@ -9,21 +9,13 @@ DECLARE @datasetparamval varchar(200)
 DECLARE @lsparamname varchar(200)
 DECLARE @lsparamval varchar(200)
 
-
-SELECT @LinkedServiceType = tll.[LinkedServiceName]
-FROM T_Pipeline_LinkedServices tpl JOIN T_List_LinkedServices tll
-ON tpl.LinkedServiceId = tll.[LinkedServiceId]
-WHERE tpl.[PipelineLinkedServicesID] = @LinkedServiceId
-
-SET @datasetparamname = '$'+CAST(@LinkedServiceId AS NVARCHAR(10))+'_'+@LinkedServiceType+'DatasetName'
-SET @datasetparamval = 'DS_POC_'+@LinkedServiceType+'_'+CAST(@LinkedServiceId AS NVARCHAR(10))
+SET @datasetparamval = 'DS_'+@LinkedServiceName+'_'+CAST(@DatasetId AS NVARCHAR(10))+'_'+CAST(@PipelineId AS NVARCHAR(10))
             
-SET @lsparamname = '$'+CAST(@LinkedServiceId AS NVARCHAR(10))+'_'+@LinkedServiceType+'LinkedServiceName'
-SET @lsparamval = 'LS_POC_'+@LinkedServiceType+'_'+CAST(@LinkedServiceId AS NVARCHAR(10))
+SET @lsparamval = 'LS_'+@LinkedServiceName
 
 
 INSERT INTO dbo.T_Pipeline_DataSet_Parameters (ParameterName,ParameterValue,DataSetId,pipelineid )
-SELECT REPLACE(tldp.ParameterName,'$','$'+CAST(@LinkedServiceId AS nvarchar)+'_') AS ParameterName,
+SELECT REPLACE(tldp.ParameterName,'$','$'+CAST(@DatasetId AS nvarchar)+'_'+CAST(@pipelineid AS nvarchar)+'_') AS ParameterName,
 ParameterValue,@DatasetId,@PipelineId
 FROM T_List_Dataset_Parameters tldp
 INNER JOIN T_List_DataSets tld
@@ -34,13 +26,13 @@ WHERE tpd.[PipelineDatasetId] = @DatasetId
 
 UPDATE T_Pipeline_DataSet_Parameters
 SET ParameterValue = @datasetparamval
-WHERE ParameterName = @datasetparamname
+WHERE ParameterName like '%Datasetname%'
 AND DatasetId = @DatasetId
 AND pipelineid= @PipelineId
 
 UPDATE T_Pipeline_DataSet_Parameters
 SET ParameterValue = @lsparamval
-WHERE ParameterName = @lsparamname
+WHERE ParameterName like '%LinkedServicename%'
 AND DatasetId = @DatasetId
 AND pipelineid= @PipelineId
 

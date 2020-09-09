@@ -173,6 +173,7 @@
     <Build Include="dbo\Stored Procedures\usp_InsertPipelineTablesToBeMoved.sql" />
     <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_LinkedServiceParameters.sql" />
     <Build Include="dbo\Stored Procedures\usp_UpdatePipelineDataSetParameters.sql" />
+    <Build Include="dbo\Stored Procedures\usp_UpdateKeyVaultReferedLinkedServiceParameters.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Script.PostDeployment1.sql" />
