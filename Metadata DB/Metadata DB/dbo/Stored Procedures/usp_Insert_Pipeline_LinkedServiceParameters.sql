@@ -41,16 +41,14 @@ AND LinkedServerId = @LinkedServiceId
 UPDATE T_Pipeline_LinkedService_Parameters SET ParameterValue = @IRName WHERE ParameterName like '%nameofintegrationruntime%' 
 AND LinkedServerId = @LinkedServiceId 
 
---IF(@LinkedServiceType = 'azurekeyvault')
---BEGIN
-	
---	SET @Keyvaultparamname = '$'+CAST(@LinkedServiceId AS NVARCHAR(10)) +'_keyvaultname'
+declare @tenantid varchar(255)
 
---	SELECT @Keyvaultname = ParameterValue FROM T_Master_Parameters_List WHERE ParameterName = '$keyvaultname'
---	EXEC usp_UpdateLinkedServiceParameters @Keyvaultparamname,@Keyvaultname,@PipelineId,@LinkedServiceId
- 
+SELECT @tenantid = ParameterValue
+FROM T_Master_Parameters_List
+WHERE ParameterName = '$tenantid'
 
---END
+UPDATE T_Pipeline_LinkedService_Parameters SET ParameterValue = @tenantid WHERE ParameterName like '%tenantid%' 
+AND LinkedServerId = @LinkedServiceId 
 
    
 

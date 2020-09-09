@@ -198,7 +198,7 @@ VALUES
 ('azureKeyVault','{    "name": "$azureKeyVaultLinkedServiceName",    "properties": {        "annotations": [],        "type": "AzureKeyVault",       "typeProperties": {            "baseUrl": "https://$keyvaultname.vault.azure.net/"        }    }}','Managed Identity',0),
 ('RestService','    {      "name": "RestService1",      "type": "Microsoft.DataFactory/factories/linkedservices",      "properties": {          "annotations": [],          "type": "RestService",          "typeProperties": {              "url": "$restapiurl" ,         "enableServerCertificateValidation": true,              "authenticationType": "Anonymous"          }      }  }  ','Anonymous',0)
 ,
-('azureSQLDatabase', '{  "name": "$azureSqlDatabaseLinkedServiceName",  "properties": {    "type": "AzureSqlDatabase",    "typeProperties": {      "connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=$azureSqlDBServerName.database.windows.net;Initial Catalog=$azureSqlDatabaseName",      "servicePrincipalId": "$servicePrincipalId",      "servicePrincipalKey": {        "type": "AzureKeyVaultSecret",        "store": {          "referenceName": "$azurekeyvaultlinkedservicereference",          "type": "LinkedServiceReference"        },        "secretName": "$servicePrincipalKey"      }    },    "tenant": "$tenantid",    "connectVia": {      "referenceName": "$nameofintegrationruntime",      "type": "IntegrationRuntimeReference"    } }} ','Service Principal',1)
+('azureSQLDatabase', '{  "name": "$azureSqlDatabaseLinkedServiceName",  "properties": {    "type": "AzureSqlDatabase",    "typeProperties": {      "connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=$azureSqlDBServerName.database.windows.net;Initial Catalog=$azureSqlDatabaseName",      "servicePrincipalId": "$servicePrincipalId",      "servicePrincipalKey": {        "type": "AzureKeyVaultSecret",        "store": {          "referenceName": "$azurekeyvaultlinkedservicereference",          "type": "LinkedServiceReference"        },        "secretName": "$servicePrincipalKey"      }  ,"tenant":"$tenantId"  },    "connectVia": {      "referenceName": "$nameofintegrationruntime",      "type": "IntegrationRuntimeReference"    } }} ','Service Principal',1)
 MERGE [T_List_LinkedServices] AS mrg
 USING (SELECT * FROM @SrcLinkedServices) AS src
 ON mrg.LinkedServiceName = src.LinkedServiceName
@@ -261,16 +261,19 @@ VALUES
 ('$azureSqlDatabaseName','','azureSQLDatabase',0,'Managed Identity'),
 ('$nameofintegrationruntime','','azureSQLDatabase',0,'Managed Identity'),
 ('$azureKeyVaultLinkedServiceName','','azureKeyVault',0,'Managed Identity'),
+('$keyvaultname','','azureKeyVault',0,'Managed Identity'),
 ('$restapiurl','','RestService',0,'Anonymous'),
 ('$nameofintegrationruntime','','RestService',0,'Anonymous'),
 ('$RestServiceLinkedServiceName','','RestService',0,'Anonymous'),
 ('$azureSqlDatabaseLinkedServiceName','','azureSQLDatabase',0,'Service Principal'),
+('$azureSqlDBServerName','','azureSQLDatabase',0,'Service Principal'),
+('$azureSqlDatabaseName','','azureSQLDatabase',0,'Service Principal'),
+('$azurekeyvaultlinkedservicereference','','azureSQLDatabase',0,'Service Principal'),
+('$servicePrincipalKey','','azureSQLDatabase',1,'Service Principal'),
+('$nameofintegrationruntime','','azureSQLDatabase',0,'Service Principal'),
+('$servicePrincipalId','','azureSQLDatabase',0,'Service Principal'),
+('$tenantid','','azureSQLDatabase',0,'Service Principal')
 
-$azureSqlDBServerName
-$azureSqlDatabaseName
-$azurekeyvaultlinkedservicereference
-$servicePrincipalKey
-$nameofintegrationruntime
 
 MERGE [T_List_LinkedService_Parameters] AS mrg
 USING (
@@ -321,7 +324,8 @@ VALUES
 ('azureADLSv2DataSet','ADLSv2','Managed Identity','{  "name": "$azureADLSV2DataSetName",  "properties": {    "linkedServiceName": {      "referenceName": "$LInkedServerReferneceName",        "type": "LinkedServiceReference"      },      "parameters": {        "filename": { "type": "string" },        "directory": { "type": "string" },        "fileformat": { "type": "string" },        "fileextension": { "type": "string" },        "columnDelimiter": { "type": "string" }      },      "annotations": [],      "type": "$fileformat",      "typeProperties": {        "location": {          "type": "AzureBlobFSLocation",          "fileName": {            "value": "@concat(dataset().filename,''.'',dataset().fileextension)",            "type": "Expression"          },          "folderPath": {            "value": "@dataset().directory",            "type": "Expression"          },          "fileSystem": "$fileSystemFolderName"        }      },      "schema": []    }  }','azureADLSv2DataSet','SinkFileFormat','Avro'),
 ('azureSQLDatabaseDataset','azureSQLDatabase','Managed Identity','{  "name": "$azureSQLDatabaseDatasetName",  "properties": {    "type": "AzureSqlTable",    "linkedServiceName": {      "referenceName": "$azureSQLDatabaseLinkedServiceName", "type": "LinkedServiceReference"},  "typeProperties": { "tableName": "dummy" }}}','azureSQLDatabaseDataset',NULL,NULL),
 ('OnPremiseSQLServerDataset','OnPremiseSQLServer','SQL Authentication','{"name": "$OnPremiseSQLServerDatasetName","properties": {"type": "SqlServerTable","linkedServiceName":{"referenceName": "$OnPremiseSQLServerLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','OnPremiseSQLServerDataset',NULL,NULL),
-('RestServiceDataset','RestService','Anonymous','  {      "name": "$RestServiceDatasetName",      "properties": {          "linkedServiceName": {              "referenceName": "$RestServiceLinkedServiceName",              "type": "LinkedServiceReference"          },          "annotations": [],          "type": "RestResource",          "schema": []      },      "type": "Microsoft.DataFactory/factories/datasets"  }','RestServiceDataset',NULL,NULL)
+('RestServiceDataset','RestService','Anonymous','  {      "name": "$RestServiceDatasetName",      "properties": {          "linkedServiceName": {              "referenceName": "$RestServiceLinkedServiceName",              "type": "LinkedServiceReference"          },          "annotations": [],          "type": "RestResource",          "schema": []      },      "type": "Microsoft.DataFactory/factories/datasets"  }','RestServiceDataset',NULL,NULL),
+('azureSQLDatabaseDataset','azureSQLDatabase','Service Principal',' {"name": "$azureSqlDatabaseDatasetName","properties": {"type": "AzureSqlTable","linkedServiceName": {"referenceName": "$azureSqlDatabaseLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','azureSQLDatabaseDataset',NULL,NULL)
 
 
 MERGE [T_List_DataSets] AS mrg
@@ -391,7 +395,9 @@ VALUES
 ('$OnPremiseSQLServerDatasetName','','OnPremiseSQLServerDataset','OnPremiseSQLServer','SQL Authentication',NULL,NULL),
 ('$OnPremiseSQLServerLinkedServiceName','','OnPremiseSQLServerDataset','OnPremiseSQLServer','SQL Authentication',NULL,NULL),
 ('$RestServiceDatasetName','','RestServiceDataset','RestService','Anonymous',NULL,NULL),
-('$RestServiceLinkedServiceName','','RestServiceDataset','RestService','Anonymous',NULL,NULL)
+('$RestServiceLinkedServiceName','','RestServiceDataset','RestService','Anonymous',NULL,NULL),
+('$azureSQLDatabaseDatasetName','','azureSQLDatabaseDataset','azureSqlDatabase','Service Principal',NULL,NULL),
+('$azureSQLDatabaseLinkedServiceName','','azureSQLDatabaseDataset','azureSqlDatabase','Service Principal',NULL,NULL)
 
 MERGE [T_List_Dataset_Parameters] AS mrg
 USING (
