@@ -19,7 +19,7 @@ SELECT
 FROM (
 		SELECT 
 				 ROW_NUMBER() OVER(ORDER BY TPS.[PipelineActivityId]) AS RowNumber
-				,REPLACE(TLS.[JsonCode],'$','$'+ISNULL(TPS.ActivityName,TLS.ActivityStandardName)+'_') AS Code
+				,REPLACE(REPLACE(TLS.[JsonCode],'$','$'+ISNULL(TPS.ActivityName,TLS.ActivityStandardName)+'_'),'$'+ISNULL(TPS.ActivityName,TLS.ActivityStandardName)+'_master_','$') AS Code
 				,TPS.[PipelineActivityId] AS PipelineActivityId
 				,TPS.EmailNotificationEnabled
 				,TPS.[ChildActivity]
@@ -34,7 +34,7 @@ LEFT JOIN (
 		SELECT 
 				 ROW_NUMBER() OVER(ORDER BY TPS.[PipelineActivityId]) AS RowNumber
 				,CASE WHEN TPS.[ChildActivity] IS NULL OR TPS.[ChildActivity]='' THEN REPLACE(TLS.[JsonCode],'$','$'+ISNULL(TPS.ActivityName,TLS.ActivityStandardName)+'_') 
-					  WHEN TPS.[ChildActivity] IS NOT NULL THEN REPLACE(REPLACE(TLS.[JsonCode],'$activityjsoncode',ChildTLS.[JsonCode]),'$','$'+ISNULL(TPS.ActivityName,ChildTLS.ActivityStandardName)+'_') END AS Code
+					  WHEN TPS.[ChildActivity] IS NOT NULL THEN REPLACE(REPLACE(REPLACE(TLS.[JsonCode],'$activityjsoncode',ChildTLS.[JsonCode]),'$','$'+ISNULL(TPS.ActivityName,ChildTLS.ActivityStandardName)+'_'),'$'+ISNULL(TPS.ActivityName,ChildTLS.ActivityStandardName)+'_master_','$') END AS Code
 				,TPS.[PipelineActivityId] AS PipelineActivityId
 				,TPS.EmailNotificationEnabled
 				,CASE WHEN TPS.[PipelineActivityId] IN (SELECT [ChildActivity] FROM [dbo].[T_Pipeline_Activities]) THEN 'Yes' ELSE 'No' END AS IsChildActivity

@@ -64,7 +64,7 @@ AND t.rownum =@LSInit
 
 
 insert into @LinkedServiceJsoncode select '$'+@LinkedService+'Definition = @"'
-insert into @LinkedServiceJsoncode select REPLACE(Jsoncode,'$','$'+CAST(TPL.[PipelineLinkedServicesID] AS nvarchar)+'_') from [dbo].[T_Pipeline_LinkedServices] 
+insert into @LinkedServiceJsoncode select REPLACE(REPLACE(Jsoncode,'$','$'+CAST(TPL.[PipelineLinkedServicesID] AS nvarchar)+'_'),'$'+CAST(TPL.[PipelineLinkedServicesID] AS nvarchar)+'_master','$') from [dbo].[T_Pipeline_LinkedServices] 
 TPL JOIN [dbo].[T_List_LinkedServices] TLL ON TLL.[LinkedServiceId] = TPL.LinkedServiceID where TPL.[PipelineLinkedServicesID]=@lsid
 insert into @LinkedServiceJsoncode select '"@'
 insert into @LinkedServiceJsoncode select '$'+@LinkedService+'Definition | Out-File c:\'+@LinkedService+'.json'
@@ -98,7 +98,7 @@ AND t.rownum =@DSCount AND tpdp.pipelineid = @PipelineId
 --set @Dataset= (select DataSet_Name from [dbo].[T_Pipeline_DataSets] TPD JOIN [T_List_DataSets] TLD ON TPD.DataSetId= TLD.id where TPD.id =@DSCount)
 
 insert into @DataSetJsoncode select '$'+@DataSet+'Definition = @"'
-insert into @DataSetJsoncode select REPLACE(TLD.Jsoncode,'$','$'+CAST(TPD.PipelineDatasetId AS nvarchar)+'_'+CAST(@PipelineId AS nvarchar)+'_') from [dbo].[T_Pipeline_DataSets] TPD JOIN [T_List_DataSets] TLD ON TPD.DataSetId= TLD.[DatasetId] JOIN T_Pipeline_LinkedServices TPL ON TPL.[PipelineLinkedServicesID] = TPD.LinkedServericeId JOIN T_List_LinkedServices TLL ON TLL.[LinkedServiceId] = TPL.LinkedServiceId where TPD.[PipelineDatasetId]=@dsid 
+insert into @DataSetJsoncode select REPLACE(REPLACE(TLD.Jsoncode,'$','$'+CAST(TPD.PipelineDatasetId AS nvarchar)+'_'+CAST(@PipelineId AS nvarchar)+'_'),'$'+CAST(TPD.PipelineDatasetId AS nvarchar)+'_'+CAST(@PipelineId AS nvarchar)+'_master','$') from [dbo].[T_Pipeline_DataSets] TPD JOIN [T_List_DataSets] TLD ON TPD.DataSetId= TLD.[DatasetId] JOIN T_Pipeline_LinkedServices TPL ON TPL.[PipelineLinkedServicesID] = TPD.LinkedServericeId JOIN T_List_LinkedServices TLL ON TLL.[LinkedServiceId] = TPL.LinkedServiceId where TPD.[PipelineDatasetId]=@dsid 
 insert into @DataSetJsoncode select '"@'
 insert into @DataSetJsoncode select '$'+@DataSet+'Definition | Out-File c:\'+@DataSet+'.json'
 insert into @DataSetJsoncode select  'New-AzDataFactoryV2DataSet -DataFactoryName $dataFactoryName -ResourceGroupName $resourceGroupName -Force -Name "'+@name+'" -File "c:\'+@DataSet+'.json"'

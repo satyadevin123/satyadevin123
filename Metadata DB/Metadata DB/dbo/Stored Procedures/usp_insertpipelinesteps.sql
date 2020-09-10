@@ -11,10 +11,12 @@ declare @LkpActivityName NVARCHAR(200)
 declare @CpyActivityName NVARCHAR(200)
 declare @ForeachActivityName NVARCHAR(200)
 DECLARE @type VARCHAR(200)
+DECLARE @GettokenActivityName NVARCHAR(200)
 
 SET @LkpActivityName = 'LKP_'+CAST(@PipelineId AS VARCHAR)
 SET @CpyActivityName = 'CP_'+CAST(@PipelineId AS VARCHAR)
 SET @ForeachActivityName = 'Foreach_SourceEntity_'+CAST(@PipelineId AS VARCHAR)
+
 
 select @type = TLL.LinkedServiceName
 from T_Pipeline_LinkedServices TPL
@@ -40,12 +42,42 @@ where TPL.[LinkedServiceName] = @sourcelinkedservicename
 	if(@type = 'RestService')
 	begin
 
+    INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
+    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,'GetSPNKey','Succeeded' FROM dbo.T_List_Activities where ActivityName = 'Get SPNKey from Vault'
+	AND ISNULL(SourceType,@type)=@type
+
+    SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
+    on tps.[ActivityID] = tla.[ActivityId]
+    where tla.activityname = 'Get SPNKey from Vault' and tps.pipelineid = @PipelineId and tps.activityname = 'GetSPNKey'
+
+	SET @failedactivityname = CONCAT('SPPipelineFailedActivity',@dependsonid)
+
 	INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
+    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,@failedactivityname,'Failed' 
+    FROM dbo.T_List_Activities where ActivityName = 'Custom Logging'
+	AND ISNULL(SourceType,@type)=@type
+
+    INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
+    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,'GetToken','Succeeded' FROM dbo.T_List_Activities where ActivityName = 'Get Token'
+	AND ISNULL(SourceType,@type)=@type
+
+    SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
+    on tps.[ActivityID] = tla.[ActivityId]
+    where tla.activityname = 'Get Token' and tps.pipelineid = @PipelineId and tps.activityname = 'GetToken'
+	
+    SET @failedactivityname = CONCAT('SPPipelineFailedActivity',@dependsonid)
+
+	INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
+    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,@failedactivityname,'Failed' 
+    FROM dbo.T_List_Activities where ActivityName = 'Custom Logging'
+	AND ISNULL(SourceType,@type)=@type
+
+
+    INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
     SELECT @PipelineId,[ActivityId],@dependsonid,0,1,@CpyActivityName,'Succeeded' FROM dbo.T_List_Activities where ActivityName = 'Copy Activity'
 	AND ISNULL(SourceType,@type)=@type
 
-	
-    SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
+	SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
     on tps.[ActivityID] = tla.[ActivityId]
     where tla.activityname = 'Copy Activity' and tps.pipelineid = @PipelineId and tps.activityname = @CpyActivityName
 
@@ -54,7 +86,7 @@ where TPL.[LinkedServiceName] = @sourcelinkedservicename
     SELECT @PipelineId,[ActivityId],@dependsonid,0,1,@failedactivityname,'Failed' 
     FROM dbo.T_List_Activities where ActivityName = 'Custom Logging' AND ISNULL(SourceType,@type)=@type
 
-		INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
+    INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
     SELECT @PipelineId,[ActivityId],@dependsonid,0,1,'SPPipelineSucceededActivity' ,'Succeeded'
     FROM dbo.T_List_Activities where ActivityName = 'Custom Logging'
 	AND ISNULL(SourceType,@type)=@type

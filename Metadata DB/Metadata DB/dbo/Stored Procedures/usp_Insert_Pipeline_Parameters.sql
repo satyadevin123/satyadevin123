@@ -41,10 +41,15 @@ WHERE
 --TPS.Activityname IN (@LkpActName,@ForeachActName,@CPActName)
 TPS.PipelineId = @PipelineId
 
+DECLARE @MetaLS VARCHAR(200)
 
---UPDATE [T_Pipeline_Activity_Parameters]
---SET Parametervalue = REPLACE(@LkpActName,'LKP_','')
---WHERE ParameterName like '%MetadataDBLinkedServiceName%' AND pipelineid = @PipelineId
+SELECT @MetaLS = 'LS_'+LinkedServiceName
+FROM T_Pipeline_LinkedServices
+WHERE LinkedServiceName like '%metadata%'
+
+UPDATE [T_Pipeline_Activity_Parameters]
+SET Parametervalue = @MetaLS
+WHERE ParameterName like '%MetadataDBLinkedServiceName%' AND pipelineid = @PipelineId
 
 GO
 

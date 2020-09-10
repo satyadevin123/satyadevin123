@@ -44,7 +44,9 @@ VALUES
 ('$nameofintegrationruntime','"Azure-IR-ADF"'),
 ('$SinkAccountName',''),
 ('$keyvaultname',''),
-('$keyvaultlocation','')
+('$keyvaultlocation',''),
+('$servicePrincipalId',''),
+('$servicePrincipalKey','')
 
 MERGE [T_Master_Parameters_List] AS mrg
 USING (SELECT * FROM @Mastertable) AS src
@@ -198,7 +200,7 @@ VALUES
 ('azureKeyVault','{    "name": "$azureKeyVaultLinkedServiceName",    "properties": {        "annotations": [],        "type": "AzureKeyVault",       "typeProperties": {            "baseUrl": "https://$keyvaultname.vault.azure.net/"        }    }}','Managed Identity',0),
 ('RestService','    {      "name": "RestService1",      "type": "Microsoft.DataFactory/factories/linkedservices",      "properties": {          "annotations": [],          "type": "RestService",          "typeProperties": {              "url": "$restapiurl" ,         "enableServerCertificateValidation": true,              "authenticationType": "Anonymous"          }      }  }  ','Anonymous',0)
 ,
-('azureSQLDatabase', '{  "name": "$azureSqlDatabaseLinkedServiceName",  "properties": {    "type": "AzureSqlDatabase",    "typeProperties": {      "connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=$azureSqlDBServerName.database.windows.net;Initial Catalog=$azureSqlDatabaseName",      "servicePrincipalId": "$servicePrincipalId",      "servicePrincipalKey": {        "type": "AzureKeyVaultSecret",        "store": {          "referenceName": "$azurekeyvaultlinkedservicereference",          "type": "LinkedServiceReference"        },        "secretName": "$servicePrincipalKey"      }  ,"tenant":"$tenantId"  },    "connectVia": {      "referenceName": "$nameofintegrationruntime",      "type": "IntegrationRuntimeReference"    } }} ','Service Principal',1)
+('azureSQLDatabase', '{  "name": "$azureSqlDatabaseLinkedServiceName",  "properties": {    "type": "AzureSqlDatabase",    "typeProperties": {      "connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=$azureSqlDBServerName.database.windows.net;Initial Catalog=$azureSqlDatabaseName",      "servicePrincipalId": "$master_servicePrincipalId",      "servicePrincipalKey": {        "type": "AzureKeyVaultSecret",        "store": {          "referenceName": "$azurekeyvaultlinkedservicereference",          "type": "LinkedServiceReference"        },        "secretName": "$master_servicePrincipalKey"      }  ,"tenant":"$master_tenantId"  },    "connectVia": {      "referenceName": "$nameofintegrationruntime",      "type": "IntegrationRuntimeReference"    } }} ','Service Principal',1)
 MERGE [T_List_LinkedServices] AS mrg
 USING (SELECT * FROM @SrcLinkedServices) AS src
 ON mrg.LinkedServiceName = src.LinkedServiceName
@@ -269,10 +271,7 @@ VALUES
 ('$azureSqlDBServerName','','azureSQLDatabase',0,'Service Principal'),
 ('$azureSqlDatabaseName','','azureSQLDatabase',0,'Service Principal'),
 ('$azurekeyvaultlinkedservicereference','','azureSQLDatabase',0,'Service Principal'),
-('$servicePrincipalKey','','azureSQLDatabase',1,'Service Principal'),
-('$nameofintegrationruntime','','azureSQLDatabase',0,'Service Principal'),
-('$servicePrincipalId','','azureSQLDatabase',0,'Service Principal'),
-('$tenantid','','azureSQLDatabase',0,'Service Principal')
+('$nameofintegrationruntime','','azureSQLDatabase',0,'Service Principal')
 
 
 MERGE [T_List_LinkedService_Parameters] AS mrg
@@ -447,7 +446,9 @@ VALUES
 ('For Each Activity','ForEachActivity',1,'   {                  "name": "$foreachactivityname",                  "type": "ForEach",                  "dependsOn": [                      {                          "activity": "$dependson",                          "dependencyConditions": [                              "$dependencyConditions"                          ]                      }                  ],                  "userProperties": [],                  "typeProperties": {                      "items": {                          "value": "@activity(''$dependentactivityname'').output.value",                          "type": "Expression"                      },                      "batchCount": $batchCount,       "isSequential": $isSequential,       "activities": [$activityjsoncode]                         }              }',NULL,NULL,NULL),
 ('Custom Logging','SP_Custom_Logging',1,'   {      "name": "$SPActivityName",      "description":"Description",      "type": "SqlServerStoredProcedure",     "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],     "linkedServiceName": {          "referenceName": "$MetadataDBLinkedServiceName",       "type": "LinkedServiceReference"      },      "typeProperties": {              "storedProcedureName": "$SPName",          "storedProcedureParameters": $SPParameters            }      }  }','1',NULL,NULL),
 ('Copy Activity','CP_DataSource_DataDestination',1,'  {"name": "$CopyActivityName","type": "Copy","dependsOn": [],"policy": {   "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},  "userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "sqlReaderQuery": {        "value": "$sqlReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },     "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }   ',NULL,NULL,'OnPremiseSQLServer'),
-('Copy Activity','CP_DataSource_DataDestination',1,'          {"name": "$CopyActivityName","type": "Copy","dependsOn": [],"policy": {      "timeout": "7.00:00:00",    "retry": 0,     "retryIntervalInSeconds": 30,       "secureOutput": false,    "secureInput": false},  "userProperties": [],    "typeProperties": {          "source": {                          "type": "RestSource",                                "httpRequestTimeout": "00:01:40",                            "requestInterval": "00.00:00:00.010",                         "requestMethod": "GET"                      },    "sink": {          "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }  ,"formatSettings": {          "type": "JsonWriteSettings",          "filePattern": "setOfObjects"        }  },      "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",              "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",               "type": "DatasetReference" ,"parameters": {            $parameters            }         } ]                          }             ',NULL,NULL,'RestService')
+('Copy Activity','CP_DataSource_DataDestination',1,'          {"name": "$CopyActivityName","type": "Copy","dependsOn": [         {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }  ],"policy": {      "timeout": "7.00:00:00",    "retry": 0,     "retryIntervalInSeconds": 30,       "secureOutput": false,    "secureInput": false},  "userProperties": [],    "typeProperties": {          "source": {                          "type": "RestSource",                                "httpRequestTimeout": "00:01:40",                            "requestInterval": "00.00:00:00.010",                         "requestMethod": "GET"                      },    "sink": {          "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }  ,"formatSettings": {          "type": "JsonWriteSettings",          "filePattern": "setOfObjects"        }  },      "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",              "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",               "type": "DatasetReference" ,"parameters": {            $parameters            }         } ]                          }             ',NULL,NULL,'RestService'),
+('Get Token','GetToken',1,'{ "name": "GetToken","description": "Use this Web activity to get bearer token","type": "WebActivity","dependsOn": [               {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }       ],"policy": {"timeout": "7.00:00:00","retry": 0,"retryIntervalInSeconds": 30,"secureOutput": false,"secureInput": false},"userProperties": [],"typeProperties": {"url": "https://login.microsoftonline.com/$master_tenantId/oauth2/token","method": "POST",    "headers": { "Content-Type": "application/x-www-form-urlencoded" },"body": { "value":"@concat(''grant_type=client_credentials&client_id=$master_servicePrincipalId&client_secret='',activity(''GetSPNKey'').output.Value)",  "type": "Expression"	  }  }}',NULL,NULL,NULL),
+('Get SPNKey from Vault','GetSPNKey',1,'{"name": "GetSPNKey", "type": "WebActivity","dependsOn": [               {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }       ],"policy": {"timeout": "7.00:00:00","retry": 0,"retryIntervalInSeconds": 30,"secureOutput": true,"secureInput": false},"userProperties": [],"typeProperties": {"url": "https://$master_keyvaultname.vault.azure.net/secrets/$master_servicePrincipalKey/?api-version=7.0","method": "GET","authentication": {"type": "MSI","resource": "https://vault.azure.net"}}}',NULL,NULL,NULL)
 
 MERGE [T_List_Activities] AS mrg
 USING (SELECT s.* FROM @SrcActivities s
@@ -550,9 +551,13 @@ VALUES
 ('Sink','ParquetSink','Copy Activity','RestService'),
 ('inputDatasetReference','','Copy Activity','RestService'),
 ('outputDatasetReference','','Copy Activity','RestService'),
-('parameters','filename"": ""output"",                                         ""directory"": ""restserviceoutput"",                                                ""fileformat"": ""json"",                                                ""fileextension"": ""json"",                                ""columnDelimiter"": """"','Copy Activity','RestService')
-
-
+('parameters','""filename"": ""output"",                                         ""directory"": ""restserviceoutput"",                                                ""fileformat"": ""json"",                                                ""fileextension"": ""json"",                                ""columnDelimiter"": """"','Copy Activity','RestService'),
+('dependson','','Get Token',NULL),
+('dependencyConditions','','Get Token',NULL),
+('dependson','','Get SPNKey from Vault',NULL),
+('dependencyConditions','','Get SPNKey from Vault',NULL),
+('dependson','','Copy Activity','RestService'),
+('dependencyConditions','','Copy Activity','RestService')
 
 MERGE [T_List_Activity_Parameters] AS mrg
 USING (

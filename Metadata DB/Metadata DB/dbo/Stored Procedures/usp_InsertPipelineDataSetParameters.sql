@@ -14,7 +14,7 @@ SET @datasetparamval = 'DS_'+@LinkedServiceName+'_'+CAST(@DatasetId AS NVARCHAR(
 SET @lsparamval = 'LS_'+@LinkedServiceName
 
 
-INSERT INTO dbo.T_Pipeline_DataSet_Parameters (ParameterName,ParameterValue,DataSetId,pipelineid )
+INSERT INTO dbo.T_Pipeline_DataSet_Parameters (ParameterName,ParameterValue,PipelineDatasetId,pipelineid )
 SELECT REPLACE(tldp.ParameterName,'$','$'+CAST(@DatasetId AS nvarchar)+'_'+CAST(@pipelineid AS nvarchar)+'_') AS ParameterName,
 ParameterValue,@DatasetId,@PipelineId
 FROM T_List_Dataset_Parameters tldp
@@ -27,13 +27,13 @@ WHERE tpd.[PipelineDatasetId] = @DatasetId
 UPDATE T_Pipeline_DataSet_Parameters
 SET ParameterValue = @datasetparamval
 WHERE ParameterName like '%Datasetname%'
-AND DatasetId = @DatasetId
+AND PipelineDatasetId = @DatasetId
 AND pipelineid= @PipelineId
 
 UPDATE T_Pipeline_DataSet_Parameters
 SET ParameterValue = @lsparamval
 WHERE ParameterName like '%LinkedServicename%'
-AND DatasetId = @DatasetId
+AND PipelineDatasetId = @DatasetId
 AND pipelineid= @PipelineId
 
 
