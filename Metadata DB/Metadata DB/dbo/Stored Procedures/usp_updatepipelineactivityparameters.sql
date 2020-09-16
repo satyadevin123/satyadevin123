@@ -70,20 +70,20 @@ declare @sinkcoldelimiter varchar(3)
 declare @qry varchar(2000)
 
 SELECT @sinkfileformat =  ParameterValue 
-FROM T_Pipeline_Dataset_Parameters WHERE PipelineDatasetId = @DatasetId
+FROM T_Pipeline_Dataset_Parameters WHERE PipelineId = @PipelineId
 AND ParameterName like '%fileformat%'
 
 SELECT @sinkfileextension =  ParameterValue 
-FROM T_Pipeline_Dataset_Parameters WHERE PipelineDatasetId = @DatasetId
+FROM T_Pipeline_Dataset_Parameters WHERE PipelineId = @PipelineId
 AND ParameterName like '%fileextension%'
 
 SELECT @sinkcoldelimiter =  ParameterValue 
-FROM T_Pipeline_Dataset_Parameters WHERE PipelineDatasetId  = @DatasetId
+FROM T_Pipeline_Dataset_Parameters WHERE PipelineId = @PipelineId
 AND ParameterName like '%ColumnDelimiter%'
 
 
 set @qry = 
-'SELECT Schema_Name,Table_Name,'''+@sinkfileformat+''' as fileformat,'''+@sinkfileextension+''' as fileextension,'''+@sinkcoldelimiter+''' as columnDelimiter FROM t_pipeline_tables_tobemoved WHERE pipelineid = '+ cAST(@PipelineId AS VARCHAR)
+'SELECT SchemaName,TableName,'''+@sinkfileformat+''' as fileformat,'''+@sinkfileextension+''' as fileextension,'''+@sinkcoldelimiter+''' as columnDelimiter FROM t_pipeline_tables_tobemoved WHERE pipelineid = '+ cAST(@PipelineId AS VARCHAR)
 
 
 UPDATE dbo.T_Pipeline_Activity_Parameters SET ParameterValue = @qry WHERE ParameterName like '%query%'

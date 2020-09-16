@@ -1,5 +1,5 @@
 ﻿CREATE procedure [dbo].[usp_add_email_nofification]
-@dependactivityname varchar(255),@condition varchar(15)
+@dependactivityname varchar(255),@Condition varchar(15)
 as
 declare @return table (returnvalue varchar(8000))
 insert into @return select ' {

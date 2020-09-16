@@ -1,0 +1,78 @@
+<Metadata>
+<AzureEnvSetup>
+<Parameters>
+<Parameter Name='$tenantid' Value = 'bdcfaa46-3f69-4dfd-b3f7-c582bdfbb820'/>
+<Parameter Name='$subscriptionid' Value = '81ec4907-9db6-4d56-86d4-d997209d7be6'/>
+<Parameter Name='$resourceGroupName' Value = 'RG-data-pipeline-framework-poc'/>
+<Parameter Name='$dataFactoryName' Value = 'satyatest'/>
+<Parameter Name='$dataFactoryNameLocation' Value = 'WEST US'/>
+<Parameter Name='$SinkAccountName' Value = 'satyatestadls'/>
+<Parameter Name='$keyvaultname' Value = 'pocmetadatakeyvault'/>
+<Parameter Name='$keyvaultlocation' Value = 'WEST US'/>
+<Parameter Name='$EmailTo' Value = 'satyadevi.nimmakayala@winwire.com'/>
+</Parameters>
+</AzureEnvSetup>
+<IntegrationRunTimes>
+<IntegrationRunTime Name='Azure-IR-ADF' Type ='Managed'/>
+<IntegrationRunTime Name='OnPrem-Oracle-IR' Type ='SelfHosted'/>
+</IntegrationRunTimes>
+<LinkedServices>
+<LinkedService Type='azureKeyVault' AuthenticationType='Managed Identity' Description='KeyVault'>
+<Parameters>
+<Parameter Name='$keyvaultname' Value = 'pocmetadatakeyvault'/>
+</Parameters>
+</LinkedService>
+<LinkedService Type='azureSQLDatabase' AuthenticationType='Managed Identity' Description='MetadataDB'>
+<Parameters>
+<Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
+<Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDBPublishTest'/>
+</Parameters>
+</LinkedService>
+<LinkedService Type='onPremiseOracle' AuthenticationType='SQL Authentication' Description='OracleOnPremDB'>
+<Parameters>
+<Parameter Name='$OnPremiseOracleHost' Value = '182.74.243.14'/>
+<Parameter Name='$OnPremiseOraclePort' Value = '1521'/>
+<Parameter Name='$OnPremiseOracleSid' Value = 'ORCL'/>
+<Parameter Name='$OnPremiseOracleUserName' Value = 'system'/>
+<Parameter Name='$IRName' Value = 'OnPrem-Oracle-IR'/>
+</Parameters>
+</LinkedService>
+<LinkedService Type='ADLSv2' AuthenticationType='Managed Identity' Description='ADLSV2'>
+<Parameters>
+<Parameter Name='$ADLSv2AccountName' Value='satyatestadls'/>
+<Parameter Name='$URL' Value='https://satyatestadls.dfs.core.windows.net'/>
+</Parameters>
+</LinkedService>
+</LinkedServices>
+<MetadataDB Type ='azureSQLDatabase' AuthenticationType='SQL Authentication'>
+<Parameters>
+<Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
+<Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDBPublishTest'/>
+<Parameter Name='$azureSqlDBUserName' Value = 'vsagala'/>
+</Parameters>
+</MetadataDB>
+<Pipelines>
+<Pipeline Name = 'Sample_From_OnPremOracle_To_ADLS'>
+<Activities>
+<Activity Type='Lookup Activity' LinkedServiceReference='MetadataDB'>
+</Activity>
+<Activity Type ='Copy Activity'>
+<Source LinkedServiceReference='OracleOnPremDB'>
+<Tables>
+<Table Name='AQ$_INTERNET_AGENTS' schema='SYSTEM'/>
+</Tables>
+</Source>
+<Sink LinkedServiceReference='ADLSV2'>
+<SinkParameters>
+<Parameter Name='$fileSystemFolderName' Value ='onpremoracledata'/>
+<Parameter Name='$CompressionCodectype' Value ='none'/>
+<Parameter Name='$fileformat' Value ='DelimitedText'/>
+<Parameter Name='$fileextension' Value ='csv'/>
+<Parameter Name='$columndelimiter' Value =','/>
+</SinkParameters>
+</Sink>
+</Activity>
+</Activities>
+</Pipeline>
+</Pipelines>
+</Metadata>

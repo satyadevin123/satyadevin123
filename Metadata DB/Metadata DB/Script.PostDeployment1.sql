@@ -46,7 +46,9 @@ VALUES
 ('$keyvaultname',''),
 ('$keyvaultlocation',''),
 ('$servicePrincipalId',''),
-('$servicePrincipalKey','')
+('$servicePrincipalKey',''),
+('$EmailTo',''),
+('$LogicAppURL','')
 
 MERGE [T_Master_Parameters_List] AS mrg
 USING (SELECT * FROM @Mastertable) AS src
@@ -102,7 +104,7 @@ INSERT INTO @SrcMasterPipelinesparams
 VALUES
 ('$LogicAppURL','"https://prod-91.eastus.logic.azure.com:443/workflows/687c06941f5f4b2694402fb9f0cfd4f7/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=_lxKCk_SSJGvx8WZ05-TkfVmeKOD0DqpCzklFByuK48"','Sendmail'),
 ('$body','''"{\"EmailTo\": \"@{pipeline().parameters.EmailTo}\",  \"Subject\": \"An error has occured in the @{pipeline().parameters.PipelineName}-pipeline\",  \"DataFactoryName\": \"@{pipeline().DataFactory}\",  \"PipelineName\": \"@{pipeline().parameters.PipelineName}\",  \"Activity\": \"@{pipeline().parameters.Activity}\",  \"Message\": \"@{pipeline().parameters.Message}\"}"''','Sendmail'),
-('$EmailTo','','Sendmail'),
+('$EmailTo','"$EmailTo"','Sendmail'),
 ('$Activity','""','Sendmail'),
 ('$PipelineEndedMessage','"The $Pipeline is Ended"','Sendmail'),
 ('$PipelineStartedMessage','"The $Pipeline is Started"','Sendmail')
@@ -199,8 +201,9 @@ VALUES
 ('azureSQLDatabase','     { "name": "$azureSqlDatabaseLinkedServiceName",      "type": "Microsoft.DataFactory/factories/linkedservices",      "properties": {          "annotations": [],          "type": "AzureSqlDatabase",          "typeProperties": {              "connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=$azureSqlDBServerName.database.windows.net;Initial Catalog=$azureSqlDatabaseName"          }      }  }','Managed Identity',0),
 ('azureKeyVault','{    "name": "$azureKeyVaultLinkedServiceName",    "properties": {        "annotations": [],        "type": "AzureKeyVault",       "typeProperties": {            "baseUrl": "https://$keyvaultname.vault.azure.net/"        }    }}','Managed Identity',0),
 ('RestService','    {      "name": "RestService1",      "type": "Microsoft.DataFactory/factories/linkedservices",      "properties": {          "annotations": [],          "type": "RestService",          "typeProperties": {              "url": "$restapiurl" ,         "enableServerCertificateValidation": true,              "authenticationType": "Anonymous"          }      }  }  ','Anonymous',0)
-,
-('azureSQLDatabase', '{  "name": "$azureSqlDatabaseLinkedServiceName",  "properties": {    "type": "AzureSqlDatabase",    "typeProperties": {      "connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=$azureSqlDBServerName.database.windows.net;Initial Catalog=$azureSqlDatabaseName",      "servicePrincipalId": "$master_servicePrincipalId",      "servicePrincipalKey": {        "type": "AzureKeyVaultSecret",        "store": {          "referenceName": "$azurekeyvaultlinkedservicereference",          "type": "LinkedServiceReference"        },        "secretName": "$master_servicePrincipalKey"      }  ,"tenant":"$master_tenantId"  },    "connectVia": {      "referenceName": "$nameofintegrationruntime",      "type": "IntegrationRuntimeReference"    } }} ','Service Principal',1)
+,('azureSQLDatabase', '{  "name": "$azureSqlDatabaseLinkedServiceName",  "properties": {    "type": "AzureSqlDatabase",    "typeProperties": {      "connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=$azureSqlDBServerName.database.windows.net;Initial Catalog=$azureSqlDatabaseName",      "servicePrincipalId": "$master_servicePrincipalId",      "servicePrincipalKey": {        "type": "AzureKeyVaultSecret",        "store": {          "referenceName": "$azurekeyvaultlinkedservicereference",          "type": "LinkedServiceReference"        },        "secretName": "$master_servicePrincipalKey"      }  ,"tenant":"$master_tenantId"  },    "connectVia": {      "referenceName": "$nameofintegrationruntime",      "type": "IntegrationRuntimeReference"    } }} ','Service Principal',0)
+,('OnPremiseOracle','{ "name": "$OnPremiseOracleLinkedServiceName","properties": { "type": "Oracle", "typeProperties": {  "connectionString": "Host=$OnPremiseOracleHost;Port=$OnPremiseOraclePort;Sid=$OnPremiseOracleSid;User Id=$OnPremiseOracleUserName;","password": {   "type": "AzureKeyVaultSecret",  "store": { "referenceName": "$azurekeyvaultlinkedservicereference",  "type": "LinkedServiceReference"  }, "secretName": "$OnPremiseOraclePassword" } },"connectVia": {"referenceName": "$IRName", "type": "IntegrationRuntimeReference"  }}}','SQL authentication',1)
+
 MERGE [T_List_LinkedServices] AS mrg
 USING (SELECT * FROM @SrcLinkedServices) AS src
 ON mrg.LinkedServiceName = src.LinkedServiceName
@@ -271,7 +274,15 @@ VALUES
 ('$azureSqlDBServerName','','azureSQLDatabase',0,'Service Principal'),
 ('$azureSqlDatabaseName','','azureSQLDatabase',0,'Service Principal'),
 ('$azurekeyvaultlinkedservicereference','','azureSQLDatabase',0,'Service Principal'),
-('$nameofintegrationruntime','','azureSQLDatabase',0,'Service Principal')
+('$nameofintegrationruntime','','azureSQLDatabase',0,'Service Principal'),
+('$OnPremiseOracleLinkedServiceName','','OnPremiseOracle',0,'SQL Authentication'),
+('$IRName','IR-SelfHosted','OnPremiseOracle',0,'SQL Authentication'),
+('$OnPremiseOracleHost','','OnPremiseOracle',0,'SQL Authentication'),
+('$OnPremiseOraclePort','','OnPremiseOracle',0,'SQL Authentication'),
+('$OnPremiseOracleSid','','OnPremiseOracle',0,'SQL Authentication'),
+('$OnPremiseOracleUserName','','OnPremiseOracle',0,'SQL Authentication'),
+('$OnPremiseOraclePassword','','OnPremiseOracle',1,'SQL Authentication'),
+('$azurekeyvaultlinkedservicereference','','OnPremiseOracle',0,'SQL Authentication')
 
 
 MERGE [T_List_LinkedService_Parameters] AS mrg
@@ -324,7 +335,8 @@ VALUES
 ('azureSQLDatabaseDataset','azureSQLDatabase','Managed Identity','{  "name": "$azureSQLDatabaseDatasetName",  "properties": {    "type": "AzureSqlTable",    "linkedServiceName": {      "referenceName": "$azureSQLDatabaseLinkedServiceName", "type": "LinkedServiceReference"},  "typeProperties": { "tableName": "dummy" }}}','azureSQLDatabaseDataset',NULL,NULL),
 ('OnPremiseSQLServerDataset','OnPremiseSQLServer','SQL Authentication','{"name": "$OnPremiseSQLServerDatasetName","properties": {"type": "SqlServerTable","linkedServiceName":{"referenceName": "$OnPremiseSQLServerLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','OnPremiseSQLServerDataset',NULL,NULL),
 ('RestServiceDataset','RestService','Anonymous','  {      "name": "$RestServiceDatasetName",      "properties": {          "linkedServiceName": {              "referenceName": "$RestServiceLinkedServiceName",              "type": "LinkedServiceReference"          },          "annotations": [],          "type": "RestResource",          "schema": []      },      "type": "Microsoft.DataFactory/factories/datasets"  }','RestServiceDataset',NULL,NULL),
-('azureSQLDatabaseDataset','azureSQLDatabase','Service Principal',' {"name": "$azureSqlDatabaseDatasetName","properties": {"type": "AzureSqlTable","linkedServiceName": {"referenceName": "$azureSqlDatabaseLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','azureSQLDatabaseDataset',NULL,NULL)
+('azureSQLDatabaseDataset','azureSQLDatabase','Service Principal',' {"name": "$azureSqlDatabaseDatasetName","properties": {"type": "AzureSqlTable","linkedServiceName": {"referenceName": "$azureSqlDatabaseLinkedServiceName","type": "LinkedServiceReference"}, "typeProperties": {"tableName": "dummy"}}}','azureSQLDatabaseDataset',NULL,NULL),
+('OnPremiseOracleDataset','OnPremiseOracle','SQL Authentication','{"name": "$OnPremiseOracleDatasetName","properties":{"type": "OracleTable","schema": [],"typeProperties": {"table": "dummy" },"linkedServiceName": {  "referenceName": "$OnPremiseOracleLinkedServiceName",  "type": "LinkedServiceReference" }}}','OnPremiseOracleDataset',NULL,NULL)
 
 
 MERGE [T_List_DataSets] AS mrg
@@ -396,7 +408,11 @@ VALUES
 ('$RestServiceDatasetName','','RestServiceDataset','RestService','Anonymous',NULL,NULL),
 ('$RestServiceLinkedServiceName','','RestServiceDataset','RestService','Anonymous',NULL,NULL),
 ('$azureSQLDatabaseDatasetName','','azureSQLDatabaseDataset','azureSqlDatabase','Service Principal',NULL,NULL),
-('$azureSQLDatabaseLinkedServiceName','','azureSQLDatabaseDataset','azureSqlDatabase','Service Principal',NULL,NULL)
+('$azureSQLDatabaseLinkedServiceName','','azureSQLDatabaseDataset','azureSqlDatabase','Service Principal',NULL,NULL),
+('$OnPremiseOracleDatasetName','','OnPremiseOracleDataset','OnPremiseOracle','SQL Authentication',NULL,NULL),
+('$OnPremiseOracleLinkedServiceName','','OnPremiseOracleDataset','OnPremiseOracle','SQL Authentication',NULL,NULL)
+
+
 
 MERGE [T_List_Dataset_Parameters] AS mrg
 USING (
@@ -446,9 +462,14 @@ VALUES
 ('For Each Activity','ForEachActivity',1,'   {                  "name": "$foreachactivityname",                  "type": "ForEach",                  "dependsOn": [                      {                          "activity": "$dependson",                          "dependencyConditions": [                              "$dependencyConditions"                          ]                      }                  ],                  "userProperties": [],                  "typeProperties": {                      "items": {                          "value": "@activity(''$dependentactivityname'').output.value",                          "type": "Expression"                      },                      "batchCount": $batchCount,       "isSequential": $isSequential,       "activities": [$activityjsoncode]                         }              }',NULL,NULL,NULL),
 ('Custom Logging','SP_Custom_Logging',1,'   {      "name": "$SPActivityName",      "description":"Description",      "type": "SqlServerStoredProcedure",     "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],     "linkedServiceName": {          "referenceName": "$MetadataDBLinkedServiceName",       "type": "LinkedServiceReference"      },      "typeProperties": {              "storedProcedureName": "$SPName",          "storedProcedureParameters": $SPParameters            }      }  }','1',NULL,NULL),
 ('Copy Activity','CP_DataSource_DataDestination',1,'  {"name": "$CopyActivityName","type": "Copy","dependsOn": [],"policy": {   "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},  "userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "sqlReaderQuery": {        "value": "$sqlReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },     "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }   ',NULL,NULL,'OnPremiseSQLServer'),
-('Copy Activity','CP_DataSource_DataDestination',1,'          {"name": "$CopyActivityName","type": "Copy","dependsOn": [         {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }  ],"policy": {      "timeout": "7.00:00:00",    "retry": 0,     "retryIntervalInSeconds": 30,       "secureOutput": false,    "secureInput": false},  "userProperties": [],    "typeProperties": {          "source": {                          "type": "RestSource",                                "httpRequestTimeout": "00:01:40",                            "requestInterval": "00.00:00:00.010",                         "requestMethod": "GET"                      },    "sink": {          "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }  ,"formatSettings": {          "type": "JsonWriteSettings",          "filePattern": "setOfObjects"        }  },      "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",              "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",               "type": "DatasetReference" ,"parameters": {            $parameters            }         } ]                          }             ',NULL,NULL,'RestService'),
+('Copy Activity','CP_DataSource_DataDestination',1,'          {"name": "$CopyActivityName","type": "Copy","dependsOn": [         {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }  ],"policy": {      "timeout": "7.00:00:00",    "retry": 0,     "retryIntervalInSeconds": 30,       "secureOutput": false,    "secureInput": false},  "userProperties": [],    "typeProperties": {          "source": {                          "type": "RestSource",                                "httpRequestTimeout": "00:01:40",                            "requestInterval": "00.00:00:00.010",                         "requestMethod": "GET"    ,  "additionalHeaders": {
+                            "Authorization": { "value": "@concat(''Bearer '',activity(''GetToken'').output.access_token)", "type": "Expression"
+                            }
+                        }                  },    "sink": {          "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }  ,"formatSettings": {          "type": "JsonWriteSettings",          "filePattern": "setOfObjects"        }  },      "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",              "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",               "type": "DatasetReference" ,"parameters": {            $parameters            }         } ]                          }             ',NULL,NULL,'RestService'),
 ('Get Token','GetToken',1,'{ "name": "GetToken","description": "Use this Web activity to get bearer token","type": "WebActivity","dependsOn": [               {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }       ],"policy": {"timeout": "7.00:00:00","retry": 0,"retryIntervalInSeconds": 30,"secureOutput": false,"secureInput": false},"userProperties": [],"typeProperties": {"url": "https://login.microsoftonline.com/$master_tenantId/oauth2/token","method": "POST",    "headers": { "Content-Type": "application/x-www-form-urlencoded" },"body": { "value":"@concat(''grant_type=client_credentials&client_id=$master_servicePrincipalId&client_secret='',activity(''GetSPNKey'').output.Value)",  "type": "Expression"	  }  }}',NULL,NULL,NULL),
 ('Get SPNKey from Vault','GetSPNKey',1,'{"name": "GetSPNKey", "type": "WebActivity","dependsOn": [               {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }       ],"policy": {"timeout": "7.00:00:00","retry": 0,"retryIntervalInSeconds": 30,"secureOutput": true,"secureInput": false},"userProperties": [],"typeProperties": {"url": "https://$master_keyvaultname.vault.azure.net/secrets/$master_servicePrincipalKey/?api-version=7.0","method": "GET","authentication": {"type": "MSI","resource": "https://vault.azure.net"}}}',NULL,NULL,NULL)
+,('Copy Activity','CP_DataSource_DataDestination',1,'{"name": "$CopyActivityName","type": "Copy","dependsOn": [],"policy": {   "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},  "userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "oracleReaderQuery": {        "value": "$oracleReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },     "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }   ',NULL,NULL,'OnPremiseOracle')
+
 
 MERGE [T_List_Activities] AS mrg
 USING (SELECT s.* FROM @SrcActivities s
@@ -519,8 +540,8 @@ VALUES
 ('Sink','ParquetSink','Copy Activity','azureSQLDatabase'),
 ('inputDatasetReference','','Copy Activity','azureSQLDatabase'),
 ('outputDatasetReference','','Copy Activity','azureSQLDatabase'),
-('parameters','       ""filename"": ""@item().table_name"",                                          ""directory"": ""@item().table_name"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','azureSQLDatabase'),
-('sqlReaderQuery','@concat(''select * from '',''['',item().schema_name,'']'',''.'',''['',item().table_name,'']'')','Copy Activity','azureSQLDatabase'),
+('parameters','       ""filename"": ""@item().tablename"",                                          ""directory"": ""@item().tablename"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','azureSQLDatabase'),
+('sqlReaderQuery','@concat(''select * from '',''['',item().schemaname,'']'',''.'',''['',item().tablename,'']'')','Copy Activity','azureSQLDatabase'),
 ('SPName','usp_Log_PipelineStatus','Custom Logging',NULL),
 ('SPParameters','   {""In_PipelineName"": {""value"": 
    {""value"": ""@pipeline().Pipeline"",""type"": ""Expression""},                
@@ -544,20 +565,28 @@ VALUES
 ('Sink','ParquetSink','Copy Activity','OnPremiseSQLServer'),
 ('inputDatasetReference','','Copy Activity','OnPremiseSQLServer'),
 ('outputDatasetReference','','Copy Activity','OnPremiseSQLServer'),
-('parameters','       ""filename"": ""@item().table_name"",                                          ""directory"": ""@item().table_name"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','OnPremiseSQLServer'),
-('sqlReaderQuery','@concat(''select * from '',''['',item().schema_name,'']'',''.'',''['',item().table_name,'']'')','Copy Activity','OnPremiseSQLServer'),
+('parameters','       ""filename"": ""@item().tablename"",                                          ""directory"": ""@item().tablename"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','OnPremiseSQLServer'),
+('sqlReaderQuery','@concat(''select * from '',''['',item().schemaname,'']'',''.'',''['',item().tablename,'']'')','Copy Activity','OnPremiseSQLServer'),
 ('CopyActivityName','CP_RESTService_ADLSParquet','Copy Activity','RestService'),
 ('Source','RestService','Copy Activity','RestService'),
 ('Sink','ParquetSink','Copy Activity','RestService'),
 ('inputDatasetReference','','Copy Activity','RestService'),
 ('outputDatasetReference','','Copy Activity','RestService'),
-('parameters','""filename"": ""output"",                                         ""directory"": ""restserviceoutput"",                                                ""fileformat"": ""json"",                                                ""fileextension"": ""json"",                                ""columnDelimiter"": """"','Copy Activity','RestService'),
+('parameters','""filename"": ""output"",                                         ""directory"": ""restserviceoutput"",                                                ""fileformat"": ""json"",                                                ""fileextension"": ""json"",                                ""columnDelimiter"": "" ""','Copy Activity','RestService'),
 ('dependson','','Get Token',NULL),
 ('dependencyConditions','','Get Token',NULL),
 ('dependson','','Get SPNKey from Vault',NULL),
 ('dependencyConditions','','Get SPNKey from Vault',NULL),
 ('dependson','','Copy Activity','RestService'),
-('dependencyConditions','','Copy Activity','RestService')
+('dependencyConditions','','Copy Activity','RestService'),
+('CopyActivityName','CP_Oracle_ADLSParquet','Copy Activity','OnPremiseOracle'),
+('Source','OracleSource','Copy Activity','OnPremiseOracle'),
+('Sink','ParquetSink','Copy Activity','OnPremiseOracle'),
+('inputDatasetReference','','Copy Activity','OnPremiseOracle'),
+('outputDatasetReference','','Copy Activity','OnPremiseOracle'),
+('parameters','       ""filename"": ""@item().tablename"",                                          ""directory"": ""@item().tablename"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','OnPremiseOracle'),
+('oracleReaderQuery','@concat(''select * from '',''['',item().schemaname,'']'',''.'',''['',item().tablename,'']'')','Copy Activity','OnPremiseOracle')
+
 
 MERGE [T_List_Activity_Parameters] AS mrg
 USING (

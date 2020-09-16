@@ -1,0 +1,78 @@
+<Metadata>
+<AzureEnvSetup>
+<Parameters>
+<Parameter Name='$tenantid' Value = 'bdcfaa46-3f69-4dfd-b3f7-c582bdfbb820'/>
+<Parameter Name='$subscriptionid' Value = '81ec4907-9db6-4d56-86d4-d997209d7be6'/>
+<Parameter Name='$resourceGroupName' Value = 'RG-data-pipeline-framework-poc'/>
+<Parameter Name='$dataFactoryName' Value = 'DFMetadataPoCDemo'/>
+<Parameter Name='$dataFactoryNameLocation' Value = 'EAST US'/>
+<Parameter Name='$SinkAccountName' Value = 'metadatapocdemo'/>
+<Parameter Name='$keyvaultname' Value = 'KVMetadataPoCDemo'/>
+<Parameter Name='$keyvaultlocation' Value = 'EAST US'/>
+<Parameter Name='$EmailTo' Value = 'satyadevi.nimmakayala@winwire.com'/>
+<Parameter Name='$servicePrincipalId' Value = '1afdcd77-3a79-4722-8f6b-a247cfbd0914'/>
+<Parameter Name='$servicePrincipalName' Value = 'poc-metadatadriven'/>
+</Parameters>
+</AzureEnvSetup>
+<IntegrationRunTimes>
+<IntegrationRunTime Name='Azure-IR-ADF' Type ='Managed'/>
+<IntegrationRunTime Name='OnPrem-SQLServer-IR' Type ='SelfHosted'/>
+</IntegrationRunTimes>
+<LinkedServices>
+<LinkedService Type='azureKeyVault' AuthenticationType='Managed Identity' Description='KeyVault'>
+<Parameters>
+<Parameter Name='$keyvaultname' Value = 'KVMetadataPoCDemo'/>
+</Parameters>
+</LinkedService>
+<LinkedService Type='azureSQLDatabase' AuthenticationType='Service Principal' Description='MetadataDBSPN'>
+<Parameters>
+<Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
+<Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDBPublish'/>
+</Parameters>
+</LinkedService>
+<LinkedService Type='OnPremiseSQLServer' AuthenticationType='SQL Authentication' Description='OnPremiseSQLServer'>
+<Parameters>
+<Parameter Name='$onpremSqlDBServerName' Value = 'DESKTOP-ETHARF0\\SQLEXPRESS'/>
+<Parameter Name='$onpremSqlDatabaseName' Value = 'MetadataPocOnprem'/>
+<Parameter Name='$onpremSqlDBUserName' Value = 'pocuser'/>
+<Parameter Name='$IRName' Value = 'OnPrem-SQLServer-IR'/>
+</Parameters>
+</LinkedService>
+<LinkedService Type='ADLSv2' AuthenticationType='Managed Identity' Description='ADLSV2'>
+<Parameters>
+<Parameter Name='$ADLSv2AccountName' Value='metadatapocdemo'/>
+<Parameter Name='$URL' Value='https://metadatapocdemo.dfs.core.windows.net'/>
+</Parameters>
+</LinkedService>
+</LinkedServices>
+<MetadataDB Type ='azureSQLDatabase' AuthenticationType='SQL Authentication'>
+<Parameters>
+<Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
+<Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDBPublish'/>
+</Parameters>
+</MetadataDB>
+<Pipelines>
+<Pipeline Name = 'EmployeeData_From_OnPremSQL_To_ADLS'>
+<Activities>
+<Activity Type='Lookup Activity' LinkedServiceReference='MetadataDB'>
+</Activity>
+<Activity Type ='Copy Activity'>
+<Source LinkedServiceReference='OnPremiseSQLServer'>
+<Tables>
+<Table Name='employee' schema='dbo' />
+</Tables>
+</Source>
+<Sink LinkedServiceReference='ADLSV2'>
+<SinkParameters>
+<Parameter Name='$fileSystemFolderName' Value ='onpremsqldataoutput'/>
+<Parameter Name='$CompressionCodectype' Value ='none'/>
+<Parameter Name='$fileformat' Value ='DelimitedText'/>
+<Parameter Name='$fileextension' Value ='txt'/>
+<Parameter Name='$columndelimiter' Value ='|'/>
+</SinkParameters>
+</Sink>
+</Activity>
+</Activities>
+</Pipeline>
+</Pipelines>
+</Metadata>

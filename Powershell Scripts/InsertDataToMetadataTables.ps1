@@ -1,18 +1,15 @@
 ﻿Param
 (
 [Parameter(Mandatory=$True,Position=1)]
-[string]$ConfigXMLFilePath,
-[Parameter(Mandatory=$True,Position=2)]
-[string] $Logfilepath,
-[Parameter(Mandatory=$True,Position=3)]
 [string]$MetadataDBUserName,
-[Parameter(Mandatory=$True,Position=4)]
+[Parameter(Mandatory=$True,Position=2)]
 [Securestring]$MetadataDBPasswordSecure
 )
 <# function to log details to file #>
 Function Log-Message([String]$Message) 
 { 
-    $datetime = (Get-Date -UFormat "%Y-%m-%d_%I-%M-%S_%p").tostring()
+    
+    $datetime = (Get-Date -UFormat "%Y-%m-%d_%I-%M%p").tostring()
     Add-Content -Path $logfilepath $Message 
     Write-Host $Message
 }
@@ -47,7 +44,7 @@ Function Sql-ExecuteScalar
 Function Create-KeyVault
 {
     Param([String]$keyvaultName,[String]$keyvaultlocation,[String]$resourceGroupName) 
-    New-AzKeyVault -Name $keyvaultname.Replace('"','') -ResourceGroupName $resourceGroupName -Location 'west us' -ErrorAction SilentlyContinue -DisableSoftDelete -SoftDeleteRetentionInDays 7
+    New-AzKeyVault -Name $keyvaultname.Replace('"','') -ResourceGroupName $resourceGroupName -Location $keyvaultlocation -ErrorAction SilentlyContinue -DisableSoftDelete -SoftDeleteRetentionInDays 7
 
 }
 <# Master parameters #>
@@ -71,17 +68,61 @@ Function Update-MasterParametersToDB
         {
             $resourceGroupName = $parameterdetail.Value
         }
-        Sql-Execute -Qry "EXEC usp_UpdateMasterParametersList '$paramname','$paramval'" -Qrydetails "Update master parameter $paramname"
-    }
-    Create-KeyVault -keyvaultName $keyvaultname -keyvaultlocation $keyvaultlocation -resourceGroupName $resourceGroupName
+        
+        if ($paramname -eq '$servicePrincipalId')
+        {
+            $servicePrincipalId = $parameterdetail.Value
+        }
+        
+        if ($paramname -eq '$dataFactoryName')
+        {
+            $dataFactoryName = $parameterdetail.Value
+        }
+        
+        if ($paramname -eq '$servicePrincipalName')
+        {
+            $servicePrincipalName = $parameterdetail.Value
+        }
+        
+        
 
-    return $keyvaultname
+        Sql-Execute -Qry "EXEC usp_UpdateMasterParametersList '$paramname','$paramval'" -Qrydetails "Update master parameter $paramname"
+        
+    }
+        Create-KeyVault -keyvaultName $keyvaultname -keyvaultlocation $keyvaultlocation -resourceGroupName $resourceGroupName
+      
+        if($servicePrincipalId -ne $null -and $servicePrincipalId -ne '')
+        {
+            $SecretPassword = Read-Host "Type key for service principal : " -AsSecureString
+            $kv = $keyvaultname.Replace('"','')
+            $name = 'spkazurekeyvaultlinkedservicereference'
+            Write-Host 'before error'
+            $x = Set-AzKeyVaultSecret -VaultName $kv -Name $name -SecretValue $SecretPassword 
+            Write-Host 'after error'
+            $name = '"'+$name+'"'
+            Write-Host $name
+            Sql-Execute -Qry "EXEC usp_UpdateMasterParametersList '`$servicePrincipalKey','$name'"  -Qrydetails 'Update master parameter $servicePrincipalKey'
+         }
+
+        $res = New-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName  -Name "LogicAppDeployment" -TemplateFile "$ScriptPath\LogicAppDeploymenttemplate.json" 
+        $logicappurl = (Get-AzLogicAppTriggerCallbackUrl  -ResourceGroupName $resourceGroupName -Name "LogicAppToSendMailFromADF" -TriggerName "manual").Value        $logicappurl = '"'+$logicappurl+'"'
+        Write-Host "EXEC usp_UpdateMasterParametersList '`$LogicAppURL','$logicappurl'"
+        Sql-Execute -Qry "EXEC usp_UpdateMasterParametersList '`$LogicAppURL','$logicappurl'"  -Qrydetails 'Update master parameter $logicappurl'
+
+         [pscustomobject] @{
+        kvname = $keyvaultname
+        dfname = $dataFactoryName
+        spnname = $servicePrincipalName
+        }
+  
+    return [pscustomobject]
 }
 
 Function Truncate-Pipelinedetails
 {
+Param([string]$PipelineName)
    <# truncate the pipeline tables as part of each run #>
-    Sql-Execute -Qry "EXEC usp_TruncateParameterTables" -Qrydetails "Trunate pipeline parameter,activity,dataset, linked server tables"
+    Sql-Execute -Qry "EXEC usp_TruncateParameterTables '$PipelineName'" -Qrydetails "Trunate pipeline parameter,activity,dataset, linked server tables"
 }
 Function Insert-DatasetsAndParameters
 {
@@ -113,7 +154,11 @@ Param([int]$Linkedservice_id,[string] $keyvaultname,[string]$messagetype )
             $SecretPassword = Read-Host "Type password for $messagetype database : " -AsSecureString
             $kv = $keyvaultname.Replace('"','')
             $name = $Linkedservice_id.ToString()+'azurekeyvaultlinkedservicereference'
+            write-host $kv
+            Write-Host 'in ket vaut ref'
             Set-AzKeyVaultSecret -VaultName $kv -Name $name -SecretValue $SecretPassword
+            
+            Write-Host 'afetr ket vaut ref'
             $name = '"'+$name+'"'
             
             Sql-Execute -Qry "EXEC usp_UpdateKeyVaultReferedLinkedServiceParameters $Linkedservice_id,'$name'" -Qrydetails "Insert value for parameter : $linkedserviceparamname"
@@ -139,6 +184,23 @@ Param([String]$LinkedServiceType,[String]$resourceGroupName,[string]$Authenticat
     {
      $x = Insert-KeyVaultReferenceToSQLDBLinkedService -Linkedservice_id $linkedservice_id -keyvaultname $keyvaultname -messagetype "secret for $LinkedServiceType $LinkedServiceName"
     }
+    "help text" |Out-File "$ScriptPath\OutputPostDeploymentScripts\Help.txt"
+    if (($LinkedServiceType -notin ('azureKeyVault','ADLSv2')))
+    {
+    if ($AuthenticationType -eq 'Managed Identity'){
+    "Create USER [$dataFactoryName] FROM EXTERNAL PROVIDER; exec sp_addrolemember 'db_owner','$dataFactoryName'" | Out-File "$ScriptPath\OutputPostDeploymentScripts\ScriptFor$LinkedServiceName.sql"
+    Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\Help.txt" "Create database contained user for $dataFactoryName on $LinkedServiceName. Refer the script created"
+    }
+    if (($AuthenticationType -eq 'Service Principal'))
+    {
+    "Create USER [$servicePrincipalName]  FROM EXTERNAL PROVIDER; exec sp_addrolemember 'db_owner','$servicePrincipalName'" | Out-File "$ScriptPath\OutputPostDeploymentScripts\ScriptFor$LinkedServiceName.sql"
+    Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\Help.txt" "Create database contained user for $servicePrincipalId on $LinkedServiceName. Refer the script created"
+    
+    }
+
+    }
+
+
 
     [pscustomobject] @{
     id = $linkedservice_id
@@ -151,9 +213,14 @@ Param([String]$LinkedServiceType,[String]$resourceGroupName,[string]$Authenticat
 
 try
 {
+$ScriptPath = Split-Path $MyInvocation.InvocationName
+$ConfigXMLFilePath = "$ScriptPath\InputXMLFile\XMLInput.xml"
 [XML]$MetaDetails = Get-Content $ConfigXMLFilePath
 
 $logdate = get-date
+$datetime = (Get-Date -UFormat "%Y-%m-%d_%I-%M%p").tostring()
+$Logfilepath = "$ScriptPath\Logs\log_$datetime.txt"
+Write-Host $Logfilepath
 $logfilepath = $Logfilepath
 
 "$logdate`t************ Start************"|Out-File $logfilepath
@@ -187,11 +254,12 @@ Log-Message "Start :  Opening Connection to Metadata database"
 Log-Message "End :  Opening Connection to Metadata database"
 
 # Update master parameters to t_master_parameters table   
-    $keyvaultname = Update-MasterParametersToDB
-
-# each execution will truncate the data in the pipeline tables   
-    Truncate-Pipelinedetails
-    
+    $out = Update-MasterParametersToDB
+    $keyvaultname = $out.kvname
+    $datafactoryname = $out.dfname
+    $servicePrincipalName = $out.spnname
+    Write-Host 'spp'
+   Write-Host $servicePrincipalName
     foreach($linkedservicedetail in $MetaDetails.Metadata.LinkedServices.LinkedService)
     {
        
@@ -210,12 +278,31 @@ Log-Message "End :  Opening Connection to Metadata database"
         
     
     }
+
+    foreach($IRdetail in $MetaDetails.Metadata.IntegrationRunTimes.IntegrationRunTime)
+    {
+       $irnam = $IRdetail.Name
+       $irtype = $IRdetail.Type
+       Sql-Execute -Qry "EXEC usp_InsertPipelineIntegrationRunTimeDetails '$irnam','$irtype' " -Qrydetails  "Update linked service parameter : $paramname"
+       
+       if ($irtype -eq 'SelfHosted')
+       {
+        Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\Help.txt" "Need to install/register the self hosted IR on on-prem server $irnam . powershell script avaiable in the post deployment scripts folder."
+        
+        Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\Help.txt" "Copy the Auth key from azure portal"
+       } 
+        
+    
+    }
    
     foreach($ppdetail in $MetaDetails.Metadata.Pipelines.Pipeline)
     {
         $pipelinename = $ppdetail.Name
+        
+        # each execution will truncate the data in the pipeline tables   
+        Truncate-Pipelinedetails -PipelineName $pipelinename
         Sql-Execute -Qry "EXEC usp_InsertPipelineDetails '$pipelinename'" -Qrydetails "Insert pipeline details in T_Pipelines table"
-        $pipelineid = Sql-ExecuteScalar -Qry "SELECT MAX(PipelineId) FROM [T_Pipelines] " -Qrydetails "max pipeline id"
+        $pipelineid = Sql-ExecuteScalar -Qry "SELECT PipelineId FROM [T_Pipelines] WHERE PipelineName = '$pipelinename'" -Qrydetails "max pipeline id"
         
         foreach($actdetail in $ppdetail.Activities.Activity)
         {
@@ -239,7 +326,7 @@ Log-Message "End :  Opening Connection to Metadata database"
                 $lsr = $actdetail.LinkedServiceReference
                 Write-Host "EXEC usp_updatepipelineactivityparameters 'LKPdataset',$dsid,$pipelineid,$lsr" 
                 Sql-Execute -Qry "EXEC usp_updatepipelineactivityparameters 'LKPdataset',$dsid,$pipelineid,$lsr" -Qrydetails  "update pipeline activity parameter :$linksetname "
-                     
+                               
             
             }
             if($actdetail.Type -eq 'Copy Activity')
@@ -260,22 +347,41 @@ Log-Message "End :  Opening Connection to Metadata database"
                 $od =  Insert-DatasetsAndParameters -PipelineId $pipelineid -LinkedServiceName $actdetail.Sink.LinkedServiceReference -AdditionalType 'SinkFileFormat' -AdditionalVal 'DelimitedText'
                 $dsid = $od.id
                 Sql-Execute -Qry "EXEC usp_updatepipelineactivityparameters 'CPOutputReference',$dsid,$pipelineid" -Qrydetails  "update pipeline activity parameter :$linksetname "
-                Sql-Execute -Qry "EXEC  usp_updatepipelineactivityparameters 'LKPQuery',$dsid,$pipelineid" -Qrydetails  "update activity parameter :  $qryparamname"
-           
+
                 foreach($parameterdetail in $actdetail.Sink.SinkParameters.Parameter)
                 {
                     $paramval = $parameterdetail.Value
                     $paramname = $parameterdetail.Name.Replace('$','$'+$dsid+'_'+$pipelineid+'_')
                     Sql-Execute -Qry "EXEC [usp_UpdatePipelineDataSetParameters] '$paramname','$paramval',$dsid,$pipelineid" -Qrydetails "Insert value for parameter : $paramname"
                     
-                }                
+                }
+                
+                Sql-Execute -Qry "EXEC  usp_updatepipelineactivityparameters 'LKPQuery',$dsid,$pipelineid" -Qrydetails  "update activity parameter :  $qryparamname"
+                           
                                    
             }
 
         }
-        
-    }
+
+
+        $SqlCmd.CommandText = "EXEC final_execution_ps_new $pipelineid"
     
+        $DataAdapter = new-object System.Data.SqlClient.SqlDataAdapter $SqlCmd
+        $dataset = new-object System.Data.Dataset
+        $DataAdapter.Fill($dataset)
+        New-Item -Path "$ScriptPath\OutputPipelineScripts\$pipelinename.ps1" -ItemType File -Force
+        Add-Content -Value ' Param([Parameter(Mandatory=$True,Position=1)][string]$logfilepath,[Parameter(Mandatory=$True,Position=2)][string]$ScriptPath)' -Path "$ScriptPath\OutputPipelineScripts\$pipelinename.ps1"
+        for($i=0;$i -lt $dataset.Tables[0].Rows.Count;$i++) 
+        {
+        Add-Content -Value ($dataset.Tables[0].Rows[$i][0].ToString()) -Path "$ScriptPath\OutputPipelineScripts\$pipelinename.ps1"
+        }
+        
+        $scriptpath1 = "$ScriptPath\OutputPipelineScripts\$pipelinename.ps1"
+        $params = "-logfilepath '$logfilepath' -Scriptpath '$Scriptpath'"
+        Invoke-Expression "$scriptpath1 $params"
+        }
+
+
     $SqlConnection.Close()
 }
 

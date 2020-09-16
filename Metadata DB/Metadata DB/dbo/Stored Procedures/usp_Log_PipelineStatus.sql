@@ -14,7 +14,7 @@ FROM T_Pipelines WHERE PipelineName = @In_PipelineName
 
 IF (@In_PipelineStatus = 'InProgress')
 BEGIN
-	INSERT INTO audit.PipelineStatusDetails
+	INSERT INTO Audit.PipelineStatusDetails
 	(
 	[PipelineId]
 	,[PipelineName]
@@ -35,7 +35,7 @@ END
 ELSE
 BEGIN
 
-UPDATE audit.PipelineStatusDetails
+UPDATE Audit.PipelineStatusDetails
 SET [ExecutionEndTime] = getdate(),
 [PipelineStatus] = @In_PipelineStatus,
 ErrorMessage = @In_ErrorMessage

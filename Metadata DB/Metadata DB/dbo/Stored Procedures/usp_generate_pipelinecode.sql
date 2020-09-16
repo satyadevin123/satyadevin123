@@ -5,7 +5,7 @@ Declare @PipelineName varchar(500)
 set @PipelineName =(select PipelineName from [dbo].[T_Pipelines] Where Enabled=1)
 declare @activity_code varchar(max)
 SELECT  @activity_code=coalesce(@activity_code+ ',','')+[JsonCode] from [dbo].[T_Pipelines] P
-Join [dbo].[T_Pipeline_Activities] PS on P.[PipelineId] = PS.PipelineiD
+Join [dbo].[T_Pipeline_Activities] PS on P.[PipelineId] = PS.PipelineId
 join [dbo].[T_List_Activities] LS on LS.[ActivityId] = PS.[ActivityID]
 SELECT '{
 	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
