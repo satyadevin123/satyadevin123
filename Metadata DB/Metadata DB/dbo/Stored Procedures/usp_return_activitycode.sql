@@ -49,7 +49,7 @@ Declare @configvalues varchar(8000)
 select @configvalues=coalesce(@configvalues+ ',','')+'"'+ConfigName+'":"'+configvalue+'"' from [dbo].[T_ConfigurationDetails]
 
 insert into @activity_code select ', {
-                "name": "Execute Send Mail for lkp'+CAST(PS.[PipelineActivityId] AS nvarchar)+'",
+                "name": "Execute Send Mail for failed activity '+CAST(PS.[PipelineActivityId] AS nvarchar)+'",
                 "type": "ExecutePipeline",
                 "dependsOn": [
                     {
@@ -82,7 +82,7 @@ INNER JOIN [dbo].[T_List_Activities] LS on LS.[ActivityId] = PS.[ActivityID]
 WHERE PS.EmailNotificationEnabled=1
 and ps.[PipelineActivityId] not in (select  [ChildActivity] from [T_Pipeline_Activities] where PipelineId = @PipelineID)
 AND ps1.Activityname like '%SPPipelineFailedActivity%'
-
+AND P.PipelineId = @PipelineID
 
 SELECT ActivityJsoncode FROM @activity_code
 GO

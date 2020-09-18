@@ -102,9 +102,7 @@ DECLARE @SrcMasterPipelinesparams as TABLE
 INSERT INTO @SrcMasterPipelinesparams
 ( ParameterName, ParameterValue,MasterPipelineName)
 VALUES
-('$LogicAppURL','"https://prod-91.eastus.logic.azure.com:443/workflows/687c06941f5f4b2694402fb9f0cfd4f7/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=_lxKCk_SSJGvx8WZ05-TkfVmeKOD0DqpCzklFByuK48"','Sendmail'),
 ('$body','''"{\"EmailTo\": \"@{pipeline().parameters.EmailTo}\",  \"Subject\": \"An error has occured in the @{pipeline().parameters.PipelineName}-pipeline\",  \"DataFactoryName\": \"@{pipeline().DataFactory}\",  \"PipelineName\": \"@{pipeline().parameters.PipelineName}\",  \"Activity\": \"@{pipeline().parameters.Activity}\",  \"Message\": \"@{pipeline().parameters.Message}\"}"''','Sendmail'),
-('$EmailTo','"$EmailTo"','Sendmail'),
 ('$Activity','""','Sendmail'),
 ('$PipelineEndedMessage','"The $Pipeline is Ended"','Sendmail'),
 ('$PipelineStartedMessage','"The $Pipeline is Started"','Sendmail')
@@ -585,7 +583,7 @@ VALUES
 ('inputDatasetReference','','Copy Activity','OnPremiseOracle'),
 ('outputDatasetReference','','Copy Activity','OnPremiseOracle'),
 ('parameters','       ""filename"": ""@item().tablename"",                                          ""directory"": ""@item().tablename"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','OnPremiseOracle'),
-('oracleReaderQuery','@concat(''select * from '',''['',item().schemaname,'']'',''.'',''['',item().tablename,'']'')','Copy Activity','OnPremiseOracle')
+('oracleReaderQuery','@concat(''select * from '',item().schemaname,''.'',item().tablename)','Copy Activity','OnPremiseOracle')
 
 
 MERGE [T_List_Activity_Parameters] AS mrg

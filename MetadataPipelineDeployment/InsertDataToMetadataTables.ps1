@@ -93,19 +93,19 @@ Function Update-MasterParametersToDB
       
         if($servicePrincipalId -ne $null -and $servicePrincipalId -ne '')
         {
+        Write-Host $servicePrincipalId 
             $SecretPassword = Read-Host "Type key for service principal : " -AsSecureString
             $kv = $keyvaultname.Replace('"','')
             $name = 'spkazurekeyvaultlinkedservicereference'
-            Write-Host 'before error'
             $x = Set-AzKeyVaultSecret -VaultName $kv -Name $name -SecretValue $SecretPassword 
-            Write-Host 'after error'
             $name = '"'+$name+'"'
-            Write-Host $name
             Sql-Execute -Qry "EXEC usp_UpdateMasterParametersList '`$servicePrincipalKey','$name'"  -Qrydetails 'Update master parameter $servicePrincipalKey'
          }
 
         $res = New-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName  -Name "LogicAppDeployment" -TemplateFile "$ScriptPath\LogicAppDeploymenttemplate.json" 
         $logicappurl = (Get-AzLogicAppTriggerCallbackUrl  -ResourceGroupName $resourceGroupName -Name "LogicAppToSendMailFromADF" -TriggerName "manual").Value        $logicappurl = '"'+$logicappurl+'"'
+
+        Write-Host $logicappurl
         Write-Host "EXEC usp_UpdateMasterParametersList '`$LogicAppURL','$logicappurl'"
         Sql-Execute -Qry "EXEC usp_UpdateMasterParametersList '`$LogicAppURL','$logicappurl'"  -Qrydetails 'Update master parameter $logicappurl'
 
@@ -154,15 +154,12 @@ Param([int]$Linkedservice_id,[string] $keyvaultname,[string]$messagetype )
             $SecretPassword = Read-Host "Type password for $messagetype database : " -AsSecureString
             $kv = $keyvaultname.Replace('"','')
             $name = $Linkedservice_id.ToString()+'azurekeyvaultlinkedservicereference'
-            write-host $kv
-            Write-Host 'in ket vaut ref'
             Set-AzKeyVaultSecret -VaultName $kv -Name $name -SecretValue $SecretPassword
             
-            Write-Host 'afetr ket vaut ref'
             $name = '"'+$name+'"'
             
             Sql-Execute -Qry "EXEC usp_UpdateKeyVaultReferedLinkedServiceParameters $Linkedservice_id,'$name'" -Qrydetails "Insert value for parameter : $linkedserviceparamname"
-           return $null
+            return $null
             
 
 }
@@ -184,17 +181,21 @@ Param([String]$LinkedServiceType,[String]$resourceGroupName,[string]$Authenticat
     {
      $x = Insert-KeyVaultReferenceToSQLDBLinkedService -Linkedservice_id $linkedservice_id -keyvaultname $keyvaultname -messagetype "secret for $LinkedServiceType $LinkedServiceName"
     }
-    "help text" |Out-File "$ScriptPath\OutputPostDeploymentScripts\Help.txt"
     if (($LinkedServiceType -notin ('azureKeyVault','ADLSv2')))
     {
     if ($AuthenticationType -eq 'Managed Identity'){
+    Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\PostDeploySteps.txt" "--------------------------"
+    Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\PostDeploySteps.txt" "Create database contained user for $dataFactoryName on $LinkedServiceName. Refer the script created"
+    Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\PostDeploySteps.txt" "--------------------------"
     "Create USER [$dataFactoryName] FROM EXTERNAL PROVIDER; exec sp_addrolemember 'db_owner','$dataFactoryName'" | Out-File "$ScriptPath\OutputPostDeploymentScripts\ScriptFor$LinkedServiceName.sql"
-    Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\Help.txt" "Create database contained user for $dataFactoryName on $LinkedServiceName. Refer the script created"
+    
     }
     if (($AuthenticationType -eq 'Service Principal'))
     {
+    Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\PostDeploySteps.txt" "--------------------------"
+    Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\PostDeploySteps.txt" "Create database contained user for $servicePrincipalId on $LinkedServiceName. Refer the script created"
+    Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\PostDeploySteps.txt" "--------------------------"
     "Create USER [$servicePrincipalName]  FROM EXTERNAL PROVIDER; exec sp_addrolemember 'db_owner','$servicePrincipalName'" | Out-File "$ScriptPath\OutputPostDeploymentScripts\ScriptFor$LinkedServiceName.sql"
-    Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\Help.txt" "Create database contained user for $servicePrincipalId on $LinkedServiceName. Refer the script created"
     
     }
 
@@ -213,14 +214,28 @@ Param([String]$LinkedServiceType,[String]$resourceGroupName,[string]$Authenticat
 
 try
 {
+
 $ScriptPath = Split-Path $MyInvocation.InvocationName
-$ConfigXMLFilePath = "$ScriptPath\InputXMLFile\XMLInput.xml"
+if(!(Test-Path -path "$Scriptpath\Logs")){New-Item -ItemType directory -Path "$Scriptpath\Logs"}
+if(!(Test-Path -path "$Scriptpath\OutputPipelineScripts")){New-Item -ItemType directory -Path "$Scriptpath\OutputPipelineScripts"}
+if(!(Test-Path -path "$Scriptpath\OutputPostDeploymentScripts")){New-Item -ItemType directory -Path "$Scriptpath\OutputPostDeploymentScripts"}
+if(!(Test-Path -path "$Scriptpath\Archive")){New-Item -ItemType directory -Path "$Scriptpath\Archive"}
+
+Get-ChildItem "$ScriptPath\InputXMLFile\" -Filter *.xml | 
+Foreach-Object {
+    $content = Get-Content $_.FullName
+    Write-Host $_.FullName
+
+$ConfigXMLFilePath = $_.FullName
 [XML]$MetaDetails = Get-Content $ConfigXMLFilePath
+
 
 $logdate = get-date
 $datetime = (Get-Date -UFormat "%Y-%m-%d_%I-%M%p").tostring()
+
+$archivexmlfilepath =  ($_.BaseName + "_$datetime.xml")
 $Logfilepath = "$ScriptPath\Logs\log_$datetime.txt"
-Write-Host $Logfilepath
+
 $logfilepath = $Logfilepath
 
 "$logdate`t************ Start************"|Out-File $logfilepath
@@ -253,13 +268,13 @@ Log-Message "Start :  Opening Connection to Metadata database"
     $SqlConnection.Open()
 Log-Message "End :  Opening Connection to Metadata database"
 
+"help text:" |Out-File "$ScriptPath\OutputPostDeploymentScripts\PostDeploySteps.txt"
+    
 # Update master parameters to t_master_parameters table   
     $out = Update-MasterParametersToDB
     $keyvaultname = $out.kvname
     $datafactoryname = $out.dfname
     $servicePrincipalName = $out.spnname
-    Write-Host 'spp'
-   Write-Host $servicePrincipalName
     foreach($linkedservicedetail in $MetaDetails.Metadata.LinkedServices.LinkedService)
     {
        
@@ -287,9 +302,10 @@ Log-Message "End :  Opening Connection to Metadata database"
        
        if ($irtype -eq 'SelfHosted')
        {
-        Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\Help.txt" "Need to install/register the self hosted IR on on-prem server $irnam . powershell script avaiable in the post deployment scripts folder."
-        
-        Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\Help.txt" "Copy the Auth key from azure portal"
+        Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\PostDeploySteps.txt" "--------------------------"
+        Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\PostDeploySteps.txt" "Need to install/register the self hosted IR on on-prem server $irnam . powershell script avaiable in the post deployment scripts folder."
+        Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\PostDeploySteps.txt" "Copy the Auth key from azure portal"
+        Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\PostDeploySteps.txt" "--------------------------"
        } 
         
     
@@ -324,7 +340,6 @@ Log-Message "End :  Opening Connection to Metadata database"
             
                 $dsid = $od.id
                 $lsr = $actdetail.LinkedServiceReference
-                Write-Host "EXEC usp_updatepipelineactivityparameters 'LKPdataset',$dsid,$pipelineid,$lsr" 
                 Sql-Execute -Qry "EXEC usp_updatepipelineactivityparameters 'LKPdataset',$dsid,$pipelineid,$lsr" -Qrydetails  "update pipeline activity parameter :$linksetname "
                                
             
@@ -383,8 +398,11 @@ Log-Message "End :  Opening Connection to Metadata database"
 
 
     $SqlConnection.Close()
-}
 
+    Move-Item -Path $_.FullName -Destination "$Scriptpath\Archive\$archivexmlfilepath" -Force
+
+}
+}
 catch
 {
 #Write-host $error
