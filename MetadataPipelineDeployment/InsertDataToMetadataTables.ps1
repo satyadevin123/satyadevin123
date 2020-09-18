@@ -393,6 +393,7 @@ Log-Message "End :  Opening Connection to Metadata database"
         
         $scriptpath1 = "$ScriptPath\OutputPipelineScripts\$pipelinename.ps1"
         $params = "-logfilepath '$logfilepath' -Scriptpath '$Scriptpath'"
+        Login-AzAccount
         Invoke-Expression "$scriptpath1 $params"
         }
 
