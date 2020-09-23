@@ -467,7 +467,8 @@ VALUES
 ('Get Token','GetToken',1,'{ "name": "GetToken","description": "Use this Web activity to get bearer token","type": "WebActivity","dependsOn": [               {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }       ],"policy": {"timeout": "7.00:00:00","retry": 0,"retryIntervalInSeconds": 30,"secureOutput": false,"secureInput": false},"userProperties": [],"typeProperties": {"url": "https://login.microsoftonline.com/$master_tenantId/oauth2/token","method": "POST",    "headers": { "Content-Type": "application/x-www-form-urlencoded" },"body": { "value":"@concat(''grant_type=client_credentials&client_id=$master_servicePrincipalId&client_secret='',activity(''GetSPNKey'').output.Value)",  "type": "Expression"	  }  }}',NULL,NULL,NULL),
 ('Get SPNKey from Vault','GetSPNKey',1,'{"name": "GetSPNKey", "type": "WebActivity","dependsOn": [               {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }       ],"policy": {"timeout": "7.00:00:00","retry": 0,"retryIntervalInSeconds": 30,"secureOutput": true,"secureInput": false},"userProperties": [],"typeProperties": {"url": "https://$master_keyvaultname.vault.azure.net/secrets/$master_servicePrincipalKey/?api-version=7.0","method": "GET","authentication": {"type": "MSI","resource": "https://vault.azure.net"}}}',NULL,NULL,NULL)
 ,('Copy Activity','CP_DataSource_DataDestination',1,'{"name": "$CopyActivityName","type": "Copy","dependsOn": [],"policy": {   "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},  "userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "oracleReaderQuery": {        "value": "$oracleReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },     "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }   ',NULL,NULL,'OnPremiseOracle')
-
+,
+('Copy Activity Logging','SP_CopyActivity_Logging',1,' {      "name": "$SPActivityName",      "description":"Description",      "type": "SqlServerStoredProcedure",     "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],     "linkedServiceName": {          "referenceName": "$MetadataDBLinkedServiceName",       "type": "LinkedServiceReference"      },      "typeProperties": {              "storedProcedureName": "$SPName",          "storedProcedureParameters": $SPParameters            }      }  ',NULL,NULL,NULL)
 
 MERGE [T_List_Activities] AS mrg
 USING (SELECT s.* FROM @SrcActivities s
@@ -541,18 +542,7 @@ VALUES
 ('parameters','       ""filename"": ""@item().tablename"",                                          ""directory"": ""@item().tablename"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','azureSQLDatabase'),
 ('sqlReaderQuery','@concat(''select * from '',''['',item().schemaname,'']'',''.'',''['',item().tablename,'']'')','Copy Activity','azureSQLDatabase'),
 ('SPName','usp_Log_PipelineStatus','Custom Logging',NULL),
-('SPParameters','   {""In_PipelineName"": {""value"": 
-   {""value"": ""@pipeline().Pipeline"",""type"": ""Expression""},                
-   ""type"": ""String""                          },                     
-   ""In_PipelineStatus"": {                              ""value"": ""$pipelinestatus"",     
-   ""type"": ""String""                          },                 
-   ""In_ExecutionStartTime"": {                            
-   ""value"": {                                 ""value"": ""@utcnow()"",     
-   ""type"": ""Expression""                              },                  
-   ""type"": ""Datetime""                          },                      
-   ""In_ExecutionEndTime"": {                              ""value"": ""@utcnow()"",                    
-   ""type"": ""Datetime""                          }    
-                    ','Custom Logging',NULL),
+('SPParameters','    { ""In_PipelineName"": {""value"":      {""value"": ""@pipeline().Pipeline"",""type"": ""Expression""},                     ""type"": ""String""                          },    ""In_PipelineStatus"": {                              ""value"": ""$pipelinestatus"",          ""type"": ""String""                          },                   ""In_ExecutionStartTime"": {                                 ""value"": {                                 ""value"": ""@utcnow()"",          ""type"": ""Expression""                              },                       ""type"": ""Datetime""                          },                           ""In_ExecutionEndTime"": {                              ""value"": ""@utcnow()"",                         ""type"": ""Datetime""                          }            ,              ""In_PipelineRunID"": {""value"":      {""value"": ""@pipeline().RunId"",""type"": ""Expression""},                     ""type"": ""String""                          }  ','Custom Logging',NULL),
 ('MetadataDBLinkedServiceName','','Custom Logging',NULL),
 ('SPActivityName','','Custom Logging',NULL),
 ('dependson','','Custom Logging',NULL),
@@ -583,7 +573,13 @@ VALUES
 ('inputDatasetReference','','Copy Activity','OnPremiseOracle'),
 ('outputDatasetReference','','Copy Activity','OnPremiseOracle'),
 ('parameters','       ""filename"": ""@item().tablename"",                                          ""directory"": ""@item().tablename"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','OnPremiseOracle'),
-('oracleReaderQuery','@concat(''select * from '',item().schemaname,''.'',item().tablename)','Copy Activity','OnPremiseOracle')
+('oracleReaderQuery','@concat(''select * from '',item().schemaname,''.'',item().tablename)','Copy Activity','OnPremiseOracle'),
+('SPName','usp_InsertPipelineCopyLogDetails','Copy Activity Logging',NULL),
+('SPParameters','   {""In_PipelineRunID"": {""value"": {""value"": ""@pipeline().RunId"",""type"": ""Expression""},""type"": ""Guid""},""In_RowsCopied"": {""value"": {""value"": ""@activity(''$SP_CopyActivityLogging_dependson'').output.rowsCopied"",""type"": ""Expression""},""type"": ""Int64""  },""In_RowsRead"": {""value"": {""value"": ""@activity(''$SP_CopyActivityLogging_dependson'').output.rowsRead"",""type"": ""Expression""},""type"": ""Int64""},  ""In_Duration"": {""value"": {""value"": ""@activity(''$SP_CopyActivityLogging_dependson'').output.copyDuration"",""type"": ""Expression""},""type"": ""Int16""},  ""In_Status"": {""value"": {""value"": ""@activity(''$SP_CopyActivityLogging_dependson'').output.executionDetails[0].status"",""type"": ""Expression""},""type"": ""String""},""In_StartTime"": { ""value"": {  ""value"": ""@activity(''$SP_CopyActivityLogging_dependson'').output.executionDetails[0].start"",""type"": ""Expression""},""type"": ""Datetime""},""In_EndTime"": {  ""value"": {""value"": ""@utcnow()"",""type"": ""Expression""},""type"": ""Datetime""},""In_EntityName"": {""value"": {""value"": ""@item().tablename"",""type"": ""Expression""},""type"": ""String""  }  }  ','Copy Activity Logging',NULL),
+('MetadataDBLinkedServiceName','','Copy Activity Logging',NULL),
+('SPActivityName','','Copy Activity Logging',NULL),
+('dependson','','Copy Activity Logging',NULL),
+('dependencyConditions','','Copy Activity Logging',NULL)
 
 
 MERGE [T_List_Activity_Parameters] AS mrg

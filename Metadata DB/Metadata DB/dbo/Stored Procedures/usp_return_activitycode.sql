@@ -12,8 +12,8 @@ DECLARE @activity_code TABLE (ID INT IDENTITY(1,1),ActivityJsoncode VARCHAR(MAX)
 INSERT INTO @activity_code
 
 SELECT 
-		CASE WHEN A.RowNumber >1 THEN CASE WHEN ISNULL(A.[ChildActivity],0)<>0 THEN ','+REPLACE(A.Code,'$'+ActivityName+'_'+'activityJsoncode',B.Code) ELSE ','+A.Code END 
-		ELSE CASE WHEN ISNULL(A.[ChildActivity],0)<>0 THEN REPLACE(A.Code,'$'+ActivityName+'_'+'activityJsoncode',B.Code) ELSE A.Code END END AS Code
+		CASE WHEN A.RowNumber >1 THEN CASE WHEN ISNULL(A.[ChildActivity],'0')<>'0' THEN ','+REPLACE(A.Code,'$'+ActivityName+'_'+'activityJsoncode',code1) ELSE ','+A.Code END 
+		ELSE CASE WHEN ISNULL(A.[ChildActivity],'0')<>'0' THEN REPLACE(A.Code,'$'+ActivityName+'_'+'activityJsoncode',code1) ELSE A.Code END END AS Code
 		,A.PipelineActivityId 
 		
 FROM (
@@ -23,28 +23,20 @@ FROM (
 				,TPS.[PipelineActivityId] AS PipelineActivityId
 				,TPS.EmailNotificationEnabled
 				,TPS.[ChildActivity]
-				,CASE WHEN TPS.[PipelineActivityId] IN (SELECT [ChildActivity] FROM [dbo].[T_Pipeline_Activities]) THEN 'Yes' ELSE 'No' END AS IsChildActivity
+				,CASE WHEN TPS.[PipelineActivityId] IN (select distinct cast(value as int) from T_Pipeline_Activities tpa
+cross apply (select value from string_split(tpa.ChildActivity,',') ) as a
+where value <> 0
+) THEN 'Yes' ELSE 'No' END AS IsChildActivity
 				,ISNULL(TPS.ActivityName,TLS.ActivityStandardName) AS ActivityName
+				,code1
 		FROM [dbo].[T_Pipelines] TP
 		JOIN [dbo].[T_Pipeline_Activities] TPS on TP.[PipelineId] = TPS.PipelineiD
 		JOIN [dbo].[T_List_Activities] TLS on TLS.[ActivityId] = TPS.[ActivityID]
-		WHERE TP.[PipelineId] = @PipelineId
-) A
-LEFT JOIN (
-		SELECT 
-				 ROW_NUMBER() OVER(ORDER BY TPS.[PipelineActivityId]) AS RowNumber
-				,CASE WHEN TPS.[ChildActivity] IS NULL OR TPS.[ChildActivity]='' THEN REPLACE(TLS.[JsonCode],'$','$'+ISNULL(TPS.ActivityName,TLS.ActivityStandardName)+'_') 
-					  WHEN TPS.[ChildActivity] IS NOT NULL THEN REPLACE(REPLACE(REPLACE(TLS.[JsonCode],'$activityjsoncode',ChildTLS.[JsonCode]),'$','$'+ISNULL(TPS.ActivityName,ChildTLS.ActivityStandardName)+'_'),'$'+ISNULL(TPS.ActivityName,ChildTLS.ActivityStandardName)+'_master_','$') END AS Code
-				,TPS.[PipelineActivityId] AS PipelineActivityId
-				,TPS.EmailNotificationEnabled
-				,CASE WHEN TPS.[PipelineActivityId] IN (SELECT [ChildActivity] FROM [dbo].[T_Pipeline_Activities]) THEN 'Yes' ELSE 'No' END AS IsChildActivity
-		FROM [dbo].[T_Pipelines] TP
-		JOIN [dbo].[T_Pipeline_Activities] TPS on TP.[PipelineId] = TPS.PipelineiD
-		JOIN [dbo].[T_List_Activities] TLS on TLS.[ActivityId] = TPS.[ActivityID]
-		LEFT JOIN [dbo].[T_List_Activities] ChildTLS on ChildTLS.[ActivityId] = TPS.[ChildActivity]
-		WHERE TP.[PipelineId] = @PipelineId AND CASE WHEN TPS.[PipelineActivityId] IN (SELECT [ChildActivity] FROM [dbo].[T_Pipeline_Activities]) THEN 'Yes' ELSE 'No' END ='Yes'
-) B ON A.[ChildActivity] = B.PipelineActivityId
+		CROSS APPLY (select dbo.usp_return_childcode(TPS.pipelineactivityid, TPS.childactivity)) t(code1)
+		WHERE TP.[PipelineId] = @PipelineID
+		) A
 WHERE A.IsChildActivity='No'
+
 Declare @configvalues varchar(8000)
 select @configvalues=coalesce(@configvalues+ ',','')+'"'+ConfigName+'":"'+configvalue+'"' from [dbo].[T_ConfigurationDetails]
 
@@ -80,7 +72,10 @@ INNER JOIN [dbo].[T_Pipeline_Activities] PS1 on PS.PipelineId = PS1.PipelineiD A
 AND ps1.DependencyCondition = 'Failed'
 INNER JOIN [dbo].[T_List_Activities] LS on LS.[ActivityId] = PS.[ActivityID]
 WHERE PS.EmailNotificationEnabled=1
-and ps.[PipelineActivityId] not in (select  [ChildActivity] from [T_Pipeline_Activities] where PipelineId = @PipelineID)
+and ps.[PipelineActivityId] not in 
+(select distinct cast(value as int) from T_Pipeline_Activities tpa
+cross apply (select value from string_split(tpa.ChildActivity,',') ) as a
+where value <> 0 and tpa.PipelineId = @PipelineID)
 AND ps1.Activityname like '%SPPipelineFailedActivity%'
 AND P.PipelineId = @PipelineID
 

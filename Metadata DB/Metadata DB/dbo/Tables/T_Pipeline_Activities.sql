@@ -3,7 +3,7 @@
     [PipelineId]               INT           NULL,
     [ActivityID]              INT           NULL,
     [DependsOn]                VARCHAR (10)  NULL,
-    [ChildActivity]           INT           NULL,
+    [ChildActivity]           VARCHAR(100)           NULL,
     [EmailNotificationEnabled] TINYINT       NULL,
     [Activityname]             VARCHAR (100) NULL,
     [DependencyCondition]        NVARCHAR(20)

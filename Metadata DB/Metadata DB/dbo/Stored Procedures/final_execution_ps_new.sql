@@ -179,7 +179,9 @@ FROM (
 		union all
 		Select '#Variables for pipeline Activity Parameters',0,'ActivityParameterList'
 		union all
-		select ParameterName+' = "'+ ParameterValue+'"' AS Parameter,[PipelineActivityParameterId], 'ActivityParameterList' AS DescType from [dbo].[T_Pipeline_Activity_Parameters] where parametername not like '%activityjsoncode%'  AND PipelineId = @PipelineId
+		select ParameterName+' = "'+ ParameterValue+'"' AS Parameter,[PipelineActivityParameterId], 'ActivityParameterList' AS DescType from [dbo].[T_Pipeline_Activity_Parameters] where parametername not like '%activityjsoncode%'  AND parametername not like '%SPParameters%' AND PipelineId = @PipelineId 
+		union all
+		select ParameterName+' = "'+ ParameterValue+'"' AS Parameter,[PipelineActivityParameterId], 'ActivityParameterList1' AS DescType from [dbo].[T_Pipeline_Activity_Parameters] where parametername not like '%activityjsoncode%'  AND parametername  like '%SPParameters%' AND PipelineId = @PipelineId 
 		union all
 		Select '#Variables for master pipeline paramters i.e sendmail',0,'MasterPipelineParameterList'
 		union all
@@ -213,13 +215,14 @@ ORDER BY CASE WHEN DescType Like '%MasterParameterList%' THEN 1
 			  WHEN DescType Like '%LinkedServiceParameterList%' THEN 2 
 			  WHEN DescType Like '%DatasetParameterList%' THEN 3
 			  WHEN DescType Like '%ActivityParameterList%' THEN 4
-			  WHEN DescType Like '%MasterPipelineParameterList%' THEN 5
-			  WHEN DescType Like '%DFCode%' THEN 6
-			  WHEN DescType Like '%KVCode%' THEN 7
-			  WHEN DescType Like '%LSCode%' THEN 8
-			  WHEN DescType Like '%DSCode%' THEN 9 
-			  WHEN DescType Like '%Mastercode%' THEN 10
-			  WHEN DescType Like '%ActivityCode%' THEN 11 END 
+			  WHEN DescType Like '%ActivityParameterList1%' THEN 5
+			  WHEN DescType Like '%MasterPipelineParameterList%' THEN 6
+			  WHEN DescType Like '%DFCode%' THEN 7
+			  WHEN DescType Like '%KVCode%' THEN 8
+			  WHEN DescType Like '%LSCode%' THEN 9
+			  WHEN DescType Like '%DSCode%' THEN  10
+			  WHEN DescType Like '%Mastercode%' THEN 11
+			  WHEN DescType Like '%ActivityCode%' THEN 12 END 
 			  ,ID
 
 
@@ -244,7 +247,9 @@ FROM (
 		union all
 		Select '#Variables for pipeline activity parameters',0,'ActivityParameterList'
 		union all
-		select ParameterName+' = "'+ ParameterValue+'"' AS Parameter,[PipelineActivityParameterId], 'ActivityParameterList' AS DescType from [dbo].[T_Pipeline_Activity_Parameters] where parametername not like '%activityjsoncode%'  AND PipelineId = @PipelineId
+		select ParameterName+' = "'+ ParameterValue+'"' AS Parameter,[PipelineActivityParameterId], 'ActivityParameterList' AS DescType from [dbo].[T_Pipeline_Activity_Parameters] where parametername not like '%activityjsoncode%'  AND parametername not like '%SPParameters%' AND PipelineId = @PipelineId 
+		union all
+		select ParameterName+' = "'+ ParameterValue+'"' AS Parameter,[PipelineActivityParameterId], 'ActivityParameterList1' AS DescType from [dbo].[T_Pipeline_Activity_Parameters] where parametername not like '%activityjsoncode%'  AND parametername  like '%SPParameters%' AND PipelineId = @PipelineId 
 		union all
 		Select '#Variables for master pipeline parameters',0,'MasterPipelineParameterList'
 		union all
@@ -274,13 +279,14 @@ ORDER BY CASE WHEN DescType Like '%MasterParameterList%' THEN 1
 			  WHEN DescType Like '%LinkedServiceParameterList%' THEN 2 
 			  WHEN DescType Like '%DatasetParameterList%' THEN 3
 			  WHEN DescType Like '%ActivityParameterList%' THEN 4
-			  WHEN DescType Like '%MasterPipelineParameterList%' THEN 5
-			  WHEN DescType Like '%DFCode%' THEN 6
-			  WHEN DescType Like '%KVCode%' THEN 7
-			  WHEN DescType Like '%LSCode%' THEN 8
-			  WHEN DescType Like '%DSCode%' THEN 9 
-			  WHEN DescType Like '%Mastercode%' THEN 10
-			  WHEN DescType Like '%ActivityCode%' THEN 11 END
+			  WHEN DescType Like '%ActivityParameterList1%' THEN 5
+			  WHEN DescType Like '%MasterPipelineParameterList%' THEN 6
+			  WHEN DescType Like '%DFCode%' THEN 7
+			  WHEN DescType Like '%KVCode%' THEN 8
+			  WHEN DescType Like '%LSCode%' THEN 9
+			  WHEN DescType Like '%DSCode%' THEN 10 
+			  WHEN DescType Like '%Mastercode%' THEN 11
+			  WHEN DescType Like '%ActivityCode%' THEN 12 END
 GO
 
 

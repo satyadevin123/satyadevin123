@@ -175,6 +175,13 @@
     <Build Include="dbo\Stored Procedures\usp_UpdateKeyVaultReferedLinkedServiceParameters.sql" />
     <Build Include="dbo\Tables\T_Pipeline_IntegrationRunTime.sql" />
     <Build Include="dbo\Stored Procedures\usp_InsertPipelineIntegrationRunTimeDetails.sql" />
+    <Build Include="dbo\usp_return_childcode.sql" />
+    <Build Include="Audit\Tables\pipeline_Copy_Activity_log.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
+    <Build Include="dbo\Stored Procedures\usp_InsertPipelineCopyLogDetails.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Script.PostDeployment1.sql" />

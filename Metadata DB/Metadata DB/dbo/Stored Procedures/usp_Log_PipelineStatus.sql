@@ -1,5 +1,5 @@
-﻿
-CREATE PROC [dbo].[usp_Log_PipelineStatus] 
+﻿CREATE PROC [dbo].[usp_Log_PipelineStatus] 
+@In_PipelineRunID UNIQUEIDENTIFIER,
 @In_PipelineName [VARCHAR](100),
 @In_PipelineStatus [VARCHAR](50),
 @In_ExecutionStartTime [DATETIME],
@@ -8,7 +8,9 @@ CREATE PROC [dbo].[usp_Log_PipelineStatus]
 AS
 BEGIN
 
+
 DECLARE @PipelineId INT
+
 SELECT @PipelineId = [PipelineId]
 FROM T_Pipelines WHERE PipelineName = @In_PipelineName
 
@@ -17,6 +19,7 @@ BEGIN
 	INSERT INTO Audit.PipelineStatusDetails
 	(
 	[PipelineId]
+	,[RunId]
 	,[PipelineName]
 	,[PipelineStatus]
 	,[ExecutionStartTime]
@@ -25,6 +28,7 @@ BEGIN
 	)
 	SELECT
 	@PipelineId ,
+	@In_PipelineRunID,
 	@In_PipelineName ,
 	@In_PipelineStatus ,
 	getdate(),
@@ -40,6 +44,7 @@ SET [ExecutionEndTime] = getdate(),
 [PipelineStatus] = @In_PipelineStatus,
 ErrorMessage = @In_ErrorMessage
 WHERE PipelineId = @PipelineId AND ExecutionEndTime IS NULL
+AND [RunId] = @In_PipelineRunID
 
 END
 END

@@ -121,10 +121,23 @@ where TPL.[LinkedServiceName] = @sourcelinkedservicename
 	AND ISNULL(SourceType,@type)=@type
 
 	INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,@childid,1,@ForeachActivityName,'Succeeded'
+    SELECT @PipelineId,[ActivityId],@childid,0,1,'SP_CopyActivityLogging','Completed' FROM dbo.T_List_Activities where ActivityName = 'Copy Activity Logging'
+	AND ISNULL(SourceType,@type)=@type
+    declare @childid1 int
+    SELECT @childid1 = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
+    on tps.[ActivityID] = tla.[ActivityId]
+    where tla.activityname = 'Copy Activity Logging' and tps.pipelineid = @PipelineId and tps.activityname = 'SP_CopyActivityLogging'
+	AND ISNULL(SourceType,@type)=@type
+
+    declare @childactstring varchar(100)
+    set @childactstring = cast(@childid as varchar)+','+cast(@childid1 as varchar)
+
+    INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
+    SELECT @PipelineId,[ActivityId],@dependsonid,@childactstring,1,@ForeachActivityName,'Succeeded'
     FROM dbo.T_List_Activities where ActivityName = 'For Each Activity'
 	AND ISNULL(SourceType,@type)=@type
 
+    
     SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
     on tps.[ActivityID] = tla.[ActivityId]
     where tla.activityname = 'For Each Activity' and tps.pipelineid = @PipelineId and tps.activityname = @ForeachActivityName

@@ -13,6 +13,7 @@
     [UpdatedRecords]          INT           NULL,
     [NoImpactRecords]         INT           NULL,
     [EntityName]              VARCHAR (200) NULL,
-    ErrorMessage              VARCHAR(4000)
+    ErrorMessage              VARCHAR(4000),
+    RunID                     UNIQUEIDENTIFIER
 );
 
