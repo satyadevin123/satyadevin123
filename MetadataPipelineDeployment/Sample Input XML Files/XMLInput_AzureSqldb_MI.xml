@@ -24,7 +24,7 @@
 <LinkedService Type='azureSQLDatabase' AuthenticationType='Managed Identity' Description='MetadataDB'>
 <Parameters>
 <Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
-<Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDBPublish'/>
+<Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDBPublishTest1'/>
 </Parameters>
 </LinkedService>
 <LinkedService Type='azureSQLDatabase' AuthenticationType='Managed Identity' Description='AdventureWorksAzureSql'>
@@ -43,7 +43,7 @@
 <MetadataDB Type ='azureSQLDatabase' AuthenticationType='SQL Authentication'>
 <Parameters>
 <Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
-<Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDBPublish'/>
+<Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDBPublishTest1'/>
 </Parameters>
 </MetadataDB>
 <Pipelines>
@@ -51,7 +51,7 @@
 <Activities>
 <Activity Type='Lookup Activity' LinkedServiceReference='MetadataDB'>
 </Activity>
-<Activity Type ='Copy Activity'>
+<Activity Type ='Copy Activity' Description='DataCopy'>
 <Source LinkedServiceReference='AdventureWorksAzureSql'>
 <Tables>
 	<Table Name='ErrorLog' schema='dbo'/>
@@ -61,7 +61,7 @@
 </Source>
 <Sink LinkedServiceReference='ADLSV2'>
 <SinkParameters>
-<Parameter Name='$fileSystemFolderName' Value ='advworksazuresql'/>
+<Parameter Name='$fileSystemFolderName' Value ='advworksazuresqlwithoutschema'/>
 <Parameter Name='$CompressionCodectype' Value ='none'/>
 <Parameter Name='$fileformat' Value ='DelimitedText'/>
 <Parameter Name='$fileextension' Value ='csv'/>

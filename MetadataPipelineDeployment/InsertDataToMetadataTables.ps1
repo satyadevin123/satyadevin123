@@ -41,6 +41,55 @@ Function Sql-ExecuteScalar
     return   $scalarval
 }
 
+
+
+Function Import-Excel([string]$FilePath, [string]$csvfile, [string]$SheetName = "")
+{
+    Write-Host $FilePath
+    Write-Host $csvfile
+
+    if (Test-Path -path $csvFile) { Remove-Item -path $csvFile }
+
+    # convert Excel file to CSV file
+    $xlCSVType = 6 # SEE: http://msdn.microsoft.com/en-us/library/bb241279.aspx
+    $excelObject = New-Object -ComObject Excel.Application  
+    $excelObject.Visible = $false 
+    $workbookObject = $excelObject.Workbooks.Open($FilePath)
+    SetActiveSheet $workbookObject $SheetName | Out-Null
+    $workbookObject.SaveAs($csvFile,$xlCSVType) 
+    $workbookObject.Saved = $true
+    $workbookObject.Close()
+
+     # cleanup 
+    [System.Runtime.Interopservices.Marshal]::ReleaseComObject($workbookObject) |
+        Out-Null
+    $excelObject.Quit()
+    [System.Runtime.Interopservices.Marshal]::ReleaseComObject($excelObject) |
+        Out-Null
+    [System.GC]::Collect()
+    [System.GC]::WaitForPendingFinalizers()
+
+    # now import and return the data 
+  #  Import-Csv -path $csvFile
+}
+
+Function FindSheet([Object]$workbook, [string]$name)
+{
+    $sheetNumber = 0
+    for ($i=1; $i -le $workbook.Sheets.Count; $i++) {
+        if ($name -eq $workbook.Sheets.Item($i).Name) { $sheetNumber = $i; break }
+    }
+    return $sheetNumber
+}
+
+Function SetActiveSheet([Object]$workbook, [string]$name)
+{
+    if (!$name) { return }
+    $sheetNumber = FindSheet $workbook $name
+    if ($sheetNumber -gt 0) { $workbook.Worksheets.Item($sheetNumber).Activate() }
+    return ($sheetNumber -gt 0)
+}
+
 Function Create-KeyVault
 {
     Param([String]$keyvaultName,[String]$keyvaultlocation,[String]$resourceGroupName) 
@@ -89,11 +138,11 @@ Function Update-MasterParametersToDB
         Sql-Execute -Qry "EXEC usp_UpdateMasterParametersList '$paramname','$paramval'" -Qrydetails "Update master parameter $paramname"
         
     }
-        Create-KeyVault -keyvaultName $keyvaultname -keyvaultlocation $keyvaultlocation -resourceGroupName $resourceGroupName
+       $x = Create-KeyVault -keyvaultName $keyvaultname -keyvaultlocation $keyvaultlocation -resourceGroupName $resourceGroupName
       
         if($servicePrincipalId -ne $null -and $servicePrincipalId -ne '')
         {
-        Write-Host $servicePrincipalId 
+            Write-Host $servicePrincipalId 
             $SecretPassword = Read-Host "Type key for service principal : " -AsSecureString
             $kv = $keyvaultname.Replace('"','')
             $name = 'spkazurekeyvaultlinkedservicereference'
@@ -126,13 +175,12 @@ Param([string]$PipelineName)
 }
 Function Insert-DatasetsAndParameters
 {
-Param([int]$PipelineId,[String]$LinkedServiceName,[String]$AdditionalType,[String]$AdditionalVal) 
+Param([String]$DataSetName,[int]$PipelineId,[String]$LinkedServiceName,[String]$AdditionalType,[String]$AdditionalVal) 
     
-             
-            Sql-Execute -Qry "EXEC usp_InsertPipelineDataSets '$LinkedServiceName',$PipelineId,'$AdditionalType','$AdditionalVal'" -Qrydetails  "Insert datasets for metadata db"
-            $SqlCmd.CommandText = "SELECT MAX(PipelineDatasetId) FROM [T_Pipeline_DataSets] "
-            $dataset_id = Sql-ExecuteScalar -Qry "SELECT MAX(PipelineDatasetId) FROM [T_Pipeline_DataSets] " -Qrydetails "max dataset id"
-            $SqlCmd.CommandText = "SELECT MAX(PipelineDatasetId) FROM [T_Pipeline_DataSets] "
+            Sql-Execute -Qry "EXEC usp_InsertPipelineDataSets '$DataSetName','$LinkedServiceName',$PipelineId,'$AdditionalType','$AdditionalVal'" -Qrydetails  "Insert datasets for metadata db"
+            $SqlCmd.CommandText = "SELECT PipelineDatasetId FROM [T_Pipeline_DataSets] WHERE PipelineId = $PipelineId AND DataSetName = '$DataSetName'"
+            $dataset_id = Sql-ExecuteScalar -Qry "SELECT PipelineDatasetId FROM [T_Pipeline_DataSets] WHERE PipelineId = $PipelineId AND DataSetName = '$DataSetName'" -Qrydetails "max dataset id"
+            
             Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$LinkedServiceName',$dataset_id,$PipelineId" -Qrydetails  "Insert dataset parameters for metadata db"
             
       
@@ -322,47 +370,74 @@ Log-Message "End :  Opening Connection to Metadata database"
         
         foreach($actdetail in $ppdetail.Activities.Activity)
         {
-             if($actdetail.Type -eq 'Copy Activity')
+             if($actdetail.Type -eq 'Copy Activity' -and $actdetail.Description -eq 'DataCopy')
             {
                 $lsr = $actdetail.Source.LinkedServiceReference
-                Sql-Execute -Qry "EXEC usp_insertpipelinesteps $pipelineid,'$lsr'" -Qrydetails  "Insert pipeline steps"
-                Sql-Execute -Qry "EXEC usp_Insert_Pipeline_Parameters $pipelineid" -Qrydetails  "Insert pipeline activity parameters"
-           
+             Write-Host $lsr
+             Write-Host "EXEC usp_insertpipelinesteps $pipelineid,'$lsr','no'"
+                Sql-Execute -Qry "EXEC usp_insertpipelinesteps $pipelineid,'$lsr','no'" -Qrydetails  "Insert pipeline steps"
             }
-        }
+                    
         
+        }
+        foreach($actdetail in $ppdetail.Activities.Activity)
+        {
+            if($actdetail.Type -eq 'Copy Activity' -and $actdetail.Description -eq 'SchemaCopy')
+            {
+                $lsr = $actdetail.Source.LinkedServiceReference
+             Write-Host $lsr
+             Write-Host "EXEC usp_insertpipelinesteps $pipelineid,'$lsr','yes'"
+                Sql-Execute -Qry "EXEC usp_insertpipelinesteps $pipelineid,'$lsr','yes'" -Qrydetails  "Insert pipeline steps"
+            }
+
+        }
+        Sql-Execute -Qry "EXEC usp_Insert_Pipeline_Parameters $pipelineid" -Qrydetails  "Insert pipeline activity parameters"
         foreach($actdetail in $ppdetail.Activities.Activity)
         {
           
             if($actdetail.Type -eq 'Lookup Activity')
             {
-                $od =  Insert-DatasetsAndParameters -PipelineId $pipelineid -LinkedServiceName $actdetail.LinkedServiceReference -AdditionalType $null -AdditionalVal $null
+                $datasetname = "DS_LKP_$pipelineid"
+                $od =  Insert-DatasetsAndParameters -DataSetName $datasetname -PipelineId $pipelineid -LinkedServiceName $actdetail.LinkedServiceReference -AdditionalType $null -AdditionalVal $null
             
                 $dsid = $od.id
                 $lsr = $actdetail.LinkedServiceReference
                 Sql-Execute -Qry "EXEC usp_updatepipelineactivityparameters 'LKPdataset',$dsid,$pipelineid,$lsr" -Qrydetails  "update pipeline activity parameter :$linksetname "
                                
-            
             }
             if($actdetail.Type -eq 'Copy Activity')
             {
-                $od =  Insert-DatasetsAndParameters -PipelineId $pipelineid -LinkedServiceName $actdetail.Source.LinkedServiceReference -AdditionalType $null -AdditionalVal $null
+                $desc = $actdetail.Description
+                Write-Host $desc
+                $datasetname = "DS_CP_SRC_"+$desc+"_$pipelineid"
+                
+                
+                                
+                write-host $datasetname
+                $od =  Insert-DatasetsAndParameters -DataSetName $datasetname -PipelineId $pipelineid -LinkedServiceName $actdetail.Source.LinkedServiceReference -AdditionalType $null -AdditionalVal $null
                 $dsid = $od.id
-
-                Sql-Execute -Qry "EXEC usp_updatepipelineactivityparameters 'CPInputReference',$dsid,$pipelineid" -Qrydetails  "update pipeline activity parameter :$linksetname "
+                
+                Write-Host "EXEC usp_updatepipelineactivityparameters 'CPInputReference',$dsid,$pipelineid,'','$desc'"
+                Sql-Execute -Qry "EXEC usp_updatepipelineactivityparameters 'CPInputReference',$dsid,$pipelineid,'','$desc'" -Qrydetails  "update pipeline activity parameter :$linksetname "
                 
                 foreach($tbldetail in $actdetail.Source.Tables.Table)
                 {
                     $tblname = $tbldetail.Name
                     $schname = $tbldetail.schema
-                    Sql-Execute -Qry "EXEC  usp_InsertPipelineTablesToBeMoved $pipelineid,'$tblname','$schname'" -Qrydetails  "insert tables to be moved "
+                    $IsIncremental = $tbldetail.IsIncremental
+                    $RefreshBasedOn = $tbldetail.LastRefreshBasedOnColumn
+                    Sql-Execute -Qry "EXEC  usp_InsertPipelineTablesToBeMoved $pipelineid,'$tblname','$schname','$IsIncremental','$RefreshBasedOn'" -Qrydetails  "insert tables to be moved "
                     
                 }
-
-                $od =  Insert-DatasetsAndParameters -PipelineId $pipelineid -LinkedServiceName $actdetail.Sink.LinkedServiceReference -AdditionalType 'SinkFileFormat' -AdditionalVal 'DelimitedText'
+                $datasetname = "DS_CP_SINK_"+$desc+"_$pipelineid"
+                
+                $od =  Insert-DatasetsAndParameters -DataSetName $datasetname -PipelineId $pipelineid -LinkedServiceName $actdetail.Sink.LinkedServiceReference -AdditionalType 'SinkFileFormat' -AdditionalVal 'DelimitedText'
                 $dsid = $od.id
-                Sql-Execute -Qry "EXEC usp_updatepipelineactivityparameters 'CPOutputReference',$dsid,$pipelineid" -Qrydetails  "update pipeline activity parameter :$linksetname "
-
+                
+                Write-Host "EXEC usp_updatepipelineactivityparameters 'CPOutputReference',$dsid,$pipelineid,'','$desc'"
+                Sql-Execute -Qry "EXEC usp_updatepipelineactivityparameters 'CPOutputReference',$dsid,$pipelineid,'','$desc'" -Qrydetails  "update pipeline activity parameter :$linksetname "
+                
+                
                 foreach($parameterdetail in $actdetail.Sink.SinkParameters.Parameter)
                 {
                     $paramval = $parameterdetail.Value
@@ -370,14 +445,38 @@ Log-Message "End :  Opening Connection to Metadata database"
                     Sql-Execute -Qry "EXEC [usp_UpdatePipelineDataSetParameters] '$paramname','$paramval',$dsid,$pipelineid" -Qrydetails "Insert value for parameter : $paramname"
                     
                 }
+                if($actdetail.Description -eq 'DataCopy')
+                {
                 
                 Sql-Execute -Qry "EXEC  usp_updatepipelineactivityparameters 'LKPQuery',$dsid,$pipelineid" -Qrydetails  "update activity parameter :  $qryparamname"
-                           
-                                   
+                
+                }           
             }
 
+
+        }
+        
+        $excelfile = "$ScriptPath\InputXMLFile\SourceTableSchemaDetails.xlsx"
+        
+        $csvfile = "$ScriptPath\InputXMLFile\SourceTableSchemaDetails.csv"
+        if(Test-Path "$ScriptPath\InputXMLFile\SourceTableSchemaDetails.xlsx")
+        {
+        Import-Excel -FilePath $excelfile -SheetName 'Sheet1' -csvfile $csvfile
+        Import-Csv "$ScriptPath\InputXMLFile\SourceTableSchemaDetails.csv" | ? PipelineName -eq $pipelinename | ForEach-Object{
+
+        Sql-Execute -Qry "EXEC usp_InsertSourceTableColumnDetails  $pipelineid,'$($_.SchemaName)','$($_.TableName)','$($_.ColumnName)','$($_.Key)','$($_.Type)','$($_.Length)','$($_.OutputLen)','$($_.Decimals)'"  -Qrydetails "sd"
+        }
         }
 
+        foreach($tbldetail in $actdetail.Source.Tables.Table)
+        {
+                    $tblname = $tbldetail.Name
+                    $schname = $tbldetail.schema
+                    $IsIncremental = $tbldetail.IsIncremental
+                    $RefreshBasedOn = $tbldetail.LastRefreshBasedOnColumn
+                    Sql-Execute -Qry "EXEC  usp_UpdatePipelineTablesQuery $pipelineid,'$tblname','$schname','$IsIncremental','$RefreshBasedOn'" -Qrydetails  "update tables to be moved "
+                    
+        }
 
         $SqlCmd.CommandText = "EXEC final_execution_ps_new $pipelineid"
     
@@ -393,7 +492,7 @@ Log-Message "End :  Opening Connection to Metadata database"
         
         $scriptpath1 = "$ScriptPath\OutputPipelineScripts\$pipelinename.ps1"
         $params = "-logfilepath '$logfilepath' -Scriptpath '$Scriptpath'"
-        Login-AzAccount
+        #Login-AzAccount
         Invoke-Expression "$scriptpath1 $params"
         }
 
@@ -401,6 +500,10 @@ Log-Message "End :  Opening Connection to Metadata database"
     $SqlConnection.Close()
 
     Move-Item -Path $_.FullName -Destination "$Scriptpath\Archive\$archivexmlfilepath" -Force
+
+    if(Test-Path $excelfile){ Move-Item -Path $excelfile -Destination "$Scriptpath\Archive\SourceTableSchemaDetails_$datetime.xlsx" -Force}
+    
+    if(Test-Path $csvfile){ Move-Item -Path $csvfile -Destination "$Scriptpath\Archive\SourceTableSchemaDetails_$datetime.csv" -Force}
 
 }
 }

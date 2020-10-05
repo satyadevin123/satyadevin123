@@ -456,19 +456,71 @@ INSERT INTO @SrcActivities
 VALUES
 ('Execute Pipeline','Exe_Pipeline',1,'{                  "name": "ExecutePipelineActivity",                  "type": "ExecutePipeline",                  "typeProperties": {                      "parameters": {                                                  "mySourceDatasetFolderPath": {                              "value": "@pipeline().parameters.mySourceDatasetFolderPath",                              "type": "Expression"                          }                      },                      "pipeline": {                          "referenceName": "<InvokedPipelineName>",                          "type": "PipelineReference"                      },                      "waitOnCompletion": true                   }              }          ],          "parameters": [              {                  "mySourceDatasetFolderPath": {                      "type": "String"                  }              }',NULL,NULL,NULL),
 ('Lookup Activity','LKP_DataSourceName',1,'     {                  "name": "$LookupActivityname",                  "type": "Lookup",                      "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],                  "policy": {                      "timeout": "7.00:00:00",                      "retry": 0,                      "retryIntervalInSeconds": 30,                      "secureOutput": false,                      "secureInput": false                  },                  "userProperties": [],                  "typeProperties": {                      "source": {                          "type": "AzureSqlSource",                          "sqlReaderQuery": {                              "value": "$query",                              "type": "Expression"                          },                          "queryTimeout": "02:00:00"                      },                      "dataset": {                          "referenceName": "$dataset",                          "type": "DatasetReference"                      },       "firstRowOnly": $firstrow                  }              }       ',NULL,1,NULL),
-('Copy Activity','CP_DataSource_DataDestination',1,'{"name": "$CopyActivityName","type": "Copy","dependsOn": [],"policy": {    "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},"userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "sqlReaderQuery": {            "value": "$sqlReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },    "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }',NULL,1,'azureSQLDatabase'),
+('Copy Activity','CP_DataSource_DataDestination',1,'{"name": "$CopyActivityName","type": "Copy","dependsOn": [{
+      "activity": "$dependson",
+      "dependencyConditions": [ "$dependencyConditions" ]
+    }],"policy": {    "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},"userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "sqlReaderQuery": {            "value": "$sqlReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },    "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }',NULL,1,'azureSQLDatabase'),
 ('For Each Activity','ForEachActivity',1,'   {                  "name": "$foreachactivityname",                  "type": "ForEach",                  "dependsOn": [                      {                          "activity": "$dependson",                          "dependencyConditions": [                              "$dependencyConditions"                          ]                      }                  ],                  "userProperties": [],                  "typeProperties": {                      "items": {                          "value": "@activity(''$dependentactivityname'').output.value",                          "type": "Expression"                      },                      "batchCount": $batchCount,       "isSequential": $isSequential,       "activities": [$activityjsoncode]                         }              }',NULL,NULL,NULL),
 ('Custom Logging','SP_Custom_Logging',1,'   {      "name": "$SPActivityName",      "description":"Description",      "type": "SqlServerStoredProcedure",     "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],     "linkedServiceName": {          "referenceName": "$MetadataDBLinkedServiceName",       "type": "LinkedServiceReference"      },      "typeProperties": {              "storedProcedureName": "$SPName",          "storedProcedureParameters": $SPParameters            }      }  }','1',NULL,NULL),
-('Copy Activity','CP_DataSource_DataDestination',1,'  {"name": "$CopyActivityName","type": "Copy","dependsOn": [],"policy": {   "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},  "userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "sqlReaderQuery": {        "value": "$sqlReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },     "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }   ',NULL,NULL,'OnPremiseSQLServer'),
+('Copy Activity','CP_DataSource_DataDestination',1,'  {"name": "$CopyActivityName","type": "Copy","dependsOn": [{
+      "activity": "$dependson",
+      "dependencyConditions": [ "$dependencyConditions" ]
+    }],"policy": {   "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},  "userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "sqlReaderQuery": {        "value": "$sqlReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },     "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }   ',NULL,NULL,'OnPremiseSQLServer'),
 ('Copy Activity','CP_DataSource_DataDestination',1,'          {"name": "$CopyActivityName","type": "Copy","dependsOn": [         {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }  ],"policy": {      "timeout": "7.00:00:00",    "retry": 0,     "retryIntervalInSeconds": 30,       "secureOutput": false,    "secureInput": false},  "userProperties": [],    "typeProperties": {          "source": {                          "type": "RestSource",                                "httpRequestTimeout": "00:01:40",                            "requestInterval": "00.00:00:00.010",                         "requestMethod": "GET"    ,  "additionalHeaders": {
                             "Authorization": { "value": "@concat(''Bearer '',activity(''GetToken'').output.access_token)", "type": "Expression"
                             }
                         }                  },    "sink": {          "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }  ,"formatSettings": {          "type": "JsonWriteSettings",          "filePattern": "setOfObjects"        }  },      "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",              "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",               "type": "DatasetReference" ,"parameters": {            $parameters            }         } ]                          }             ',NULL,NULL,'RestService'),
 ('Get Token','GetToken',1,'{ "name": "GetToken","description": "Use this Web activity to get bearer token","type": "WebActivity","dependsOn": [               {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }       ],"policy": {"timeout": "7.00:00:00","retry": 0,"retryIntervalInSeconds": 30,"secureOutput": false,"secureInput": false},"userProperties": [],"typeProperties": {"url": "https://login.microsoftonline.com/$master_tenantId/oauth2/token","method": "POST",    "headers": { "Content-Type": "application/x-www-form-urlencoded" },"body": { "value":"@concat(''grant_type=client_credentials&client_id=$master_servicePrincipalId&client_secret='',activity(''GetSPNKey'').output.Value)",  "type": "Expression"	  }  }}',NULL,NULL,NULL),
 ('Get SPNKey from Vault','GetSPNKey',1,'{"name": "GetSPNKey", "type": "WebActivity","dependsOn": [               {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }       ],"policy": {"timeout": "7.00:00:00","retry": 0,"retryIntervalInSeconds": 30,"secureOutput": true,"secureInput": false},"userProperties": [],"typeProperties": {"url": "https://$master_keyvaultname.vault.azure.net/secrets/$master_servicePrincipalKey/?api-version=7.0","method": "GET","authentication": {"type": "MSI","resource": "https://vault.azure.net"}}}',NULL,NULL,NULL)
-,('Copy Activity','CP_DataSource_DataDestination',1,'{"name": "$CopyActivityName","type": "Copy","dependsOn": [],"policy": {   "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},  "userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "oracleReaderQuery": {        "value": "$oracleReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },     "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }   ',NULL,NULL,'OnPremiseOracle')
+,('Copy Activity','CP_DataSource_DataDestination',1,'{"name": "$CopyActivityName","type": "Copy","dependsOn": [{
+      "activity": "$dependson",
+      "dependencyConditions": [ "$dependencyConditions" ]
+    }],"policy": {   "timeout": "7.00:00:00",    "retry": 0,    "retryIntervalInSeconds": 30,    "secureOutput": false,    "secureInput": false},  "userProperties": [],"typeProperties": {    "source": {        "type": "$Source",        "oracleReaderQuery": {        "value": "$oracleReaderQuery",            "type": "Expression"        },        "queryTimeout": "02:00:00"    },     "sink": {        "type": "$Sink",        "storeSettings": {            "type": "AzureBlobFSWriteSettings"        }    },    "enableStaging": false},"inputs": [    {        "referenceName": "$inputDatasetReference",        "type": "DatasetReference"    }],"outputs": [    {        "referenceName": "$outputDatasetReference",        "type": "DatasetReference",        "parameters": {            $parameters            }        }    ]                          }   ',NULL,NULL,'OnPremiseOracle')
 ,
 ('Copy Activity Logging','SP_CopyActivity_Logging',1,' {      "name": "$SPActivityName",      "description":"Description",      "type": "SqlServerStoredProcedure",     "dependsOn": [                      {                          "activity": "$dependson",                   "dependencyConditions": [                              "$dependencyConditions"                           ]                      }                  ],     "linkedServiceName": {          "referenceName": "$MetadataDBLinkedServiceName",       "type": "LinkedServiceReference"      },      "typeProperties": {              "storedProcedureName": "$SPName",          "storedProcedureParameters": $SPParameters            }      }  ',NULL,NULL,NULL)
+,
+
+('Set Variable','SetVariable',1,'{
+  "name": "$SetVaraibleActivityName",
+  "type": "SetVariable",
+  "dependsOn": [
+    {
+      "activity": "$dependson",
+      "dependencyConditions": [
+        "$dependencyConditions"
+      ]
+    }
+  ],
+  "userProperties": [],
+  "typeProperties": {
+    "variableName": "srcmaxval",
+    "value": {
+      "value": "@activity(''$dependson'').output.firstrow.maxval",
+      "type": "Expression"
+    }
+  }
+}',NULL,NULL,NULL),
+('Update max refresh','SP_UpdateMaxRefresh',1,'{
+  "name": "$SPActivityName",
+  "description": "Description",
+  "type": "SqlServerStoredProcedure",
+  "dependsOn": [
+    {
+      "activity": "$dependson",
+      "dependencyConditions": [ "$dependencyConditions" ]
+    }
+  ],
+  "linkedServiceName": {
+    "referenceName": "$MetadataDBLinkedServiceName",
+    "type": "LinkedServiceReference"
+  },
+  "typeProperties": {
+    "storedProcedureName": "$SPName",
+    "storedProcedureParameters": $SPParameters
+  }
+}  
+',NULL,NULL,NULL)
+
 
 MERGE [T_List_Activities] AS mrg
 USING (SELECT s.* FROM @SrcActivities s
@@ -539,8 +591,10 @@ VALUES
 ('Sink','ParquetSink','Copy Activity','azureSQLDatabase'),
 ('inputDatasetReference','','Copy Activity','azureSQLDatabase'),
 ('outputDatasetReference','','Copy Activity','azureSQLDatabase'),
-('parameters','       ""filename"": ""@item().tablename"",                                          ""directory"": ""@item().tablename"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','azureSQLDatabase'),
-('sqlReaderQuery','@concat(''select * from '',''['',item().schemaname,'']'',''.'',''['',item().tablename,'']'')','Copy Activity','azureSQLDatabase'),
+('dependson','','Copy Activity','azureSQLDatabase'),
+('dependencyConditions','','Copy Activity','azureSQLDatabase'),
+('parameters','       ""filename"": {""value"": ""@concat(item().tablename,''_'',utcnow())"",""type"": ""Expression""},                                          ""directory"": ""@item().tablename"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','azureSQLDatabase'),
+('sqlReaderQuery','@if(equals(item().IsIncremental,true),concat(''select * from '',''['',item().schemaname,'']'',''.'',''['',item().tablename,''] WHERE '',item().LastRefreshedBasedOn ,'' > CAST('''''',item().LastRefreshedDateTime,'''''' AS Datetime) AND '',item().LastRefreshedBasedOn,'' <= CAST('''''',activity(''FE_LKP'').output.firstrow.maxval,'''''' AS Datetime)''),concat(''select * from '',''['',item().schemaname,'']'',''.'',''['',item().tablename,'']''))','Copy Activity','azureSQLDatabase'),
 ('SPName','usp_Log_PipelineStatus','Custom Logging',NULL),
 ('SPParameters','    { ""In_PipelineName"": {""value"":      {""value"": ""@pipeline().Pipeline"",""type"": ""Expression""},                     ""type"": ""String""                          },    ""In_PipelineStatus"": {                              ""value"": ""$pipelinestatus"",          ""type"": ""String""                          },                   ""In_ExecutionStartTime"": {                                 ""value"": {                                 ""value"": ""@utcnow()"",          ""type"": ""Expression""                              },                       ""type"": ""Datetime""                          },                           ""In_ExecutionEndTime"": {                              ""value"": ""@utcnow()"",                         ""type"": ""Datetime""                          }            ,              ""In_PipelineRunID"": {""value"":      {""value"": ""@pipeline().RunId"",""type"": ""Expression""},                     ""type"": ""String""                          }  ','Custom Logging',NULL),
 ('MetadataDBLinkedServiceName','','Custom Logging',NULL),
@@ -553,8 +607,10 @@ VALUES
 ('Sink','ParquetSink','Copy Activity','OnPremiseSQLServer'),
 ('inputDatasetReference','','Copy Activity','OnPremiseSQLServer'),
 ('outputDatasetReference','','Copy Activity','OnPremiseSQLServer'),
-('parameters','       ""filename"": ""@item().tablename"",                                          ""directory"": ""@item().tablename"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','OnPremiseSQLServer'),
-('sqlReaderQuery','@concat(''select * from '',''['',item().schemaname,'']'',''.'',''['',item().tablename,'']'')','Copy Activity','OnPremiseSQLServer'),
+('dependson','','Copy Activity','OnPremiseSQLServer'),
+('dependencyConditions','','Copy Activity','OnPremiseSQLServer'),
+('parameters','      ""filename"": {""value"": ""@concat(item().tablename,''_'',utcnow())"",""type"": ""Expression""},                                          ""directory"": ""@item().tablename"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','OnPremiseSQLServer'),
+('sqlReaderQuery','@if(equals(item().IsIncremental,true),concat(''select * from '',''['',item().schemaname,'']'',''.'',''['',item().tablename,''] WHERE '',item().LastRefreshedBasedOn ,'' > CAST('''''',item().LastRefreshedDateTime,'''''' AS Datetime) AND '',item().LastRefreshedBasedOn,'' <= CAST('''''',activity(''FE_LKP'').output.firstrow.maxval,'''''' AS Datetime)''),concat(''select * from '',''['',item().schemaname,'']'',''.'',''['',item().tablename,'']''))','Copy Activity','OnPremiseSQLServer'),
 ('CopyActivityName','CP_RESTService_ADLSParquet','Copy Activity','RestService'),
 ('Source','RestService','Copy Activity','RestService'),
 ('Sink','ParquetSink','Copy Activity','RestService'),
@@ -572,14 +628,31 @@ VALUES
 ('Sink','ParquetSink','Copy Activity','OnPremiseOracle'),
 ('inputDatasetReference','','Copy Activity','OnPremiseOracle'),
 ('outputDatasetReference','','Copy Activity','OnPremiseOracle'),
-('parameters','       ""filename"": ""@item().tablename"",                                          ""directory"": ""@item().tablename"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','OnPremiseOracle'),
-('oracleReaderQuery','@concat(''select * from '',item().schemaname,''.'',item().tablename)','Copy Activity','OnPremiseOracle'),
+('dependson','','Copy Activity','OnPremiseOracle'),
+('dependencyConditions','','Copy Activity','OnPremiseOracle'),
+('parameters','      ""filename"": {""value"": ""@concat(''item().tablename,''_'',utcnow())"",""type"": ""Expression""},                                          ""directory"": ""@item().tablename"",                                          ""fileformat"": ""@item().fileformat"",                                          ""fileextension"": ""@item().fileextension"",                                          ""columnDelimiter"": ""@item().columndelimiter""','Copy Activity','OnPremiseOracle'),
+('oracleReaderQuery','@if(equals(item().IsIncremental,true),concat(''select * from '',''['',item().schemaname,'']'',''.'',''['',item().tablename,''] WHERE '',item().LastRefreshedBasedOn ,'' > CAST('''''',item().LastRefreshedDateTime,'''''' AS Datetime) AND '',item().LastRefreshedBasedOn,'' <= CAST('''''',activity(''FE_LKP'').output.firstrow.maxval,'''''' AS Datetime)''),concat(''select * from '',''['',item().schemaname,'']'',''.'',''['',item().tablename,'']''))','Copy Activity','OnPremiseOracle'),
 ('SPName','usp_InsertPipelineCopyLogDetails','Copy Activity Logging',NULL),
 ('SPParameters','   {""In_PipelineRunID"": {""value"": {""value"": ""@pipeline().RunId"",""type"": ""Expression""},""type"": ""Guid""},""In_RowsCopied"": {""value"": {""value"": ""@activity(''$SP_CopyActivityLogging_dependson'').output.rowsCopied"",""type"": ""Expression""},""type"": ""Int64""  },""In_RowsRead"": {""value"": {""value"": ""@activity(''$SP_CopyActivityLogging_dependson'').output.rowsRead"",""type"": ""Expression""},""type"": ""Int64""},  ""In_Duration"": {""value"": {""value"": ""@activity(''$SP_CopyActivityLogging_dependson'').output.copyDuration"",""type"": ""Expression""},""type"": ""Int16""},  ""In_Status"": {""value"": {""value"": ""@activity(''$SP_CopyActivityLogging_dependson'').output.executionDetails[0].status"",""type"": ""Expression""},""type"": ""String""},""In_StartTime"": { ""value"": {  ""value"": ""@activity(''$SP_CopyActivityLogging_dependson'').output.executionDetails[0].start"",""type"": ""Expression""},""type"": ""Datetime""},""In_EndTime"": {  ""value"": {""value"": ""@utcnow()"",""type"": ""Expression""},""type"": ""Datetime""},""In_EntityName"": {""value"": {""value"": ""@item().tablename"",""type"": ""Expression""},""type"": ""String""  }  }  ','Copy Activity Logging',NULL),
 ('MetadataDBLinkedServiceName','','Copy Activity Logging',NULL),
 ('SPActivityName','','Copy Activity Logging',NULL),
 ('dependson','','Copy Activity Logging',NULL),
-('dependencyConditions','','Copy Activity Logging',NULL)
+('dependencyConditions','','Copy Activity Logging',NULL),
+('SPName','usp_UpdateMaxRefreshDate','Update max refresh',NULL),
+('SPParameters','{""TableName"": { ""value"": {""value"": ""@item().TableName"", ""type"": ""Expression"" },""type"": ""String""},""SchemaName"": {
+""value"": {""value"": ""@item().SchemaName"",""type"": ""Expression""},""type"": ""String""},
+""PipelineName"": {""value"": {""value"": ""@pipeline().Pipeline"",""type"": ""Expression""},""type"": ""String""},
+""MaxRefreshDateTime"": {""value"": {""value"": ""@activity(''FE_LKP'').output.firstrow.maxval"",""type"": ""Expression""},""type"": ""String""}
+}','Update max refresh',NULL),
+('MetadataDBLinkedServiceName','','Update max refresh',NULL),
+('SPActivityName','','Update max refresh',NULL),
+('dependson','','Update max refresh',NULL),
+('dependencyConditions','','Update max refresh',NULL),
+('SetVaraibleActivityName','','Set Variable',NULL),
+('dependson','','Set Variable',NULL),
+('dependencyConditions','','Set Variable',NULL)
+
+
 
 
 MERGE [T_List_Activity_Parameters] AS mrg

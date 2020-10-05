@@ -17,9 +17,11 @@ where tpa.PipelineActivityId in (select value from string_split(@ChildActivity,'
 
 if(@ChildActivity <> '0')
 begin
-set @x = substring(@x,1,len(@x)-2)
+set @x = substring(@x,1,len(@x)-1)
 end
 return @x
 
 END
 GO
+
+

@@ -182,6 +182,10 @@
     <Build Include="dbo\Stored Procedures\usp_InsertPipelineCopyLogDetails.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
+    <Build Include="dbo\Tables\T_Pipeline_SourceColumnDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_InsertSourceTableColumnDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_UpdatePipelineTablesQuery.sql" />
+    <Build Include="dbo\Stored Procedures\usp_UpdateMaxRefreshDate.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Script.PostDeployment1.sql" />

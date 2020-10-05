@@ -9,8 +9,10 @@ DECLARE @datasetparamval varchar(200)
 DECLARE @lsparamname varchar(200)
 DECLARE @lsparamval varchar(200)
 
-SET @datasetparamval = 'DS_'+@LinkedServiceName+'_'+CAST(@DataSetId AS NVARCHAR(10))+'_'+CAST(@PipelineId AS NVARCHAR(10))
-            
+SELECT  @datasetparamval = DataSetName FROM
+T_Pipeline_DataSets WHERE PipelineDataSetId = @DataSetId
+AND pipelineid= @PipelineId
+
 SET @lsparamval = 'LS_'+@LinkedServiceName
 
 
