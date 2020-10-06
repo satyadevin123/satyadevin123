@@ -3,6 +3,7 @@
     [ParameterName]   VARCHAR (100) NOT NULL,
     [ParameterValue]  VARCHAR (500) NOT NULL,
     [LinkedServiceId] INT           NOT NULL,
-    [ReferFromKeyVault] INT  NULL
+    [ReferFromKeyVault] INT  NULL,
+    [KeyVaultReferenceDescription] VARCHAR(200) 
 );
 

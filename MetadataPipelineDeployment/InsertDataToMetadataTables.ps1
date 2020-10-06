@@ -199,14 +199,25 @@ Function Insert-KeyVaultReferenceToSQLDBLinkedService
 Param([int]$Linkedservice_id,[string] $keyvaultname,[string]$messagetype )
 
            
-            $SecretPassword = Read-Host "Type password for $messagetype database : " -AsSecureString
+            $SqlCmd.CommandText = "EXEC [usp_GetKeyVaultReferedParameters] $Linkedservice_id"
+            $DataAdapter = new-object System.Data.SqlClient.SqlDataAdapter $SqlCmd
+            $dataset = new-object System.Data.Dataset
+            $DataAdapter.Fill($dataset)
+            $result = $dataset.Tables[0]
             $kv = $keyvaultname.Replace('"','')
-            $name = $Linkedservice_id.ToString()+'azurekeyvaultlinkedservicereference'
+           
+            foreach($row in $result) 
+            {
+            $desc = $row.KeyVaultReferenceDescription.ToString()
+            $SecretPassword = Read-Host "Type $desc : " -AsSecureString
+            $paramname = $row.ParameterName.ToString()
+            $name = $Linkedservice_id.ToString()+"$paramname"
+            $name = $name.Replace('$','')
+            
             Set-AzKeyVaultSecret -VaultName $kv -Name $name -SecretValue $SecretPassword
-            
             $name = '"'+$name+'"'
-            
-            Sql-Execute -Qry "EXEC usp_UpdateKeyVaultReferedLinkedServiceParameters $Linkedservice_id,'$name'" -Qrydetails "Insert value for parameter : $linkedserviceparamname"
+            Sql-Execute -Qry "EXEC usp_UpdateKeyVaultReferedLinkedServiceParameters $Linkedservice_id,'$name','$paramname'" -Qrydetails "Insert value for parameter : $linkedserviceparamname"
+            }
             return $null
             
 

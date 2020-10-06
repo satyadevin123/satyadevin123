@@ -228,59 +228,59 @@ GO
 Print 'Start - Inserting data to list linked service parameters table'
 
 DECLARE @SrcLinkedServicesParameters as TABLE
-( ParameterName VARCHAR(100), ParameterValue VARCHAR(500),LinkedServiceName VARCHAR (100),ReferFromKeyVault INT,AuthenticationType VARCHAR(100))
+( ParameterName VARCHAR(100), ParameterValue VARCHAR(500),LinkedServiceName VARCHAR (100),ReferFromKeyVault INT,KeyVaultReferenceDescription VARCHAR(200),AuthenticationType VARCHAR(100))
 
 INSERT INTO @SrcLinkedServicesParameters
-( ParameterName,ParameterValue,LinkedServiceName,ReferFromKeyVault,AuthenticationType)
+( ParameterName,ParameterValue,LinkedServiceName,ReferFromKeyVault,KeyVaultReferenceDescription,AuthenticationType)
 VALUES
-('$azureSqlDatabaseLinkedServiceName','AzureSQLDatabase','azureSQLDatabase',0,'SQL Authentication'),
-('$azureSqlDBServerName','','azureSQLDatabase',0,'SQL Authentication'),
-('$azureSqlDatabaseName','','azureSQLDatabase',0,'SQL Authentication'),
-('$azureSqlDBUserName','','azureSQLDatabase',0,'SQL Authentication'),
-('$azureSqlDBPassword','','azureSQLDatabase',1,'SQL Authentication'),
-('$azurekeyvaultlinkedservicereference','','azureSQLDatabase',0,'SQL Authentication'),
-('$AccountName','','AzureBlobStorage',0,'Managed Identity'),
-('$AccountKey','','AzureBlobStorage',0,'Managed Identity'),
-('$nameofintegrationruntime','','azureSQLDatabase',0,'SQL Authentication'),
-('$AzureBlobStorageLinkedServiceName','','AzureBlobStorage',0,'Managed Identity'),
-('$OnPremiseSQLServerLinkedServiceName','','OnPremiseSQLServer',0,'SQL Authentication'),
-('$IRName','IR-SelfHosted','OnPremiseSQLServer',0,'SQL Authentication'),
-('$onpremSqlDBServerName','','OnPremiseSQLServer',0,'SQL Authentication'),
-('$onpremSqlDatabaseName','','OnPremiseSQLServer',0,'SQL Authentication'),
-('$onpremSqlDBUserName','','OnPremiseSQLServer',0,'SQL Authentication'),
-('$onpremSqlDBPassword','','OnPremiseSQLServer',1,'SQL Authentication'),
-('$azurekeyvaultlinkedservicereference','','OnPremiseSQLServer',0,'SQL Authentication'),
-('$azureSqlDataWarehouseLinkedServiceName','','azureSQLDataWarehouse',0,'SQL Authentication'),
-('$azureSqlDWServerName','','azureSQLDataWarehouse',0,'SQL Authentication'),
-('$azureSqlDWDBName','','azureSQLDataWarehouse',0,'SQL Authentication'),
-('$azureSqlDWUserName','','azureSQLDataWarehouse',0,'SQL Authentication'),
-('$azureSqlDWUserPassword','','azureSQLDataWarehouse',1,'SQL Authentication'),
-('$ADLSv2LinkedServiceName','','ADLSv2',0,'Managed Identity'),
-('$ADLSv2AccountName','','ADLSv2',0,'Managed Identity'),
-('$URL','','ADLSv2',0,'Managed Identity'),
-('$nameofintegrationruntime','','ADLSv2',0,'Managed Identity'),
-('$azureSQLDatabaseLinkedServiceName','','azureSQLDatabase',0,'Managed Identity'),
-('$azureSqlDBServerName','','azureSQLDatabase',0,'Managed Identity'),
-('$azureSqlDatabaseName','','azureSQLDatabase',0,'Managed Identity'),
-('$nameofintegrationruntime','','azureSQLDatabase',0,'Managed Identity'),
-('$azureKeyVaultLinkedServiceName','','azureKeyVault',0,'Managed Identity'),
-('$keyvaultname','','azureKeyVault',0,'Managed Identity'),
-('$restapiurl','','RestService',0,'Anonymous'),
-('$nameofintegrationruntime','','RestService',0,'Anonymous'),
-('$RestServiceLinkedServiceName','','RestService',0,'Anonymous'),
-('$azureSqlDatabaseLinkedServiceName','','azureSQLDatabase',0,'Service Principal'),
-('$azureSqlDBServerName','','azureSQLDatabase',0,'Service Principal'),
-('$azureSqlDatabaseName','','azureSQLDatabase',0,'Service Principal'),
-('$azurekeyvaultlinkedservicereference','','azureSQLDatabase',0,'Service Principal'),
-('$nameofintegrationruntime','','azureSQLDatabase',0,'Service Principal'),
-('$OnPremiseOracleLinkedServiceName','','OnPremiseOracle',0,'SQL Authentication'),
-('$IRName','IR-SelfHosted','OnPremiseOracle',0,'SQL Authentication'),
-('$OnPremiseOracleHost','','OnPremiseOracle',0,'SQL Authentication'),
-('$OnPremiseOraclePort','','OnPremiseOracle',0,'SQL Authentication'),
-('$OnPremiseOracleSid','','OnPremiseOracle',0,'SQL Authentication'),
-('$OnPremiseOracleUserName','','OnPremiseOracle',0,'SQL Authentication'),
-('$OnPremiseOraclePassword','','OnPremiseOracle',1,'SQL Authentication'),
-('$azurekeyvaultlinkedservicereference','','OnPremiseOracle',0,'SQL Authentication')
+('$azureSqlDatabaseLinkedServiceName','AzureSQLDatabase','azureSQLDatabase',0,NULL,'SQL Authentication'),
+('$azureSqlDBServerName','','azureSQLDatabase',0,NULL,'SQL Authentication'),
+('$azureSqlDatabaseName','','azureSQLDatabase',0,NULL,'SQL Authentication'),
+('$azureSqlDBUserName','','azureSQLDatabase',0,NULL,'SQL Authentication'),
+('$azureSqlDBPassword','','azureSQLDatabase',1,'Password for Azure SQL DB','SQL Authentication'),
+('$azurekeyvaultlinkedservicereference','','azureSQLDatabase',0,NULL,'SQL Authentication'),
+('$AccountName','','AzureBlobStorage',0,NULL,'Managed Identity'),
+('$AccountKey','','AzureBlobStorage',0,NULL,'Managed Identity'),
+('$nameofintegrationruntime','','azureSQLDatabase',0,NULL,'SQL Authentication'),
+('$AzureBlobStorageLinkedServiceName','','AzureBlobStorage',0,NULL,'Managed Identity'),
+('$OnPremiseSQLServerLinkedServiceName','','OnPremiseSQLServer',0,NULL,'SQL Authentication'),
+('$IRName','IR-SelfHosted','OnPremiseSQLServer',0,NULL,'SQL Authentication'),
+('$onpremSqlDBServerName','','OnPremiseSQLServer',0,NULL,'SQL Authentication'),
+('$onpremSqlDatabaseName','','OnPremiseSQLServer',0,NULL,'SQL Authentication'),
+('$onpremSqlDBUserName','','OnPremiseSQLServer',0,NULL,'SQL Authentication'),
+('$onpremSqlDBPassword','','OnPremiseSQLServer',1,'Password for Onprem SQL DB','SQL Authentication'),
+('$azurekeyvaultlinkedservicereference','','OnPremiseSQLServer',0,NULL,'SQL Authentication'),
+('$azureSqlDataWarehouseLinkedServiceName','','azureSQLDataWarehouse',0,NULL,'SQL Authentication'),
+('$azureSqlDWServerName','','azureSQLDataWarehouse',0,NULL,'SQL Authentication'),
+('$azureSqlDWDBName','','azureSQLDataWarehouse',0,NULL,'SQL Authentication'),
+('$azureSqlDWUserName','','azureSQLDataWarehouse',0,NULL,'SQL Authentication'),
+('$azureSqlDWUserPassword','','azureSQLDataWarehouse',1,'Password for Azure SQL DW','SQL Authentication'),
+('$ADLSv2LinkedServiceName','','ADLSv2',0,NULL,'Managed Identity'),
+('$ADLSv2AccountName','','ADLSv2',0,NULL,'Managed Identity'),
+('$URL','','ADLSv2',0,NULL,'Managed Identity'),
+('$nameofintegrationruntime','','ADLSv2',0,NULL,'Managed Identity'),
+('$azureSQLDatabaseLinkedServiceName','','azureSQLDatabase',0,NULL,'Managed Identity'),
+('$azureSqlDBServerName','','azureSQLDatabase',0,NULL,'Managed Identity'),
+('$azureSqlDatabaseName','','azureSQLDatabase',0,NULL,'Managed Identity'),
+('$nameofintegrationruntime','','azureSQLDatabase',0,NULL,'Managed Identity'),
+('$azureKeyVaultLinkedServiceName','','azureKeyVault',0,NULL,'Managed Identity'),
+('$keyvaultname','','azureKeyVault',0,NULL,'Managed Identity'),
+('$restapiurl','','RestService',0,NULL,'Anonymous'),
+('$nameofintegrationruntime','','RestService',0,NULL,'Anonymous'),
+('$RestServiceLinkedServiceName','','RestService',0,NULL,'Anonymous'),
+('$azureSqlDatabaseLinkedServiceName','','azureSQLDatabase',0,NULL,'Service Principal'),
+('$azureSqlDBServerName','','azureSQLDatabase',0,NULL,'Service Principal'),
+('$azureSqlDatabaseName','','azureSQLDatabase',0,NULL,'Service Principal'),
+('$azurekeyvaultlinkedservicereference','','azureSQLDatabase',0,NULL,'Service Principal'),
+('$nameofintegrationruntime','','azureSQLDatabase',0,NULL,'Service Principal'),
+('$OnPremiseOracleLinkedServiceName','','OnPremiseOracle',0,NULL,'SQL Authentication'),
+('$IRName','IR-SelfHosted','OnPremiseOracle',0,NULL,'SQL Authentication'),
+('$OnPremiseOracleHost','','OnPremiseOracle',0,NULL,'SQL Authentication'),
+('$OnPremiseOraclePort','','OnPremiseOracle',0,NULL,'SQL Authentication'),
+('$OnPremiseOracleSid','','OnPremiseOracle',0,NULL,'SQL Authentication'),
+('$OnPremiseOracleUserName','','OnPremiseOracle',0,NULL,'SQL Authentication'),
+('$OnPremiseOraclePassword','','OnPremiseOracle',1,'Password for onprem oracle DB','SQL Authentication'),
+('$azurekeyvaultlinkedservicereference','','OnPremiseOracle',0,NULL,'SQL Authentication')
 
 
 MERGE [T_List_LinkedService_Parameters] AS mrg
@@ -295,16 +295,19 @@ AND mrg.ParameterName = src.ParameterName
 WHEN MATCHED THEN 
    UPDATE SET mrg.ParameterValue = src.ParameterValue
    ,mrg.ReferFromKeyVault = src.ReferFromKeyVault
+   ,mrg.KeyVaultReferenceDescription = src.KeyVaultReferenceDescription
 WHEN NOT MATCHED THEN
 INSERT (ParameterName
            ,ParameterValue
            ,[LinkedServiceId]
            ,ReferFromKeyVault
+           ,KeyVaultReferenceDescription
            )
 VALUES(src.ParameterName
            ,src.ParameterValue
            ,src.Id
            ,src.ReferFromKeyVault
+           ,src.KeyVaultReferenceDescription
            );
 
 Print 'End - Inserting data to list linked service parameters table'
