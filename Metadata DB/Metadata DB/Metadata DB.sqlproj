@@ -95,8 +95,6 @@
       <AnsiNulls>Off</AnsiNulls>
     </Build>
     <Build Include="dbo\Tables\T_List_DataSets.sql" />
-    <Build Include="dbo\Tables\T_List_DataSets_bkup.sql" />
-    <Build Include="dbo\Tables\t_list_datasets_bkup2.sql" />
     <Build Include="dbo\Tables\T_List_DataSources.sql" />
     <Build Include="dbo\Tables\T_List_Datatypes.sql" />
     <Build Include="dbo\Tables\T_List_LinkedService_Parameters.sql">
