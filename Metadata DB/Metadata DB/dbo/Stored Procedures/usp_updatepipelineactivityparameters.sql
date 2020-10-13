@@ -1,5 +1,5 @@
 ﻿
-CREATE PROCEDURE usp_updatepipelineactivityparameters
+CREATE PROCEDURE [dbo].[usp_updatepipelineactivityparameters]
 (@Category NVARCHAR(200),@DatasetId INT,@PipelineId INT,@LinkedServiceRef VARCHAR(200)='',@ActDescription VARCHAR(30)='')
 As
 begin
@@ -7,6 +7,7 @@ begin
 DECLARE @DatasetName NVARCHAR(200)
 DECLARE @Lkpactid INT
 DECLARE @FELkpactid INT
+DECLARE @FECntLkpactid INT
 DECLARE @CPactid INT
 
 SELECT @Lkpactid = TPA.[PipelineActivityId]
@@ -18,6 +19,11 @@ SELECT @FELkpactid = TPA.[PipelineActivityId]
 FROM T_Pipeline_Activities TPA INNER JOIN T_List_Activities TLA
 ON TLA.ActivityId = TPA.ActivityID
 WHERE PipelineId = @PipelineId AND TLA.ActivityName = 'Lookup Activity' AND TPA.Activityname = 'FE_LKP'
+
+SELECT @FECntLkpactid = TPA.[PipelineActivityId]
+FROM T_Pipeline_Activities TPA INNER JOIN T_List_Activities TLA
+ON TLA.ActivityId = TPA.ActivityID
+WHERE PipelineId = @PipelineId AND TLA.ActivityName = 'Lookup Activity' AND TPA.Activityname = 'FE_LKP_CNT'
 
 
 SELECT @CPactid = TPA.[PipelineActivityId]
@@ -68,6 +74,13 @@ and pipelineid = @PipelineId AND PipelineActivityId = @FELkpactid
 UPDATE dbo.T_Pipeline_Activity_Parameters SET ParameterValue = 'true' WHERE ParameterName like '%firstrow%'
 and pipelineid = @PipelineId AND PipelineActivityId = @FELkpactid
 
+UPDATE dbo.T_Pipeline_Activity_Parameters SET ParameterValue = @DatasetName WHERE ParameterName like '%dataset%'
+and pipelineid = @PipelineId AND PipelineActivityId = @FECntLkpactid
+
+
+UPDATE dbo.T_Pipeline_Activity_Parameters SET ParameterValue = 'true' WHERE ParameterName like '%firstrow%'
+and pipelineid = @PipelineId AND PipelineActivityId = @FECntLkpactid
+
 
 END
 
@@ -81,7 +94,7 @@ and pipelineid = @PipelineId AND PipelineActivityId = @CPactid
 
 UPDATE dbo.T_Pipeline_Activity_Parameters 
 SET Parametervalue = CASE WHEN @ActDescription = 'SchemaCopy' THEN
-'@concat(''SELECT ''''COLUMN|FIELDNAME|KEY|TYPE|LENGTH|OUTPUTLEN|DECIMALS'''' UNION ALL '',  ''select CONCAT(ROW_NUMBER() OVER(ORDER BY PipelineSourceColumnDetailsId),''''|'''',ColumnName,''''|'''',ISNULL([Key],''''''''),''''|'''',[Type],''''|'''',ISNULL([Length],''''''''),''''|'''',ISNULL(OutputLen,''''''''),''''|'''',ISNULL(Decimals,'''''''')) from T_Pipeline_SourceColumnDetails ts inner join [T_Pipeline_Tables_ToBeMoved] t ON ts.PipelineSourceId = t.PipelineSourceId WHERE TableName ='''''', item().tablename ,'''''' AND SchemaName = '''''',item().schemaname,'''''' AND pipelineid =  '+CAST(@PipelineId AS VARCHAR)+''') '
+'@concat( ''select CONCAT(ROW_NUMBER() OVER(ORDER BY PipelineSourceColumnDetailsId),''''|'''',ColumnName,''''|'''',ISNULL([Key],''''''''),''''|'''',[Type],''''|'''',ISNULL([Length],''''''''),''''|'''',ISNULL(OutputLen,''''''''),''''|'''',ISNULL(Decimals,'''''''')) AS [COLUMN|FIELDNAME|KEY|TYPE|LENGTH|OUTPUTLEN|DECIMALS] from T_Pipeline_SourceColumnDetails ts inner join [T_Pipeline_Tables_ToBeMoved] t ON ts.PipelineSourceId = t.PipelineSourceId WHERE TableName ='''''', item().tablename ,'''''' AND SchemaName = '''''',item().schemaname,'''''' AND pipelineid =  '+CAST(@PipelineId AS VARCHAR)+''') '
 ELSE Parametervalue END
 WHERE pipelineid = @PipelineId AND PipelineActivityId = @CPactid
 AND ParameterName like '%sqlReaderQuery%'
@@ -120,9 +133,8 @@ AND ParameterName like '%ColumnDelimiter%' and PipelineDataSetId = @DatasetId
 set @qry = 
 'SELECT SchemaName,TableName,'''+@sinkfileformat+''' as fileformat,'''+@sinkfileextension+''' as fileextension,'''
 +@sinkcoldelimiter+''' as columnDelimiter,Query, IsIncremental, LastRefreshedBasedOn, 
-ISNULL(LastRefreshedDateTime,CAST(''1900-01-01 00:00:00.000'' AS DATETime)) AS LastRefreshedDateTime 
-FROM t_pipeline_tables_tobemoved WHERE pipelineid = '+ cAST(@PipelineId AS VARCHAR)
-
+ISNULL(LastRefreshedDateTime,CAST(''1900-01-01 00:00:00.000'' AS DATETime)) AS LastRefreshedDateTime,CntQuery  
+FROM t_pipeline_tables_tobemoved WHERE IsActive = 1 AND pipelineid = '+ cAST(@PipelineId AS VARCHAR)
 
 
 
@@ -135,5 +147,31 @@ set @qry =
 UPDATE dbo.T_Pipeline_Activity_Parameters SET ParameterValue = @qry WHERE ParameterName like '%query%'
 and pipelineid = @PipelineId AND PipelineActivityId = @FELkpactid
 
+set @qry =
+'@if(equals(item().IsIncremental,true),concat(item().CntQuery,'' WHERE '',item().LastRefreshedBasedOn ,'' > CAST('''''',item().LastRefreshedDateTime,'''''' AS Datetime) AND '',item().LastRefreshedBasedOn,'' <= CAST('''''',activity(''FE_LKP'').output.firstrow.maxval,'''''' AS Datetime)''),item().CntQuery)'
+
+UPDATE dbo.T_Pipeline_Activity_Parameters SET ParameterValue = @qry WHERE ParameterName like '%query%'
+and pipelineid = @PipelineId AND PipelineActivityId = @FECntLkpactid
+
+declare @cpyloggingfailed int
+
+select @cpyloggingfailed = PipelineActivityId
+from T_Pipeline_Activities
+where ActivityName = 'SP_CopyActivityLoggingNoDeltaRecords'
+
+UPDATE 
+T_Pipeline_Activity_Parameters
+SET Parametervalue ='   {""In_PipelineRunID"": {""value"": {""value"": ""@pipeline().RunId"",""type"": ""Expression""},""type"": ""Guid""},
+   ""In_RowsCopied"": {""value"": {""value"": ""0"",""type"": ""Expression""},""type"": ""Int64""  },
+   ""In_RowsRead"": {""value"": {""value"": ""0"",""type"": ""Expression""},""type"": ""Int64""},  
+   ""In_Duration"": {""value"": {""value"": ""0"",""type"": ""Expression""},""type"": ""Int16""},  
+   ""In_Status"": {""value"": {""value"": ""NoDeltaRecords"",""type"": ""Expression""},""type"": ""String""},
+   ""In_StartTime"": { ""value"": {  ""value"": ""@utcnow()"",""type"": ""Expression""},""type"": ""Datetime""},
+   ""In_EndTime"": {  ""value"": {""value"": ""@utcnow()"",""type"": ""Expression""},""type"": ""Datetime""},
+   ""In_EntityName"": {""value"": {""value"": ""@item().tablename"",""type"": ""Expression""},""type"": ""String""  }  }  '
+WHERE ParameterName like '%SPParameters%' AND PipelineActivityId = @cpyloggingfailed
+
 END
 end
+GO
+

@@ -12,6 +12,7 @@
 	[LastRefreshedDateTime] [datetime] NULL,
 	[IsWhereCondition] [bit] NULL,
 	[BuildQuery] [varchar](8000) NULL,
+	[CntQuery] [varchar](8000) NULL,
 	[IsRestart] [bit] NULL,
 	[FrequencyType] [varchar](50) NULL,
 	[FrequencyHours] [int] NULL,

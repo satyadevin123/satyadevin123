@@ -45,9 +45,7 @@ Function Sql-ExecuteScalar
 
 Function Import-Excel([string]$FilePath, [string]$csvfile, [string]$SheetName = "")
 {
-    Write-Host $FilePath
-    Write-Host $csvfile
-
+    
     if (Test-Path -path $csvFile) { Remove-Item -path $csvFile }
 
     # convert Excel file to CSV file
@@ -142,7 +140,7 @@ Function Update-MasterParametersToDB
       
         if($servicePrincipalId -ne $null -and $servicePrincipalId -ne '')
         {
-            Write-Host $servicePrincipalId 
+             
             $SecretPassword = Read-Host "Type key for service principal : " -AsSecureString
             $kv = $keyvaultname.Replace('"','')
             $name = 'spkazurekeyvaultlinkedservicereference'
@@ -153,9 +151,6 @@ Function Update-MasterParametersToDB
 
         $res = New-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName  -Name "LogicAppDeployment" -TemplateFile "$ScriptPath\LogicAppDeploymenttemplate.json" 
         $logicappurl = (Get-AzLogicAppTriggerCallbackUrl  -ResourceGroupName $resourceGroupName -Name "LogicAppToSendMailFromADF" -TriggerName "manual").Value        $logicappurl = '"'+$logicappurl+'"'
-
-        Write-Host $logicappurl
-        Write-Host "EXEC usp_UpdateMasterParametersList '`$LogicAppURL','$logicappurl'"
         Sql-Execute -Qry "EXEC usp_UpdateMasterParametersList '`$LogicAppURL','$logicappurl'"  -Qrydetails 'Update master parameter $logicappurl'
 
          [pscustomobject] @{
@@ -283,8 +278,7 @@ if(!(Test-Path -path "$Scriptpath\Archive")){New-Item -ItemType directory -Path 
 Get-ChildItem "$ScriptPath\InputXMLFile\" -Filter *.xml | 
 Foreach-Object {
     $content = Get-Content $_.FullName
-    Write-Host $_.FullName
-
+    
 $ConfigXMLFilePath = $_.FullName
 [XML]$MetaDetails = Get-Content $ConfigXMLFilePath
 
@@ -334,6 +328,8 @@ Log-Message "End :  Opening Connection to Metadata database"
     $keyvaultname = $out.kvname
     $datafactoryname = $out.dfname
     $servicePrincipalName = $out.spnname
+    
+    $LinkedServices = ''
     foreach($linkedservicedetail in $MetaDetails.Metadata.LinkedServices.LinkedService)
     {
        
@@ -350,8 +346,12 @@ Log-Message "End :  Opening Connection to Metadata database"
             Sql-Execute -Qry "EXEC usp_UpdateLinkedServiceParameters '$paramname','$paramval',$linkedservice_id" -Qrydetails  "Update linked service parameter : $paramname"
         }
         
+        $LinkedServices = $LinkedServices+$linkedservicedetail.Description+','
     
     }
+    $LinkedServices = $LinkedServices.Substring(0,$LinkedServices.Length-1)
+   
+    $IntegrationRunTimes = ''
 
     foreach($IRdetail in $MetaDetails.Metadata.IntegrationRunTimes.IntegrationRunTime)
     {
@@ -366,9 +366,10 @@ Log-Message "End :  Opening Connection to Metadata database"
         Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\PostDeploySteps.txt" "Copy the Auth key from azure portal"
         Add-Content -Path "$ScriptPath\OutputPostDeploymentScripts\PostDeploySteps.txt" "--------------------------"
        } 
-        
+       $IntegrationRunTimes = $IntegrationRunTimes+$irnam+','
     
     }
+    $IntegrationRunTimes = $IntegrationRunTimes.Substring(0,$IntegrationRunTimes.Length-1)
    
     foreach($ppdetail in $MetaDetails.Metadata.Pipelines.Pipeline)
     {
@@ -379,13 +380,14 @@ Log-Message "End :  Opening Connection to Metadata database"
         Sql-Execute -Qry "EXEC usp_InsertPipelineDetails '$pipelinename'" -Qrydetails "Insert pipeline details in T_Pipelines table"
         $pipelineid = Sql-ExecuteScalar -Qry "SELECT PipelineId FROM [T_Pipelines] WHERE PipelineName = '$pipelinename'" -Qrydetails "max pipeline id"
         
+       
+
         foreach($actdetail in $ppdetail.Activities.Activity)
         {
-             if($actdetail.Type -eq 'Copy Activity' -and $actdetail.Description -eq 'DataCopy')
+            
+            if($actdetail.Type -eq 'Copy Activity' -and $actdetail.Description -eq 'DataCopy')
             {
                 $lsr = $actdetail.Source.LinkedServiceReference
-             Write-Host $lsr
-             Write-Host "EXEC usp_insertpipelinesteps $pipelineid,'$lsr','no'"
                 Sql-Execute -Qry "EXEC usp_insertpipelinesteps $pipelineid,'$lsr','no'" -Qrydetails  "Insert pipeline steps"
             }
                     
@@ -396,9 +398,7 @@ Log-Message "End :  Opening Connection to Metadata database"
             if($actdetail.Type -eq 'Copy Activity' -and $actdetail.Description -eq 'SchemaCopy')
             {
                 $lsr = $actdetail.Source.LinkedServiceReference
-             Write-Host $lsr
-             Write-Host "EXEC usp_insertpipelinesteps $pipelineid,'$lsr','yes'"
-                Sql-Execute -Qry "EXEC usp_insertpipelinesteps $pipelineid,'$lsr','yes'" -Qrydetails  "Insert pipeline steps"
+             Sql-Execute -Qry "EXEC usp_insertpipelinesteps $pipelineid,'$lsr','yes'" -Qrydetails  "Insert pipeline steps"
             }
 
         }
@@ -419,16 +419,10 @@ Log-Message "End :  Opening Connection to Metadata database"
             if($actdetail.Type -eq 'Copy Activity')
             {
                 $desc = $actdetail.Description
-                Write-Host $desc
+                
                 $datasetname = "DS_CP_SRC_"+$desc+"_$pipelineid"
-                
-                
-                                
-                write-host $datasetname
                 $od =  Insert-DatasetsAndParameters -DataSetName $datasetname -PipelineId $pipelineid -LinkedServiceName $actdetail.Source.LinkedServiceReference -AdditionalType $null -AdditionalVal $null
                 $dsid = $od.id
-                
-                Write-Host "EXEC usp_updatepipelineactivityparameters 'CPInputReference',$dsid,$pipelineid,'','$desc'"
                 Sql-Execute -Qry "EXEC usp_updatepipelineactivityparameters 'CPInputReference',$dsid,$pipelineid,'','$desc'" -Qrydetails  "update pipeline activity parameter :$linksetname "
                 
                 foreach($tbldetail in $actdetail.Source.Tables.Table)
@@ -445,7 +439,6 @@ Log-Message "End :  Opening Connection to Metadata database"
                 $od =  Insert-DatasetsAndParameters -DataSetName $datasetname -PipelineId $pipelineid -LinkedServiceName $actdetail.Sink.LinkedServiceReference -AdditionalType 'SinkFileFormat' -AdditionalVal 'DelimitedText'
                 $dsid = $od.id
                 
-                Write-Host "EXEC usp_updatepipelineactivityparameters 'CPOutputReference',$dsid,$pipelineid,'','$desc'"
                 Sql-Execute -Qry "EXEC usp_updatepipelineactivityparameters 'CPOutputReference',$dsid,$pipelineid,'','$desc'" -Qrydetails  "update pipeline activity parameter :$linksetname "
                 
                 
@@ -489,7 +482,7 @@ Log-Message "End :  Opening Connection to Metadata database"
                     
         }
 
-        $SqlCmd.CommandText = "EXEC final_execution_ps_new $pipelineid"
+        $SqlCmd.CommandText = "EXEC final_execution_ps_new $pipelineid,'$LinkedServices','$IntegrationRunTimes'"
     
         $DataAdapter = new-object System.Data.SqlClient.SqlDataAdapter $SqlCmd
         $dataset = new-object System.Data.Dataset

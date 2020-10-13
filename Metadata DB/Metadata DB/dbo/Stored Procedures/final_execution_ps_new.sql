@@ -1,6 +1,6 @@
 ﻿
 CREATE procedure [dbo].[final_execution_ps_new] 
- (@PipelineId INT)
+ (@PipelineId INT,@LinkedServices VARCHAR(MAX),@IntegrationRunTimes VARCHAR(MAX))
 as
 
 
@@ -18,7 +18,8 @@ insert into @DFCreationJsonCode select '$spID = (Get-AzDataFactoryV2 -ResourceGr
 insert into @DFCreationJsonCode select 'New-AzRoleAssignment -ObjectId $spID -RoleDefinitionName "Storage Blob Data Contributor" -Scope "/subscriptions/$subscriptionid/resourceGroups/$resourceGroupName/providers/Microsoft.Storage/storageAccounts/$SinkAccountName" -ErrorAction SilentlyContinue'
 
 Declare @IRCount int,@IRType varchar(200),@irname varchar(200)
-set @IRCount =(SELECT count(*) from T_Pipeline_IntegrationRunTime  )
+set @IRCount =(SELECT count(1) from T_Pipeline_IntegrationRunTime WHERE IntegrationRunTimeName IN
+(Select value from string_split(@IntegrationRunTimes,',') ))
 declare @IRid int
 
 declare @tbl2 table
@@ -26,6 +27,7 @@ declare @tbl2 table
 
 insert into @tbl2
 select row_number() over(order by IntegrationRunTimeId ),IntegrationRunTimeId from dbo.T_Pipeline_IntegrationRunTime 
+ WHERE IntegrationRunTimeName IN (Select value from string_split(@IntegrationRunTimes,',') )
 
 set @IRid = 1
 
@@ -71,12 +73,15 @@ declare @tbl table
 
 Declare @LSCount int,@LinkedService varchar(200),@name varchar(200),@LSInit int
 Declare @LinkedServiceJsoncode table(Jsoncode varchar(max), ID INT IDENTITY(1,1))
-set @LSCount =(SELECT count(*) from T_Pipeline_LinkedServices  )
+set @LSCount =(SELECT count(1) from T_Pipeline_LinkedServices WHERE LinkedServiceName IN (SELECT value from string_split(@LinkedServices,',' ))) 
+
 declare @lsid int
 declare @dsid int
 
 insert into @tbl
 select row_number() over(order by [PipelineLinkedServicesID] ),[PipelineLinkedServicesID] from dbo.T_Pipeline_LinkedServices 
+WHERE LinkedServiceName IN (SELECT value from string_split(@LinkedServices,',' ))
+
 
 set @LSInit = 1
 
@@ -141,7 +146,7 @@ insert into @ActivityJsoncode select '"name": "$pipelinename",'
 insert into @ActivityJsoncode select '"properties": {'
 insert into @ActivityJsoncode select         '"activities": ['
 insert into @ActivityJsoncode Exec [dbo].[usp_return_activitycode] @PipelineId 
-insert into @ActivityJsoncode select '], "variables": {"srcmaxval": { "type": "String"}}'
+insert into @ActivityJsoncode select ']'
 insert into @ActivityJsoncode select     '}'
 insert into @ActivityJsoncode select 	'}'
 insert into @ActivityJsoncode select '"@'

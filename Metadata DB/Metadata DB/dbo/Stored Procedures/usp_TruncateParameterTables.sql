@@ -15,6 +15,8 @@ DELETE FROM dbo.[T_Pipeline_Activities] WHERE PipelineId = @PipelineId
 Delete from T_Pipeline_SourceColumnDetails
 where PipelineSourceId in (select PipelineSourceId from [T_Pipeline_Tables_ToBeMoved] where pipelineid = @PipelineId )
 
-DELETE FROM dbo.[T_Pipeline_Tables_ToBeMoved] WHERE PipelineId = @PipelineId
+UPDATE dbo.[T_Pipeline_Tables_ToBeMoved] 
+SET IsActive = 0
+WHERE PipelineId = @PipelineId
 
 END

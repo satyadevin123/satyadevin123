@@ -66,9 +66,9 @@
                 "type": "ApiConnection",
                 "inputs": {
                   "body": {
-                    "Body": "<p>The Message: Pipeline Failed<br>\nThe data factory name: DFMetadataPoCDemo<br>\n</p>",
-                    "Subject": "Pipeline failed",
-                    "To": "satyadevi.nimmakayala@winwire.com"
+                    "Body": "<p>The Message: @{triggerBody()?['Message']}<br>\nThe data factory name: @{triggerBody()?['DataFactoryName']}<br>\n</p>",
+                    "Subject": "@triggerBody()?['Message']",
+                    "To": "@triggerBody()?['EmailTo']"
                   },
                   "host": {
                     "connection": {

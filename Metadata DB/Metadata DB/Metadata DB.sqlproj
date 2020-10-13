@@ -186,6 +186,9 @@
     <Build Include="dbo\Stored Procedures\usp_InsertSourceTableColumnDetails.sql" />
     <Build Include="dbo\Stored Procedures\usp_UpdatePipelineTablesQuery.sql" />
     <Build Include="dbo\Stored Procedures\usp_UpdateMaxRefreshDate.sql" />
+    <Build Include="dbo\Stored Procedures\usp_GetKeyVaultReferedParameters.sql">
+      <AnsiNulls>Off</AnsiNulls>
+    </Build>
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Script.PostDeployment1.sql" />

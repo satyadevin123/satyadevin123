@@ -1,28 +1,9 @@
-﻿
-CREATE PROCEDURE [dbo].[usp_insertpipelinesteps]
+﻿CREATE PROCEDURE [dbo].[usp_insertpipelinesteps]
 (@PipelineId INT, @sourcelinkedservicename nvarchar(200),@WithSchema VARCHAR(3)='no')
 AS 
 BEGIN
-declare @dependsonid int
-declare @childid int
-declare @childid2 int
-declare @failedactivityname nvarchar(200)
-declare @llinkedserviceid int
-declare @LkpActivityName NVARCHAR(200)
-declare @FELkpActivityName NVARCHAR(200)
-declare @CpyActivityName NVARCHAR(200)
-declare @CpySchemaActivityName NVARCHAR(200)
-declare @ForeachActivityName NVARCHAR(200)
+
 DECLARE @type VARCHAR(200)
-DECLARE @GettokenActivityName NVARCHAR(200)
-declare @childactstring varchar(100)
-
-SET @LkpActivityName = 'LKP_'+CAST(@PipelineId AS VARCHAR)
-SET @FELkpActivityName = 'FE_LKP'
-SET @CpyActivityName = 'CP_'+CAST(@PipelineId AS VARCHAR)
-SET @CpySchemaActivityName = 'SchemaCP_'+CAST(@PipelineId AS VARCHAR)
-SET @ForeachActivityName = 'Foreach_SourceEntity_'+CAST(@PipelineId AS VARCHAR)
-
 
 select @type = TLL.LinkedServiceName
 from T_Pipeline_LinkedServices TPL
@@ -30,200 +11,207 @@ INNER JOIN T_List_LinkedServices TLL
 ON TPL.LinkedServiceId  = TLL.LinkedServiceId
 where TPL.[LinkedServiceName] = @sourcelinkedservicename
 
+declare @LkpActivityName NVARCHAR(200)
+declare @FELkpActivityName NVARCHAR(200)
+declare @FELkpCntActivityName NVARCHAR(200)
+declare @CpyActivityName NVARCHAR(200)
+declare @CpySchemaActivityName NVARCHAR(200)
+declare @ForeachActivityName NVARCHAR(200)
+declare @IfActivityName VARCHAR(200)
+
+SET @LkpActivityName = 'LKP_'+CAST(@PipelineId AS VARCHAR)
+SET @FELkpActivityName = 'FE_LKP'
+SET @FELkpCntActivityName = 'FE_LKP_CNT'
+SET @CpyActivityName = 'CP_'+CAST(@PipelineId AS VARCHAR)
+SET @CpySchemaActivityName = 'SchemaCP_'+CAST(@PipelineId AS VARCHAR)
+SET @ForeachActivityName = 'Foreach_SourceEntity_'+CAST(@PipelineId AS VARCHAR)
+SET @IfActivityName = 'IfCondition'
+
+
+declare @pipelinesteps table
+(
+ID INT ,
+ActivityName varchar(255),
+ActivityType VARCHAR(100),
+ChildActivity VARCHAR(MAX),
+DependsOnActivityName VARCHAR(255),
+DependencyCondition VARCHAR(30),
+IfActivity VARCHAR(MAX),
+ElseActivity VARCHAR(MAX),
+ParentActivity VARCHAR(255)
+)
+
+IF(@type = 'RestService')
+BEGIN
+
+insert into @pipelinesteps (ID,ActivityName,ActivityType,ChildActivity,DependsOnActivityName,DependencyCondition)
+values
+(1,'SPPipelineInprogressActivity','Custom Logging',NULL,NULL,NULL),
+(2,'SPPipelineFailedActivity1','Custom Logging',NULL,'SPPipelineInprogressActivity','Failed'),
+(3,'GetSPNKey','Get SPNKey from Vault',NULL,'SPPipelineInprogressActivity','Succeeded'),
+(4,'SPPipelineFailedActivity2','Custom Logging',NULL,'GetSPNKey','Failed'),
+(5,'GetToken','Get Token',NULL,'GetSPNKey','Succeeded'),
+(6,'SPPipelineFailedActivity3','Custom Logging',NULL,'GetToken','Failed'),
+(7,@CpyActivityName,'Copy Activity',NULL,'GetToken','Succeeded'),
+(8,'SPPipelineFailedActivity4','Custom Logging',NULL,@CpyActivityName,'Failed'),
+(9,'SPPipelineSucceededActivity','Custom Logging',NULL,@CpyActivityName,'Succeeded')
+
+END
+
+IF(@type != 'RestService')
+BEGIN
+IF (@WithSchema = 'no')
+BEGIN
+
+insert into @pipelinesteps 
+(ID,ActivityName,ActivityType,ChildActivity,DependsOnActivityName,DependencyCondition,IfActivity,ElseActivity,ParentActivity)
+values
+(1,'SPPipelineInprogressActivity','Custom Logging',NULL,NULL,NULL,NULL,NULL,NULL),
+(2,'SPPipelineFailedActivity1','Custom Logging',NULL,'SPPipelineInprogressActivity','Failed',NULL,NULL,NULL),
+(3,@LkpActivityName,'Lookup Activity',NULL,'SPPipelineInprogressActivity','Succeeded',NULL,NULL,NULL),
+(4,'SPPipelineFailedActivity2','Custom Logging',NULL,@LkpActivityName,'Failed',NULL,NULL,NULL),
+(5,@FELkpActivityName,'Lookup Activity',NULL,NULL,NULL,NULL,NULL,@ForeachActivityName),
+(6,@FELkpCntActivityName,'Lookup Activity',NULL,@FELkpActivityName,'Succeeded',NULL,NULL,@ForeachActivityName),
+(7,@IfActivityName,'IfCondition',NULL,@FELkpCntActivityName,'Succeeded',CONCAT(@CpyActivityName,',','SP_CopyActivityLogging',',','SP_MaxRefreshUpdate'),'SP_CopyActivityLoggingNoDeltaRecords',@ForeachActivityName),
+(8,@CpyActivityName,'Copy Activity',NULL,NULL,NULL,NULL,NULL,NULL),
+(9,'SP_CopyActivityLogging','Copy Activity Logging',NULL,@CpyActivityName,'Succeeded',NULL,NULL,NULL),
+(10,'SP_MaxRefreshUpdate','Update max refresh',NULL,'SP_CopyActivityLogging','Succeeded',NULL,NULL,NULL),
+(11,'SP_CopyActivityLoggingNoDeltaRecords','Copy Activity Logging',NULL,NULL,NULL,NULL,NULL,NULL),
+(12,'SPPipelineFailedActivity3','Custom Logging',NULL,@ForeachActivityName,'Failed',NULL,NULL,NULL),
+(13,'SPPipelineSucceededActivity','Custom Logging',NULL,@ForeachActivityName,'Succeeded',NULL,NULL,NULL),
+(14,@ForeachActivityName,'For Each Activity',CONCAT(@IfActivityName,',',@FELkpCntActivityName,',',@FELkpActivityName),@LkpActivityName,'Succeeded',NULL,NULL,NULL)
+END
+
 IF (@WithSchema = 'yes')
 BEGIN
 
-INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],0,0,1,@CpySchemaActivityName,'' FROM dbo.T_List_Activities where ActivityName = 'Copy Activity'
-	AND ISNULL(SourceType,@type)=@type
+insert into @pipelinesteps
+values
+(15,@CpySchemaActivityName,'Copy Activity',NULL,NULL,NULL,NULL,NULL,NULL)
 
-SELECT @childid2 = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
-    on tps.[ActivityID] = tla.[ActivityId]
-    where tla.activityname = 'Copy Activity' and tps.pipelineid = @PipelineId and tps.activityname = @CpySchemaActivityName
-	AND ISNULL(SourceType,@type)=@type
-
-    UPDATE [T_Pipeline_Activities]
-    SET ChildActivity = ChildActivity +','+cast(@childid2 as varchar)
-    where PipelineId = @PipelineId AND Activityname = @ForeachActivityName
 
 END
-ElSE
-BEGIN
 
-	INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],0,0,1,'SPPipelineInprogressActivity','' 
-    FROM dbo.T_List_Activities where ActivityName = 'Custom Logging' AND ISNULL(SourceType,@type)=@type
-	
-	SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
-    on tps.[ActivityID] = tla.[ActivityId]
-    where tla.activityname = 'Custom Logging' and tps.pipelineid = @PipelineId and tps.activityname = 'SPPipelineInprogressActivity'
-
-	SET @failedactivityname = CONCAT('SPPipelineFailedActivity',@dependsonid)
-
-	INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,@failedactivityname,'Failed' 
-    FROM dbo.T_List_Activities where ActivityName = 'Custom Logging'
-	AND ISNULL(SourceType,@type)=@type
-
-	if(@type = 'RestService')
-	begin
-
-    INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,'GetSPNKey','Succeeded' FROM dbo.T_List_Activities where ActivityName = 'Get SPNKey from Vault'
-	AND ISNULL(SourceType,@type)=@type
-
-    SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
-    on tps.[ActivityID] = tla.[ActivityId]
-    where tla.activityname = 'Get SPNKey from Vault' and tps.pipelineid = @PipelineId and tps.activityname = 'GetSPNKey'
-
-	SET @failedactivityname = CONCAT('SPPipelineFailedActivity',@dependsonid)
-
-	INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,@failedactivityname,'Failed' 
-    FROM dbo.T_List_Activities where ActivityName = 'Custom Logging'
-	AND ISNULL(SourceType,@type)=@type
-
-    INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,'GetToken','Succeeded' FROM dbo.T_List_Activities where ActivityName = 'Get Token'
-	AND ISNULL(SourceType,@type)=@type
-
-    SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
-    on tps.[ActivityID] = tla.[ActivityId]
-    where tla.activityname = 'Get Token' and tps.pipelineid = @PipelineId and tps.activityname = 'GetToken'
-	
-    SET @failedactivityname = CONCAT('SPPipelineFailedActivity',@dependsonid)
-
-	INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,@failedactivityname,'Failed' 
-    FROM dbo.T_List_Activities where ActivityName = 'Custom Logging'
-	AND ISNULL(SourceType,@type)=@type
-
-
-    INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,@CpyActivityName,'Succeeded' FROM dbo.T_List_Activities where ActivityName = 'Copy Activity'
-	AND ISNULL(SourceType,@type)=@type
-
-	SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
-    on tps.[ActivityID] = tla.[ActivityId]
-    where tla.activityname = 'Copy Activity' and tps.pipelineid = @PipelineId and tps.activityname = @CpyActivityName
-
-	SET @failedactivityname = CONCAT('SPPipelineFailedActivity',@dependsonid)
-	INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,@failedactivityname,'Failed' 
-    FROM dbo.T_List_Activities where ActivityName = 'Custom Logging' AND ISNULL(SourceType,@type)=@type
-
-    INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,'SPPipelineSucceededActivity' ,'Succeeded'
-    FROM dbo.T_List_Activities where ActivityName = 'Custom Logging'
-	AND ISNULL(SourceType,@type)=@type
-
-
-	END
-
-	if(@type != 'RestService')
-	begin
-
-	INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,@LkpActivityName,'Succeeded' 
-    FROM dbo.T_List_Activities where ActivityName = 'Lookup Activity'
-	AND ISNULL(SourceType,@type)=@type
-  
-    INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],0,0,1,@FELkpActivityName,'' FROM dbo.T_List_Activities where ActivityName = 'Lookup Activity'
-	AND ISNULL(SourceType,@type)=@type
-
-    SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
-    on tps.[ActivityID] = tla.[ActivityId]
-    where tla.activityname = 'Lookup Activity' and tps.pipelineid = @PipelineId and tps.activityname = @FELkpActivityName
-
-    
-    INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,@CpyActivityName,'Succeeded' FROM dbo.T_List_Activities where ActivityName = 'Copy Activity'
-	AND ISNULL(SourceType,@type)=@type
-
-    
-    SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
-    on tps.[ActivityID] = tla.[ActivityId]
-    where tla.activityname = 'Lookup Activity' and tps.pipelineid = @PipelineId and tps.activityname = @LkpActivityName
-
-	SET @failedactivityname = CONCAT('SPPipelineFailedActivity',@dependsonid)
-	INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,@failedactivityname,'Failed' 
-    FROM dbo.T_List_Activities where ActivityName = 'Custom Logging' AND ISNULL(SourceType,@type)=@type
-
-
-	SELECT @childid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
-    on tps.[ActivityID] = tla.[ActivityId]
-    where tla.activityname = 'Copy Activity' and tps.pipelineid = @PipelineId and tps.activityname = @CpyActivityName
-	AND ISNULL(SourceType,@type)=@type
-
-    
-    declare @childid3 int
-    
-    declare @childid4 int
-    SELECT @childid3 = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
-    on tps.[ActivityID] = tla.[ActivityId]
-    where tla.activityname = 'Lookup Activity' and tps.pipelineid = @PipelineId and tps.activityname = @FELkpActivityName
-	AND ISNULL(SourceType,@type)=@type
-
-	
-    INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@childid,0,1,'SP_CopyActivityLogging','Succeeded' FROM dbo.T_List_Activities where ActivityName = 'Copy Activity Logging'
-	AND ISNULL(SourceType,@type)=@type
-    
-    declare @childid1 int
-    SELECT @childid1 = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
-    on tps.[ActivityID] = tla.[ActivityId]
-    where tla.activityname = 'Copy Activity Logging' and tps.pipelineid = @PipelineId and tps.activityname = 'SP_CopyActivityLogging'
-	AND ISNULL(SourceType,@type)=@type
-
-    INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@childid1,0,1,'SP_MaxRefreshUpdate','Succeeded' FROM dbo.T_List_Activities 
-    where ActivityName = 'Update max refresh'
-	AND ISNULL(SourceType,@type)=@type
-    
-    SELECT @childid4 = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
-    on tps.[ActivityID] = tla.[ActivityId]
-    where tla.activityname = 'Update max refresh' and tps.pipelineid = @PipelineId and tps.activityname = 'SP_MaxRefreshUpdate'
-	AND ISNULL(SourceType,@type)=@type
-
-    
-    if (@childid2='' or @childid2 is null)
-    set @childactstring = cast(@childid as varchar)+','+cast(@childid1 as varchar)+','+cast(@childid3 as varchar)+','+cast(@childid4 as varchar) 
-    else
-    set @childactstring = cast(@childid as varchar)+','+cast(@childid1 as varchar)+','+cast(@childid3 as varchar)+','+cast(@childid4 as varchar)+','+cast(@childid2 as varchar) 
-    
-
-    INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,@childactstring,1,@ForeachActivityName,'Succeeded'
-    FROM dbo.T_List_Activities where ActivityName = 'For Each Activity'
-	AND ISNULL(SourceType,@type)=@type
-
-    
-    SELECT @dependsonid = tps.[PipelineActivityId] from [dbo].[T_Pipeline_Activities] tps inner join dbo.t_list_activities tla 
-    on tps.[ActivityID] = tla.[ActivityId]
-    where tla.activityname = 'For Each Activity' and tps.pipelineid = @PipelineId and tps.activityname = @ForeachActivityName
-
-	SET @failedactivityname = CONCAT('SPPipelineFailedActivity',@dependsonid)
-
-	INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,@failedactivityname,'Failed' 
-    FROM dbo.T_List_Activities where ActivityName = 'Custom Logging'
-	AND ISNULL(SourceType,@type)=@type
-
-	INSERT INTO dbo.[T_Pipeline_Activities] (PipelineId,[ActivityID],DependsOn,[ChildActivity],EmailNotificationEnabled,ActivityName,DependencyCondition)
-    SELECT @PipelineId,[ActivityId],@dependsonid,0,1,'SPPipelineSucceededActivity' ,'Succeeded'
-    FROM dbo.T_List_Activities where ActivityName = 'Custom Logging'
-	AND ISNULL(SourceType,@type)=@type
-
-	end
-
-	
-    
-	
 END
 
+select * from @pipelinesteps
 
+insert into t_pipeline_activities
+(pipelineid,activityid,emailnotificationenabled,activityname)
+select 
+@Pipelineid,tla.ActivityId,1,p.ActivityName
+from @pipelinesteps p 
+inner join dbo.T_List_Activities tla 
+on tla.ActivityName = p.ActivityType
+	AND ISNULL(SourceType,@type)=@type
+	order by ID
+
+UPDATE tpa
+SET DependsOn = tpa1.PipelineActivityId,
+DependencyCondition = p.DependencyCondition
+FROM t_pipeline_activities tpa
+INNER JOIN @pipelinesteps p
+ON tpa.activityname = p.activityname
+INNER JOIN t_pipeline_activities tpa1
+ON tpa1.ActivityName = p.DependsOnActivityName
+AND tpa.PipelineId = tpa1.PipelineId
+WHERE tpa.PipelineId = @PipelineId
+
+IF (@WithSchema='no')
+begin
+UPDATE tpa
+SET tpa.childactivity = a.val 
+FROM 
+t_pipeline_activities tpa INNER JOIN 
+(select tpa.ActivityName,string_agg(tpa1.PipelineActivityId, ',') as val
+from
+ t_pipeline_activities tpa
+INNER JOIN @pipelinesteps p
+ON tpa.activityname = p.activityname
+CROSS APPLY string_split(p.ChildActivity,',') t
+
+INNER JOIN t_pipeline_activities tpa1
+ON tpa1.ActivityName = t.value
+AND tpa.PipelineId = tpa1.PipelineId
+WHERE tpa.PipelineId = @PipelineId
+
+AND p.ChildActivity IS NOT NULL
+group by tpa.ActivityName
+) a
+on tpa.ActivityName = a.ActivityName
+WHERE tpa.PipelineId = @PipelineId
+
+
+UPDATE tpa
+SET tpa.IfActivity = a.val 
+FROM 
+t_pipeline_activities tpa INNER JOIN 
+(select tpa.ActivityName,string_agg(tpa1.PipelineActivityId, ',') as val
+from
+ t_pipeline_activities tpa
+INNER JOIN @pipelinesteps p
+ON tpa.activityname = p.activityname
+CROSS APPLY string_split(p.IfActivity,',') t
+
+INNER JOIN t_pipeline_activities tpa1
+ON tpa1.ActivityName = t.value
+AND tpa.PipelineId = tpa1.PipelineId
+
+WHERE tpa.PipelineId = @PipelineId
+AND p.IfActivity IS NOT NULL
+group by tpa.ActivityName
+) a
+on tpa.ActivityName = a.ActivityName
+WHERE tpa.PipelineId = @PipelineId
+
+
+
+UPDATE tpa
+SET tpa.ElseActivity = a.val 
+FROM 
+t_pipeline_activities tpa INNER JOIN 
+(select tpa.ActivityName,string_agg(tpa1.PipelineActivityId, ',') as val
+from
+ t_pipeline_activities tpa
+INNER JOIN @pipelinesteps p
+ON tpa.activityname = p.activityname
+CROSS APPLY string_split(p.ElseActivity,',') t
+
+INNER JOIN t_pipeline_activities tpa1
+ON tpa1.ActivityName = t.value
+AND tpa.PipelineId = tpa1.PipelineId
+
+WHERE tpa.PipelineId = @PipelineId
+AND p.ElseActivity IS NOT NULL
+group by tpa.ActivityName
+) a
+on tpa.ActivityName = a.ActivityName
+WHERE tpa.PipelineId = @PipelineId
+
+end
+else
+begin
+
+declare @childschemaid int
+select @childschemaid = PipelineActivityId
+from T_Pipeline_Activities 
+where PipelineId = @PipelineId and Activityname = @CpySchemaActivityName
+
+UPDATE T_Pipeline_Activities
+set IfActivity = IfActivity+','+cast(@childschemaid as varchar)
+where PipelineId = @PipelineId and Activityname = @IfActivityName
+
+
+end
+
+UPDATE TPA
+SET TPA.ParentActivity = tpa1.PipelineActivityId
+FROM
+ T_Pipeline_Activities tpa1
+INNER JOIN @pipelinesteps p
+ON tpa1.Activityname = p.ParentActivity
+INNER JOIN T_Pipeline_Activities tpa
+on tpa.Activityname = p.ActivityName
 END
 GO
 

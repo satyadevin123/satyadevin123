@@ -3,7 +3,7 @@
     [ActivityName]         NVARCHAR (255) NULL,
     [ActivityStandardName] NVARCHAR (255) NULL,
     [Enabled]              INT            NULL,
-    [JsonCode]                 VARCHAR (8000) NULL,
+    [JsonCode]                 VARCHAR (MAX) NULL,
     [linkedserverrequired] CHAR (3)       NULL,
     [datasetrequired]      CHAR (3)       NULL,
     SourceType        VARCHAR(200) NULL,

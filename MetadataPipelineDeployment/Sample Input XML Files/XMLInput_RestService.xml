@@ -51,7 +51,7 @@
 <Pipelines>
 <Pipeline Name = 'RestService_To_ADLS'>
 <Activities>
-<Activity Type ='Copy Activity'>
+<Activity Type ='Copy Activity' Description='DataCopy'>
 <Source LinkedServiceReference='RestServiceAPI'>
 </Source>
 <Sink LinkedServiceReference='ADLSV2'>
