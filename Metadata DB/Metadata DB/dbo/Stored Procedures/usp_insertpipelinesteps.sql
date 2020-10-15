@@ -103,7 +103,7 @@ select
 from @pipelinesteps p 
 inner join dbo.T_List_Activities tla 
 on tla.ActivityName = p.ActivityType
-	AND ISNULL(SourceType,@type)=@type
+	AND ISNULL(SourceType,@type)=CASE WHEN p.ActivityName = @LkpActivityName THEN 'azureSQLDatabase' ELSE @type END
 	order by ID
 
 UPDATE tpa
