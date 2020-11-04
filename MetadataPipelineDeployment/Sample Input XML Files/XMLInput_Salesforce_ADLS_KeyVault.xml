@@ -1,0 +1,91 @@
+<Metadata>
+<AzureEnvSetup>
+<Parameters>
+<Parameter Name='$tenantid' Value = 'bdcfaa46-3f69-4dfd-b3f7-c582bdfbb820'/>
+<Parameter Name='$subscriptionid' Value = '81ec4907-9db6-4d56-86d4-d997209d7be6'/>
+<Parameter Name='$resourceGroupName' Value = 'RG-data-pipeline-framework-poc'/>
+<Parameter Name='$dataFactoryName' Value = 'DFMetadataPoCDemoSalesforce'/>
+<Parameter Name='$dataFactoryNameLocation' Value = 'EAST US'/>
+<Parameter Name='$SinkAccountName' Value = 'metadatapocsalesforce'/>
+<Parameter Name='$keyvaultname' Value = 'KVMetadataPoCSalesforce'/>
+<Parameter Name='$keyvaultlocation' Value = 'EAST US'/>
+<Parameter Name='$EmailTo' Value = 'sharath.vullam@winwire.com'/>
+</Parameters>
+</AzureEnvSetup>
+<IntegrationRunTimes>
+<IntegrationRunTime Name='Azure-IR-ADF' Type ='Managed'/>
+</IntegrationRunTimes>
+<LinkedServices>
+<LinkedService Type='azureKeyVault' AuthenticationType='Managed Identity' Description='KeyVault'>
+<Parameters>
+<Parameter Name='$keyvaultname' Value = 'KVMetadataPoCSalesforce'/>
+</Parameters>
+</LinkedService>
+<LinkedService Type='azureSQLDatabase' AuthenticationType='Managed Identity' Description='MetadataDB'>
+<Parameters>
+<Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
+<Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDBPublishTest1'/>
+</Parameters>
+</LinkedService>
+<LinkedService Type='SalesforceKeyVault' AuthenticationType='Basic' Description='SalesforceAPI'>
+<Parameters>
+<Parameter Name='$SalesforceUrl' Value = 'https://login.salesforce.com'/>
+<Parameter Name='$SalesforceUserName' Value = 'sharath.vullam@gmail.com'/>
+</Parameters>
+</LinkedService>
+<LinkedService Type='ADLSv2' AuthenticationType='Managed Identity' Description='ADLSV2'>
+<Parameters>
+<Parameter Name='$ADLSv2AccountName' Value='metadatapocsalesforce'/>
+<Parameter Name='$URL' Value='https://metadatapocsalesforce.dfs.core.windows.net'/>
+</Parameters>
+</LinkedService>
+</LinkedServices>
+<MetadataDB Type ='azureSQLDatabase' AuthenticationType='SQL Authentication'>
+<Parameters>
+<Parameter Name='$azureSqlDBServerName' Value = 'poc-metadatadriven'/>
+<Parameter Name='$azureSqlDatabaseName' Value = 'MetadataDBPublishTest1'/>
+</Parameters>
+</MetadataDB>
+<Pipelines>
+<Pipeline Name = 'Incremental_From_Salesforce_To_ADLS_Withschema'>
+<Activities>
+<Activity Type='Lookup Activity' LinkedServiceReference='MetadataDB'>
+</Activity>
+
+<Activity Type ='Copy Activity' Description ='SchemaCopy'>
+<Source LinkedServiceReference='MetadataDB'>
+</Source>
+<Sink LinkedServiceReference='ADLSV2'>
+<SinkParameters>
+<Parameter Name='$fileSystemFolderName' Value ='salesforceincrementalwithschema'/>
+<Parameter Name='$CompressionCodectype' Value ='none'/>
+<Parameter Name='$fileformat' Value ='DelimitedText'/>
+<Parameter Name='$fileextension' Value ='csv'/>
+<Parameter Name='$columndelimiter' Value =','/>
+</SinkParameters>
+</Sink>
+</Activity>
+
+<Activity Type ='Copy Activity' Description='DataCopy'>
+<Source LinkedServiceReference='SalesforceAPI'>
+<Tables>
+	<Table Name='Account' IsIncremental='yes' LastRefreshBasedOnColumn='LastModifiedDate'/>
+	<Table Name='Asset' IsIncremental='no' LastRefreshBasedOnColumn=''/>
+	<Table Name='Contact' IsIncremental='yes' LastRefreshBasedOnColumn='LastModifiedDate'/>
+
+</Tables>
+</Source>
+<Sink LinkedServiceReference='ADLSV2'>
+<SinkParameters>
+<Parameter Name='$fileSystemFolderName' Value ='accountssalesforce'/>
+<Parameter Name='$CompressionCodectype' Value ='none'/>
+<Parameter Name='$fileformat' Value ='DelimitedText'/>
+<Parameter Name='$fileextension' Value ='csv'/>
+<Parameter Name='$columndelimiter' Value ='|'/>
+</SinkParameters>
+</Sink>
+</Activity>
+</Activities>
+</Pipeline>
+</Pipelines>
+</Metadata>
