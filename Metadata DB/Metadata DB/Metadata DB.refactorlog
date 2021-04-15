@@ -273,4 +273,18 @@
     <Property Name="ParentElementType" Value="SqlTable" />
     <Property Name="NewName" Value="[PipelineActivityId]" />
   </Operation>
+  <Operation Name="Rename Refactor" Key="80873e61-cfe7-4add-98f4-148d6998f424" ChangeDateTime="10/15/2020 10:01:49">
+    <Property Name="ElementName" Value="[dbo].[usp_Insert_Pipeline_LinkedServiceParameters]" />
+    <Property Name="ElementType" Value="SqlProcedure" />
+    <Property Name="ParentElementName" Value="[dbo]" />
+    <Property Name="ParentElementType" Value="SqlSchema" />
+    <Property Name="NewName" Value="[usp_InsertPipelineLinkedServiceParameters]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="47d91976-9dc4-4c7e-8efe-cee466e05173" ChangeDateTime="10/15/2020 11:22:09">
+    <Property Name="ElementName" Value="[dbo].[T_Pipeline_Tables_ToBeMoved].[pipelineid]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[T_Pipeline_Tables_ToBeMoved]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[PipelineID]" />
+  </Operation>
 </Operations>

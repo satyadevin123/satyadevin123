@@ -225,7 +225,7 @@ Param([String]$LinkedServiceType,[String]$resourceGroupName,[string]$Authenticat
     $Qry = "EXEC usp_InsertPipelineLinkedServiceDetails '$LinkedServiceType','$AuthenticationType','$LinkedServiceName'"
     $QryDetails = "Insert the $LinkedServiceType details to T_Pipeline_LinkedServices table"
     Sql-Execute -Qry $Qry -Qrydetails $QryDetails 
-    Sql-Execute -Qry "EXEC [dbo].[usp_Insert_Pipeline_LinkedServiceParameters] '$LinkedServiceName','$ir'" -Qrydetails  "Insert the key vault parameter details to T_Pipeline_LinkedService_Parameters table"
+    Sql-Execute -Qry "EXEC [dbo].[usp_InsertPipelineLinkedServiceParameters] '$LinkedServiceName','$ir'" -Qrydetails  "Insert the key vault parameter details to T_Pipeline_LinkedService_Parameters table"
     
     $linkedservice_id = Sql-ExecuteScalar -Qry "SELECT TOP 1 PipelineLinkedServicesId FROM T_Pipeline_LinkedServices WHERE LinkedServiceName = '$LinkedServiceName'" -Qrydetails  "Insert the key vault parameter details to T_Pipeline_LinkedService_Parameters table"
   
@@ -282,6 +282,7 @@ Foreach-Object {
 $ConfigXMLFilePath = $_.FullName
 [XML]$MetaDetails = Get-Content $ConfigXMLFilePath
 
+Connect-AzAccount
 
 $logdate = get-date
 $datetime = (Get-Date -UFormat "%Y-%m-%d_%I-%M%p").tostring()
@@ -402,7 +403,7 @@ Log-Message "End :  Opening Connection to Metadata database"
             }
 
         }
-        Sql-Execute -Qry "EXEC usp_Insert_Pipeline_Parameters $pipelineid" -Qrydetails  "Insert pipeline activity parameters"
+        Sql-Execute -Qry "EXEC usp_InsertPipelineActivityParameters $pipelineid" -Qrydetails  "Insert pipeline activity parameters"
         foreach($actdetail in $ppdetail.Activities.Activity)
         {
           
@@ -496,7 +497,7 @@ Log-Message "End :  Opening Connection to Metadata database"
         
         $scriptpath1 = "$ScriptPath\OutputPipelineScripts\$pipelinename.ps1"
         $params = "-logfilepath '$logfilepath' -Scriptpath '$Scriptpath'"
-        #Login-AzAccount
+        Login-AzAccount
         Invoke-Expression "$scriptpath1 $params"
         }
 

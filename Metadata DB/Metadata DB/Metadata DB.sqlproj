@@ -73,7 +73,6 @@
     </Build>
     <Build Include="dbo\Tables\ServicePrincipals.sql" />
     <Build Include="dbo\Tables\T_ChildPipelines_Activities.sql" />
-    <Build Include="dbo\Tables\T_Columns.sql" />
     <Build Include="dbo\Tables\T_ConfigurationDetails.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
@@ -82,10 +81,6 @@
     </Build>
     <Build Include="dbo\Tables\T_DataSource_Queries.sql" />
     <Build Include="dbo\Tables\T_Dependence.sql" />
-    <Build Include="dbo\Tables\T_LinkedService_Parameters.sql">
-      <AnsiNulls>Off</AnsiNulls>
-    </Build>
-    <Build Include="dbo\Tables\T_LinkedServices.sql" />
     <Build Include="dbo\Tables\T_List_Activities.sql" />
     <Build Include="dbo\Tables\T_List_Activities_config.sql" />
     <Build Include="dbo\Tables\T_List_Activity_Parameters.sql">
@@ -122,7 +117,6 @@
       <AnsiNulls>Off</AnsiNulls>
     </Build>
     <Build Include="dbo\Tables\T_Pipeline_DataSets.sql" />
-    <Build Include="dbo\Tables\T_Pipeline_DataSets_Bkup.sql" />
     <Build Include="dbo\Tables\T_Pipeline_LinkedService_Parameters.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
@@ -131,21 +125,16 @@
       <AnsiNulls>Off</AnsiNulls>
     </Build>
     <Build Include="dbo\Tables\t_pipeline_tables_tobemoved.sql" />
-    <Build Include="dbo\Tables\T_PipelineParameters.sql" />
     <Build Include="dbo\Tables\T_Pipelines.sql" />
     <Build Include="dbo\Tables\T_Pipeline_Activities.sql" />
-    <Build Include="dbo\Tables\T_SourceDataSet.sql" />
-    <Build Include="dbo\Tables\T_Tables.sql" />
-    <Build Include="dbo\Stored Procedures\FailProcedure.sql" />
     <Build Include="dbo\Stored Procedures\final_execution_ps_new.sql" />
     <Build Include="dbo\Stored Procedures\usp_add_email_nofification.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="dbo\Stored Procedures\usp_generate_pipelinecode.sql" />
     <Build Include="dbo\Stored Procedures\usp_Get_ErrorMessage.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
-    <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_Parameters.sql" />
+    <Build Include="dbo\Stored Procedures\usp_InsertPipelineActivityParameters.sql" />
     <Build Include="dbo\Stored Procedures\usp_Log_PipelineStatus.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
@@ -168,7 +157,7 @@
     <Build Include="dbo\Stored Procedures\usp_insertpipelinesteps.sql" />
     <Build Include="dbo\Stored Procedures\usp_updatepipelineactivityparameters.sql" />
     <Build Include="dbo\Stored Procedures\usp_InsertPipelineTablesToBeMoved.sql" />
-    <Build Include="dbo\Stored Procedures\usp_Insert_Pipeline_LinkedServiceParameters.sql" />
+    <Build Include="dbo\Stored Procedures\usp_InsertPipelineLinkedServiceParameters.sql" />
     <Build Include="dbo\Stored Procedures\usp_UpdatePipelineDataSetParameters.sql" />
     <Build Include="dbo\Stored Procedures\usp_UpdateKeyVaultReferedLinkedServiceParameters.sql" />
     <Build Include="dbo\Tables\T_Pipeline_IntegrationRunTime.sql" />

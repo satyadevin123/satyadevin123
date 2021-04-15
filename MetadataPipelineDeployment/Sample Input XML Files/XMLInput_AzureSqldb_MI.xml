@@ -57,6 +57,7 @@
 	<Table Name='ErrorLog' schema='dbo'/>
 	<Table Name='Address' schema='SalesLT'/>
 	<Table Name='Customer' schema='SalesLT'/>
+	
 </Tables>
 </Source>
 <Sink LinkedServiceReference='ADLSV2'>

@@ -7,5 +7,5 @@
 	[Execution_Status] [nvarchar](500) NULL,
 	[CopyActivity_Start_Time] [datetime] NULL,
 	[CopyActivity_End_Time] [datetime] NULL,
-	[EntityName] [varchar](100) NULL
+	[EntityName] [varchar](128) NULL
 ) ON [PRIMARY]

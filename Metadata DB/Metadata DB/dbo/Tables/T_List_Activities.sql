@@ -1,12 +1,12 @@
 ﻿CREATE TABLE [dbo].[T_List_Activities] (
     [ActivityId]                   INT        IDENTITY(1,1)    NOT NULL,
-    [ActivityName]         NVARCHAR (255) NULL,
-    [ActivityStandardName] NVARCHAR (255) NULL,
+    [ActivityName]         VARCHAR (55) NULL,
+    [ActivityStandardName] VARCHAR (55) NULL,
     [Enabled]              INT            NULL,
-    [JsonCode]                 VARCHAR (MAX) NULL,
-    [linkedserverrequired] CHAR (3)       NULL,
-    [datasetrequired]      CHAR (3)       NULL,
-    SourceType        VARCHAR(200) NULL,
+    [JsonCode]             VARCHAR (MAX) NULL,
+    [linkedserverrequired] CHAR (1)       NULL,
+    [datasetrequired]      CHAR (1)       NULL,
+    SourceType        VARCHAR(55) NULL,
     PRIMARY KEY CLUSTERED ([ActivityId] ASC)
 );
 

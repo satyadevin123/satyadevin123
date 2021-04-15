@@ -1,21 +1,27 @@
 ﻿
 CREATE procedure [dbo].[final_execution_ps_new] 
- (@PipelineId INT,@LinkedServices VARCHAR(MAX),@IntegrationRunTimes VARCHAR(MAX))
-as
+(
+	@PipelineId INT,
+	@LinkedServices VARCHAR(MAX),
+	@IntegrationRunTimes VARCHAR(MAX)
+)
+AS
 
 
-DECLARE @DSJsonCode NVARCHAR(max)
-Declare @MasterPipelineActivityJsoncode table(Jsoncode varchar(max),ID INT IDENTITY(1,1))
-Declare @DFCreationJsonCode table(Jsoncode varchar(max),ID INT IDENTITY(1,1))
-Declare @KeyVaultJsonCode table(Jsoncode varchar(max),ID INT IDENTITY(1,1))
+	DECLARE @DSJsonCode NVARCHAR(max)
+	DECLARE @MasterPipelineActivityJsoncode table(Jsoncode varchar(max),ID INT IDENTITY(1,1))
+	DECLARE @DFCreationJsonCode table(Jsoncode varchar(max),ID INT IDENTITY(1,1))
+	DECLARE @KeyVaultJsonCode table(Jsoncode varchar(max),ID INT IDENTITY(1,1))
 
-insert into @DFCreationJsonCode select 'New-AzDataFactoryV2 -ResourceGroupName $resourceGroupName -Name $dataFactoryName –Location $dataFactoryNameLocation -Force'
-insert into @DFCreationJsonCode select 
-'$sinkAccount = Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $SinkAccountName  -ErrorAction SilentlyContinue'
-insert into @DFCreationJsonCode select  'if($sinkAccount -eq $null){
-     New-AzStorageAccount -Kind StorageV2 -ResourceGroupName $resourceGroupName -Name $SinkAccountName -Location $dataFactoryNameLocation -EnableHierarchicalNamespace $true -SkuName Standard_LRS }'
-insert into @DFCreationJsonCode select '$spID = (Get-AzDataFactoryV2 -ResourceGroupName $resourceGroupName -Name $dataFactoryName).Identity.PrincipalId '
-insert into @DFCreationJsonCode select 'New-AzRoleAssignment -ObjectId $spID -RoleDefinitionName "Storage Blob Data Contributor" -Scope "/subscriptions/$subscriptionid/resourceGroups/$resourceGroupName/providers/Microsoft.Storage/storageAccounts/$SinkAccountName" -ErrorAction SilentlyContinue'
+	INSERT	INTO @DFCreationJsonCode 
+	SELECT	'New-AzDataFactoryV2 -ResourceGroupName $resourceGroupName -Name $dataFactoryName –Location $dataFactoryNameLocation -Force'
+	
+	INSERT INTO @DFCreationJsonCode 
+	SELECT '$sinkAccount = Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $SinkAccountName  -ErrorAction SilentlyContinue'
+	INSERT INTO @DFCreationJsonCode SELECT  'if($sinkAccount -eq $null){
+		 New-AzStorageAccount -Kind StorageV2 -ResourceGroupName $resourceGroupName -Name $SinkAccountName -Location $dataFactoryNameLocation -EnableHierarchicalNamespace $true -SkuName Standard_LRS }'
+	insert into @DFCreationJsonCode select '$spID = (Get-AzDataFactoryV2 -ResourceGroupName $resourceGroupName -Name $dataFactoryName).Identity.PrincipalId '
+	insert into @DFCreationJsonCode select 'New-AzRoleAssignment -ObjectId $spID -RoleDefinitionName "Storage Blob Data Contributor" -Scope "/subscriptions/$subscriptionid/resourceGroups/$resourceGroupName/providers/Microsoft.Storage/storageAccounts/$SinkAccountName" -ErrorAction SilentlyContinue'
 
 Declare @IRCount int,@IRType varchar(200),@irname varchar(200)
 set @IRCount =(SELECT count(1) from T_Pipeline_IntegrationRunTime WHERE IntegrationRunTimeName IN
@@ -192,6 +198,8 @@ FROM (
 		union all
 		select ParameterName+' = '+ ParameterValue+'' AS Parameter,[MasterParameterPipelineId], 'MasterPipelineParameterList' AS DescType from T_Master_Pipelines_Parameters_List
 		union all
+		Select 'Start-Transcript -Path $logfilepath -Append -Force',0,'LogTranscriptStart' 
+		union all
 		Select '#Code for creating/updating data factory',0,'DFCode'
 		union all
 		select Jsoncode AS Parameter,ID, 'DFCode' AS DescType from @DFCreationJsonCode 
@@ -215,6 +223,8 @@ FROM (
 		Select '#Code for creating/updating master pipeline activity code',0,'ActivityCode'
 		union all
 		select Jsoncode AS Parameter, ID, 'ActivityCode' AS DescType from @ActivityJsoncode
+		union all
+		Select 'Stop-Transcript ',0,'LogTranscriptEnd' 
 ) A
 ORDER BY CASE WHEN DescType Like '%MasterParameterList%' THEN 1 
 			  WHEN DescType Like '%LinkedServiceParameterList%' THEN 2 
@@ -222,12 +232,15 @@ ORDER BY CASE WHEN DescType Like '%MasterParameterList%' THEN 1
 			  WHEN DescType Like '%ActivityParameterList%' THEN 4
 			  WHEN DescType Like '%SPParameterList%' THEN 5
 			  WHEN DescType Like '%MasterPipelineParameterList%' THEN 6
-			  WHEN DescType Like '%DFCode%' THEN 7
-			  WHEN DescType Like '%KVCode%' THEN 8
-			  WHEN DescType Like '%LSCode%' THEN 9
-			  WHEN DescType Like '%DSCode%' THEN  10
-			  WHEN DescType Like '%Mastercode%' THEN 11
-			  WHEN DescType Like '%ActivityCode%' THEN 12 END 
+			  WHEN DescType Like '%LogTranscriptStart%' THEN 7
+			  WHEN DescType Like '%DFCode%' THEN 8
+			  WHEN DescType Like '%KVCode%' THEN 9
+			  WHEN DescType Like '%LSCode%' THEN 10
+			  WHEN DescType Like '%DSCode%' THEN  11
+			  WHEN DescType Like '%Mastercode%' THEN 12
+			  WHEN DescType Like '%ActivityCode%' THEN 13 
+			  WHEN DescType Like '%LogTranscriptEnd%' THEN 14
+			  END 
 			  ,ID
 
 
@@ -260,6 +273,8 @@ FROM (
 		union all
 		select ParameterName+' = '+ ParameterValue+'' AS Parameter,[MasterParameterPipelineId], 'MasterPipelineParameterList' AS DescType from T_Master_Pipelines_Parameters_List 
 		union all
+		Select 'Start-Transcript -Path $logfilepath -Append -Force',0,'LogTranscriptStart' 
+		union all
 		Select '#Code for creating/updating data factory',0,'DFCode'
 		union all
 		select Jsoncode AS Parameter,ID, 'DFCode' AS DescType from @DFCreationJsonCode 
@@ -279,6 +294,8 @@ FROM (
 		Select '#Code for creating/updating pipleine activities',0,'ActivityCode'
 		union all
 		select Jsoncode AS Parameter, ID, 'ActivityCode' AS DescType from @ActivityJsoncode
+		union all
+		Select 'Stop-Transcript ',0,'LogTranscriptEnd' 
 ) A
 ORDER BY CASE WHEN DescType Like '%MasterParameterList%' THEN 1 
 			  WHEN DescType Like '%LinkedServiceParameterList%' THEN 2 
@@ -286,12 +303,15 @@ ORDER BY CASE WHEN DescType Like '%MasterParameterList%' THEN 1
 			  WHEN DescType Like '%ActivityParameterList%' THEN 4
 			  WHEN DescType Like '%SPParameterList%' THEN 5
 			  WHEN DescType Like '%MasterPipelineParameterList%' THEN 6
-			  WHEN DescType Like '%DFCode%' THEN 7
-			  WHEN DescType Like '%KVCode%' THEN 8
-			  WHEN DescType Like '%LSCode%' THEN 9
-			  WHEN DescType Like '%DSCode%' THEN 10 
-			  WHEN DescType Like '%Mastercode%' THEN 11
-			  WHEN DescType Like '%ActivityCode%' THEN 12 END
+			  WHEN DescType Like '%LogTranscriptStart%' THEN 7
+			  WHEN DescType Like '%DFCode%' THEN 8
+			  WHEN DescType Like '%KVCode%' THEN 9
+			  WHEN DescType Like '%LSCode%' THEN 10
+			  WHEN DescType Like '%DSCode%' THEN 11 
+			  WHEN DescType Like '%Mastercode%' THEN 12
+			  WHEN DescType Like '%ActivityCode%' THEN 13 
+			  WHEN DescType Like '%LogTranscriptEnd%' THEN 14
+			  END
 GO
 
 

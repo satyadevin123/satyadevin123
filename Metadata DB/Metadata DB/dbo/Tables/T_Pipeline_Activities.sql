@@ -6,9 +6,9 @@
     [ChildActivity]           VARCHAR(100)           NULL,
     [EmailNotificationEnabled] TINYINT       NULL,
     [Activityname]             VARCHAR (100) NULL,
-    [DependencyCondition]        NVARCHAR(20),
-    [IfActivity] [varchar](300) NULL,
-	[ElseActivity] [varchar](300) NULL,
+    [DependencyCondition]        VARCHAR(20),
+    [IfActivity] [VARCHAR](300) NULL,
+	[ElseActivity] [VARCHAR](300) NULL,
 	[ParentActivity] [int] NULL
     PRIMARY KEY CLUSTERED ([PipelineActivityId] ASC),
     FOREIGN KEY ([ActivityID]) REFERENCES [dbo].[T_List_Activities] ([ActivityId]),

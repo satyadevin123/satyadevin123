@@ -3,6 +3,6 @@
     [PipelineId]        INT            NOT NULL Foreign Key References [dbo].[T_Pipelines] ([PipelineId]),
     [LinkedServericeId] INT            NOT NULL,
     [DataSetId]         INT            NOT NULL,
-    [DataSetName]       NVARCHAR (200) NULL
+    [DataSetName]       NVARCHAR (140) NULL
 );
 

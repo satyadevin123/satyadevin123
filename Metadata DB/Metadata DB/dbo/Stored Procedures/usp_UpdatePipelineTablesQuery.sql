@@ -14,7 +14,7 @@ FROM
 T_Pipeline_SourceColumnDetails tps
 INNER JOIN T_Pipeline_Tables_ToBeMoved tpt
 ON tps.PipelineSourceId = tpt.PipelineSourceId
-WHERE pipelineid = @PipelineId AND TableName = @TableName AND ISNULL(SchemaName,'') = ISNULL(@SchemaName,'')
+WHERE [PipelineID] = @PipelineId AND TableName = @TableName AND ISNULL(SchemaName,'') = ISNULL(@SchemaName,'')
 
 SELECT @ColList = CASE WHEN @ColList = ' ' THEN '*' ELSE SUBSTRING(@ColList,1,LEN(@ColList)-1) END
 
@@ -26,7 +26,7 @@ SET Query = 'SELECT '+ @ColList +' FROM ' + @NameString
 ,ColumnList = SUBSTRING(@ColList,1,LEN(@ColList)-1) 
 ,BuildQuery = CASE WHEN @RefreshBasedOn <> '' THEN 'SELECT '+ SUBSTRING(@ColList,1,LEN(@ColList)-1) +' FROM ' + @NameString ELSE NULL END
 ,CntQuery = 'SELECT COUNT(1) AS Cnt FROM ' + @NameString
-WHERE pipelineid = @PipelineId AND TableName = @TableName AND ISNULL(SchemaName,'') = ISNULL(@SchemaName,'')
+WHERE [PipelineID] = @PipelineId AND TableName = @TableName AND ISNULL(SchemaName,'') = ISNULL(@SchemaName,'')
 
 
 
