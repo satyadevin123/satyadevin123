@@ -15,13 +15,14 @@ BEGIN
 	DECLARE @KeyVaultLinkedServiceName VARCHAR(140)
 	DECLARE @kvlinkedserviceparamname VARCHAR(200) 
 
-	SET @kvlinkedserviceparamname = '$'+CAST(@LinkedServiceId  AS  VARCHAR)+'_'+'azurekeyvaultlinkedservicereference'
 	
 	SELECT 
 			@LinkedServiceId = TPL.PipelineLinkedServicesID
 	FROM	dbo.T_Pipeline_LinkedServices TPL
 	WHERE	LinkedServiceName = @LinkedServiceName
-
+	
+	SET @kvlinkedserviceparamname = '$'+CAST(@LinkedServiceId  AS  VARCHAR)+'_'+'azurekeyvaultlinkedservicereference'
+	
 	DELETE	FROM 
 			T_Pipeline_LinkedService_Parameters 
 	WHERE	LinkedServerId = @LinkedServiceId

@@ -3,7 +3,9 @@
 [Parameter(Mandatory=$True,Position=1)]
 [string]$MetadataDBUserName,
 [Parameter(Mandatory=$True,Position=2)]
-[Securestring]$MetadataDBPasswordSecure
+[Securestring]$MetadataDBPasswordSecure,
+[Parameter(Mandatory=$True,Position=3)]
+[string]$InputXMLFileName
 )
 <# function to log details to file #>
 Function Log-Message([String]$Message) 
@@ -119,6 +121,7 @@ Function Update-MasterParametersToDB
         if ($paramname -eq '$servicePrincipalId')
         {
             $servicePrincipalId = $parameterdetail.Value
+           
         }
         
         if ($paramname -eq '$dataFactoryName')
@@ -137,7 +140,7 @@ Function Update-MasterParametersToDB
         
     }
        $x = Create-KeyVault -keyvaultName $keyvaultname -keyvaultlocation $keyvaultlocation -resourceGroupName $resourceGroupName
-      
+       
         if($servicePrincipalId -ne $null -and $servicePrincipalId -ne '')
         {
              
@@ -149,9 +152,9 @@ Function Update-MasterParametersToDB
             Sql-Execute -Qry "EXEC usp_UpdateMasterParametersList '`$servicePrincipalKey','$name'"  -Qrydetails 'Update master parameter $servicePrincipalKey'
          }
 
-        $res = New-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName  -Name "LogicAppDeployment" -TemplateFile "$ScriptPath\LogicAppDeploymenttemplate.json" 
-        $logicappurl = (Get-AzLogicAppTriggerCallbackUrl  -ResourceGroupName $resourceGroupName -Name "LogicAppToSendMailFromADF" -TriggerName "manual").Value        $logicappurl = '"'+$logicappurl+'"'
-        Sql-Execute -Qry "EXEC usp_UpdateMasterParametersList '`$LogicAppURL','$logicappurl'"  -Qrydetails 'Update master parameter $logicappurl'
+       # $res = New-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName  -Name "LogicAppDeployment" -TemplateFile "$ScriptPath\LogicAppDeploymenttemplate.json" 
+       # $logicappurl = (Get-AzLogicAppTriggerCallbackUrl  -ResourceGroupName $resourceGroupName -Name "LogicAppToSendMailFromADF" -TriggerName "manual").Value       # $logicappurl = '"'+$logicappurl+'"'
+       # Sql-Execute -Qry "EXEC usp_UpdateMasterParametersList '`$LogicAppURL','$logicappurl'"  -Qrydetails 'Update master parameter $logicappurl'
 
          [pscustomobject] @{
         kvname = $keyvaultname
@@ -172,10 +175,11 @@ Function Insert-DatasetsAndParameters
 {
 Param([String]$DataSetName,[int]$PipelineId,[String]$LinkedServiceName,[String]$AdditionalType,[String]$AdditionalVal) 
     
-            Sql-Execute -Qry "EXEC usp_InsertPipelineDataSets '$DataSetName','$LinkedServiceName',$PipelineId,'$AdditionalType','$AdditionalVal'" -Qrydetails  "Insert datasets for metadata db"
+             Sql-Execute -Qry "EXEC usp_InsertPipelineDataSets '$DataSetName','$LinkedServiceName',$PipelineId,'$AdditionalType','$AdditionalVal'" -Qrydetails  "Insert datasets for metadata db"
+            
+            
             $SqlCmd.CommandText = "SELECT PipelineDatasetId FROM [T_Pipeline_DataSets] WHERE PipelineId = $PipelineId AND DataSetName = '$DataSetName'"
             $dataset_id = Sql-ExecuteScalar -Qry "SELECT PipelineDatasetId FROM [T_Pipeline_DataSets] WHERE PipelineId = $PipelineId AND DataSetName = '$DataSetName'" -Qrydetails "max dataset id"
-            
             Sql-Execute -Qry "EXEC usp_InsertPipelineDataSetParameters '$LinkedServiceName',$dataset_id,$PipelineId" -Qrydetails  "Insert dataset parameters for metadata db"
             
       
@@ -205,6 +209,7 @@ Param([int]$Linkedservice_id,[string] $keyvaultname,[string]$messagetype )
             {
             $desc = $row.KeyVaultReferenceDescription.ToString()
             $SecretPassword = Read-Host "Type $desc : " -AsSecureString
+           # $SecretPassword = ConvertTo-SecureString "testpwd" -AsPlainText -Force
             $paramname = $row.ParameterName.ToString()
             $name = $Linkedservice_id.ToString()+"$paramname"
             $name = $name.Replace('$','')
@@ -275,7 +280,7 @@ if(!(Test-Path -path "$Scriptpath\OutputPipelineScripts")){New-Item -ItemType di
 if(!(Test-Path -path "$Scriptpath\OutputPostDeploymentScripts")){New-Item -ItemType directory -Path "$Scriptpath\OutputPostDeploymentScripts"}
 if(!(Test-Path -path "$Scriptpath\Archive")){New-Item -ItemType directory -Path "$Scriptpath\Archive"}
 
-Get-ChildItem "$ScriptPath\InputXMLFile\" -Filter *.xml | 
+Get-ChildItem "$ScriptPath\InputXMLFile\" -Filter "$InputXMLFileName" | 
 Foreach-Object {
     $content = Get-Content $_.FullName
     
@@ -331,8 +336,11 @@ Log-Message "End :  Opening Connection to Metadata database"
     $servicePrincipalName = $out.spnname
     
     $LinkedServices = ''
+   
     foreach($linkedservicedetail in $MetaDetails.Metadata.LinkedServices.LinkedService)
     {
+    
+ 
        
         $out = Insert-LinkedServicesAndParameters -LinkedServiceType $linkedservicedetail.Type -AuthenticationType $linkedservicedetail.AuthenticationType -resourceGroupName $resourceGroupName -ir $irname -LinkedServiceName $linkedservicedetail.Description
         
@@ -350,7 +358,11 @@ Log-Message "End :  Opening Connection to Metadata database"
         $LinkedServices = $LinkedServices+$linkedservicedetail.Description+','
     
     }
+
+ if ($LinkedServices -ne '')
+ {
     $LinkedServices = $LinkedServices.Substring(0,$LinkedServices.Length-1)
+  }
    
     $IntegrationRunTimes = ''
 
@@ -370,7 +382,28 @@ Log-Message "End :  Opening Connection to Metadata database"
        $IntegrationRunTimes = $IntegrationRunTimes+$irnam+','
     
     }
+    if ($IntegrationRunTimes -ne '')
+ {
     $IntegrationRunTimes = $IntegrationRunTimes.Substring(0,$IntegrationRunTimes.Length-1)
+    }
+
+
+      $SqlCmd.CommandText = "EXEC [final_execution_ps_new_ls_ir] '$LinkedServices','$IntegrationRunTimes'"
+    
+        $DataAdapter = new-object System.Data.SqlClient.SqlDataAdapter $SqlCmd
+        $dataset = new-object System.Data.Dataset
+        $DataAdapter.Fill($dataset)
+        New-Item -Path "$ScriptPath\OutputPipelineScripts\$lsir.ps1" -ItemType File -Force
+        Add-Content -Value ' Param([Parameter(Mandatory=$True,Position=1)][string]$logfilepath,[Parameter(Mandatory=$True,Position=2)][string]$ScriptPath)' -Path "$ScriptPath\OutputPipelineScripts\$lsir.ps1"
+        for($i=0;$i -lt $dataset.Tables[0].Rows.Count;$i++) 
+        {
+        Add-Content -Value ($dataset.Tables[0].Rows[$i][0].ToString()) -Path "$ScriptPath\OutputPipelineScripts\$lsir.ps1"
+        }
+        
+        $scriptpath1 = "$ScriptPath\OutputPipelineScripts\$lsir.ps1"
+        $params = "-logfilepath '$logfilepath' -Scriptpath '$Scriptpath'"
+             Invoke-Expression "$scriptpath1 $params"
+
    
     foreach($ppdetail in $MetaDetails.Metadata.Pipelines.Pipeline)
     {
@@ -482,8 +515,7 @@ Log-Message "End :  Opening Connection to Metadata database"
                     Sql-Execute -Qry "EXEC  usp_UpdatePipelineTablesQuery $pipelineid,'$tblname','$schname','$IsIncremental','$RefreshBasedOn'" -Qrydetails  "update tables to be moved "
                     
         }
-
-        $SqlCmd.CommandText = "EXEC final_execution_ps_new $pipelineid,'$LinkedServices','$IntegrationRunTimes'"
+        $SqlCmd.CommandText = "EXEC [dbo].[final_execution_ps_pipeline] $pipelineid"
     
         $DataAdapter = new-object System.Data.SqlClient.SqlDataAdapter $SqlCmd
         $dataset = new-object System.Data.Dataset
@@ -497,24 +529,25 @@ Log-Message "End :  Opening Connection to Metadata database"
         
         $scriptpath1 = "$ScriptPath\OutputPipelineScripts\$pipelinename.ps1"
         $params = "-logfilepath '$logfilepath' -Scriptpath '$Scriptpath'"
-        Login-AzAccount
+      
         Invoke-Expression "$scriptpath1 $params"
+       
         }
-
+      
 
     $SqlConnection.Close()
 
-    Move-Item -Path $_.FullName -Destination "$Scriptpath\Archive\$archivexmlfilepath" -Force
+  #  Move-Item -Path $_.FullName -Destination "$Scriptpath\Archive\$archivexmlfilepath" -Force
 
-    if(Test-Path $excelfile){ Move-Item -Path $excelfile -Destination "$Scriptpath\Archive\SourceTableSchemaDetails_$datetime.xlsx" -Force}
+   # if(Test-Path $excelfile){ Move-Item -Path $excelfile -Destination "$Scriptpath\Archive\SourceTableSchemaDetails_$datetime.xlsx" -Force}
     
-    if(Test-Path $csvfile){ Move-Item -Path $csvfile -Destination "$Scriptpath\Archive\SourceTableSchemaDetails_$datetime.csv" -Force}
+    #if(Test-Path $csvfile){ Move-Item -Path $csvfile -Destination "$Scriptpath\Archive\SourceTableSchemaDetails_$datetime.csv" -Force}
 
 }
 }
 catch
 {
-#Write-host $error
+Write-host $error
 Add-Content $LogFilePath $error
 Add-Content $LogFilePath "Script failed with errors. Please check log file"
 Write-Host "Deployment Failed with Errors. Please refer log file"
