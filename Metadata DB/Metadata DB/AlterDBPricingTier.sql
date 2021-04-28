@@ -1,0 +1,3 @@
+﻿ ALTER DATABASE [$(DatabaseName)] MODIFY(EDITION='Basic', MAXSIZE = 500 MB)
+
+GO    

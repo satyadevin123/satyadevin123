@@ -9,26 +9,12 @@ Post-Deployment Script Template
                SELECT * FROM [$(TableName)]					
 --------------------------------------------------------------------------------------
 --*/
---Print 'Start - Change pricing tier to basic'
---DECLARE @CurrentDBName NVARCHAR(100)
---DECLARE @Sql NVARCHAR(1000)
 
---SELECT @CurrentDBName = DB_NAME() 
+Print 'start - Change pricing tier to basic'
 
---USE MASTER
---SET @Sql = 'ALTER DATABASE '+@CurrentDBName +' MODIFY (EDITION =''Basic'')';
+:r .\AlterDBPricingTier.sql
 
---exec sp_executesql @Sql
-
---Print 'end - Change pricing tier to basic'
---GO
-
---SET @Sql = 'USE '+@CurrentDBName
-
---exec sp_executesql @Sql
-
-Print 'Start - Inserting data to master parameters list table'
-
+Print 'end - Change pricing tier to basic'
 DECLARE @Mastertable as TABLE
 ( ParameterName NVARCHAR(200), ParameterValue NVARCHAR(200))
 INSERT INTO @Mastertable ( ParameterName, ParameterValue)

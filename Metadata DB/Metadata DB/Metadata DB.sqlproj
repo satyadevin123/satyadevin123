@@ -176,6 +176,7 @@
     <Build Include="dbo\Stored Procedures\usp_GetKeyVaultReferedParameters.sql">
       <AnsiNulls>Off</AnsiNulls>
     </Build>
+    <None Include="AlterDBPricingTier.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Script.PostDeployment1.sql" />
